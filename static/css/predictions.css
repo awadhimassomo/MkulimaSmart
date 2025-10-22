@@ -1,0 +1,26 @@
+/* Predictions App Styles */
+
+/* Success icon in thank you page */
+.success-icon {
+    font-size: 5rem;
+}
+
+/* Form customization */
+.rain-form .form-control {
+    border-radius: 0.25rem;
+}
+
+.rain-form .form-select {
+    padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+}
+
+/* Card styling */
+.observation-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.observation-card:hover {
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}

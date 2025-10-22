@@ -1,0 +1,443 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block title %}Login - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --brand-primary: #2D5A27;
+    --brand-primary-medium: #4A7C3A;
+    --brand-primary-dark: #1A3316;
+    --brand-accent: #C5D86D;
+    --brand-accent-light: #D4E89A;
+    --brand-accent-dark: #B5C95A;
+    --gradient-primary: linear-gradient(135deg, var(--brand-primary-dark) 0%, var(--brand-primary) 50%, var(--brand-primary-medium) 100%);
+  }
+
+  .auth-container {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+  }
+
+  .auth-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    max-width: 480px;
+    width: 100%;
+    border: 1px solid rgba(45, 90, 39, 0.1);
+  }
+
+  .auth-form-section {
+    padding: 2.5rem;
+  }
+
+  .form-header {
+    margin-bottom: 2rem;
+    text-align: center;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(45, 90, 39, 0.1);
+  }
+
+  .form-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-logo img {
+    height: 48px;
+    width: auto;
+  }
+
+  .form-logo-text {
+    font-size: 1.75rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--brand-primary-dark), var(--brand-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .form-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-primary-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .form-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group {
+    flex: 1;
+    margin-bottom: 0;
+    position: relative;
+  }
+
+  .form-group-full {
+    flex: 1;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--brand-primary-dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .form-control {
+    width: 100% !important;
+    padding: 0.9rem 1rem !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 10px !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+    background: #f8f9fa !important;
+    font-weight: 500 !important;
+    box-sizing: border-box !important;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .password-toggle:hover {
+    color: var(--brand-primary);
+    background: rgba(45, 90, 39, 0.1);
+  }
+
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--brand-primary-dark);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .remember-me input {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(45, 90, 39, 0.4);
+  }
+
+  .kikapu-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.9rem;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    background: white;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+
+  .kikapu-login-btn:hover {
+    border-color: var(--brand-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .auth-link {
+    color: var(--brand-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .auth-link:hover {
+    color: var(--brand-primary-dark);
+    text-decoration: none;
+  }
+
+  .alert {
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    border: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .alert-danger {
+    background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+    border-left: 4px solid #dc3545;
+    color: #721c24;
+  }
+
+  .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+  }
+
+  .errorlist li {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    background: #fee;
+    border-radius: 6px;
+    border-left: 3px solid #dc3545;
+    font-weight: 500;
+  }
+
+
+
+  @media (max-width: 576px) {
+    .auth-container {
+      padding: 1.5rem 1rem;
+    }
+    
+    .auth-form-section {
+      padding: 1.5rem;
+    }
+    
+    .form-row {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+
+  .loading-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ffffff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-form-section">
+      <div class="form-header">
+        <div class="form-logo">
+          <img src="{% static 'images/icon.png' %}" alt="Mkulima Smart Logo">
+          <span class="form-logo-text">Mkulima Smart</span>
+        </div>
+        <h2 class="form-title">Welcome Back</h2>
+        <p class="form-subtitle">Sign in to access your farming dashboard</p>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate id="loginForm">
+        {% csrf_token %}
+        
+        <div class="form-group-full">
+          <label for="username" class="form-label">
+            Phone Number
+          </label>
+          <input 
+            type="tel" 
+            name="username" 
+            id="username" 
+            class="form-control"
+            placeholder="Enter your registered phone number"
+            value="{{ form.username.value|default:'' }}"
+            required
+          >
+          {% if form.username.errors %}
+            <ul class="errorlist">
+              {% for error in form.username.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="form-group-full">
+          <label for="password" class="form-label">
+            Password
+          </label>
+          <div style="position: relative;">
+            <input 
+              type="password" 
+              name="password" 
+              id="password" 
+              class="form-control"
+              placeholder="Enter your password"
+              required
+            >
+            <button type="button" class="password-toggle" onclick="togglePassword()">
+              👁️
+            </button>
+          </div>
+          {% if form.password.errors %}
+            <ul class="errorlist">
+              {% for error in form.password.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" name="remember_me"> Remember me
+          </label>
+          <a href="{% url 'website:password_reset' %}" class="auth-link" style="font-size: 0.85rem;">
+            Forgot password?
+          </a>
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <button type="submit" class="btn-primary" id="loginButton">
+          <span class="loading-spinner" id="loginSpinner"></span>
+          <span id="loginText">Sign In to Dashboard</span>
+        </button>
+      </form>
+
+      <a href="/auth/kikapu/login/" class="kikapu-login-btn">
+        <img src="{% static 'images/kapu.png' %}" alt="Kikapu Logo" style="height: 24px; width: auto;">
+        <span>Login with Kikapu Account</span>
+      </a>
+
+      <div class="auth-links">
+        <p style="margin-bottom: 0.75rem; font-size: 0.9rem;">
+          Don't have an account? 
+          <a href="{% url 'website:register' %}" class="auth-link">
+            Create Account
+          </a>
+        </p>
+        <p style="font-size: 0.8rem; color: #6c757d;">
+          By logging in, you agree to our 
+          <a href="#" style="color: var(--brand-primary);">Terms</a> 
+          and 
+          <a href="#" style="color: var(--brand-primary);">Privacy Policy</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePassword() {
+    const passwordField = document.querySelector('#password');
+    const toggleButton = document.querySelector('.password-toggle');
+    
+    if (passwordField.type === 'password') {
+      passwordField.type = 'text';
+      toggleButton.textContent = '🔒';
+    } else {
+      passwordField.type = 'password';
+      toggleButton.textContent = '👁️';
+    }
+  }
+
+  // Form submission loading state
+  document.getElementById('loginForm').addEventListener('submit', function() {
+    const button = document.getElementById('loginButton');
+    const spinner = document.getElementById('loginSpinner');
+    const text = document.getElementById('loginText');
+    
+    button.disabled = true;
+    spinner.style.display = 'inline-block';
+    text.textContent = 'Signing In...';
+  });
+</script>
+{% endblock %}

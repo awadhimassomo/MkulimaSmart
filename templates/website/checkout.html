@@ -1,0 +1,524 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Checkout - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-section {
+        padding-top: 120px;
+        padding-bottom: 60px;
+    }
+    
+    .checkout-step {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .step-number {
+        width: 30px;
+        height: 30px;
+        background-color: #28a745;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    
+    .step-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .order-summary {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    
+    .summary-total {
+        font-size: 1.2rem;
+        font-weight: 700;
+        border-top: 1px solid #dee2e6;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+    
+    .product-item {
+        display: flex;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .product-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .product-img-mini {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-right: 15px;
+    }
+    
+    .product-info {
+        flex-grow: 1;
+    }
+    
+    .product-price {
+        text-align: right;
+        min-width: 80px;
+    }
+    
+    .payment-option {
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .payment-option:hover, .payment-option.active {
+        background-color: #f8f9fa;
+        border-color: #28a745;
+    }
+    
+    .payment-option.active {
+        border-width: 2px;
+    }
+    
+    .payment-icon {
+        font-size: 1.5rem;
+        margin-right: 10px;
+        color: #495057;
+    }
+    
+    .card-icon {
+        margin-right: 5px;
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="checkout-section">
+    <div class="container">
+        <h1 class="mb-4">Checkout</h1>
+        
+        <div class="row">
+            <!-- Checkout Form -->
+            <div class="col-lg-8">
+                <form id="checkout-form" method="post" action="{% url 'website:checkout' %}">
+                    {% csrf_token %}
+                    
+                    <!-- Shipping Information -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="checkout-step">
+                                <div class="step-number">1</div>
+                                <h4 class="step-title">Shipping Information</h4>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="firstName" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="firstName" name="first_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="lastName" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="lastName" name="last_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone_number" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="address" class="form-label">Street Address</label>
+                                    <input type="text" class="form-control" id="address" name="address" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="city" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="city" name="city" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="county" class="form-label">County</label>
+                                    <select class="form-select" id="county" name="county" required>
+                                        <option value="">Choose...</option>
+                                        <option value="Nairobi">Nairobi</option>
+                                        <option value="Mombasa">Mombasa</option>
+                                        <option value="Kisumu">Kisumu</option>
+                                        <option value="Nakuru">Nakuru</option>
+                                        <option value="Eldoret">Eldoret</option>
+                                        <!-- Add more counties as needed -->
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="postalCode" class="form-label">Postal Code</label>
+                                    <input type="text" class="form-control" id="postalCode" name="postal_code" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="deliveryInstructions" class="form-label">Delivery Instructions (Optional)</label>
+                                    <textarea class="form-control" id="deliveryInstructions" name="delivery_instructions" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Options -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="checkout-step">
+                                <div class="step-number">2</div>
+                                <h4 class="step-title">Delivery Options</h4>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="delivery_option" id="standardDelivery" value="standard" checked>
+                                    <label class="form-check-label d-flex justify-content-between w-100" for="standardDelivery">
+                                        <div>
+                                            <strong>Standard Delivery</strong>
+                                            <p class="text-muted mb-0">3-5 business days</p>
+                                        </div>
+                                        <span>KSh 350</span>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="delivery_option" id="expressDelivery" value="express">
+                                    <label class="form-check-label d-flex justify-content-between w-100" for="expressDelivery">
+                                        <div>
+                                            <strong>Express Delivery</strong>
+                                            <p class="text-muted mb-0">1-2 business days</p>
+                                        </div>
+                                        <span>KSh 650</span>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="delivery_option" id="pickup" value="pickup">
+                                    <label class="form-check-label d-flex justify-content-between w-100" for="pickup">
+                                        <div>
+                                            <strong>Pick up from warehouse</strong>
+                                            <p class="text-muted mb-0">Available during business hours</p>
+                                        </div>
+                                        <span>Free</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="checkout-step">
+                                <div class="step-number">3</div>
+                                <h4 class="step-title">Payment Method</h4>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <!-- Mobile Money Option -->
+                                <div class="payment-option active" onclick="selectPaymentOption(this, 'mobile_money')">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="mobileMoney" value="mobile_money" checked>
+                                        <label class="form-check-label d-flex align-items-center" for="mobileMoney">
+                                            <i class="fas fa-mobile-alt payment-icon"></i>
+                                            <span>Mobile Money (M-Pesa, Airtel Money)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Credit/Debit Card Option -->
+                                <div class="payment-option" onclick="selectPaymentOption(this, 'card')">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="creditCard" value="card">
+                                        <label class="form-check-label d-flex align-items-center" for="creditCard">
+                                            <div>
+                                                <i class="fab fa-cc-visa card-icon"></i>
+                                                <i class="fab fa-cc-mastercard card-icon"></i>
+                                                <i class="fab fa-cc-amex card-icon"></i>
+                                            </div>
+                                            <span>Credit/Debit Card</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bank Transfer Option -->
+                                <div class="payment-option" onclick="selectPaymentOption(this, 'bank_transfer')">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="bankTransfer" value="bank_transfer">
+                                        <label class="form-check-label d-flex align-items-center" for="bankTransfer">
+                                            <i class="fas fa-university payment-icon"></i>
+                                            <span>Bank Transfer</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Cash on Delivery Option -->
+                                <div class="payment-option" onclick="selectPaymentOption(this, 'cash_on_delivery')">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="cashOnDelivery" value="cash_on_delivery">
+                                        <label class="form-check-label d-flex align-items-center" for="cashOnDelivery">
+                                            <i class="fas fa-money-bill-wave payment-icon"></i>
+                                            <span>Cash on Delivery</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payment Details (conditionally shown based on selection) -->
+                            <div id="mobile_money_details" class="payment-details">
+                                <p class="mb-3">You will receive an STK push to your phone to complete the payment.</p>
+                                <div class="mb-3">
+                                    <label for="mpesaPhone" class="form-label">M-Pesa Phone Number</label>
+                                    <input type="tel" class="form-control" id="mpesaPhone" name="mpesa_phone" placeholder="e.g. 07XX XXX XXX">
+                                </div>
+                            </div>
+                            
+                            <div id="card_details" class="payment-details d-none">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="cardNumber" class="form-label">Card Number</label>
+                                        <input type="text" class="form-control" id="cardNumber" placeholder="XXXX XXXX XXXX XXXX">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="expDate" class="form-label">Expiry Date</label>
+                                        <input type="text" class="form-control" id="expDate" placeholder="MM/YY">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="cvv" class="form-label">CVV</label>
+                                        <input type="text" class="form-control" id="cvv" placeholder="XXX">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="cardName" class="form-label">Name on Card</label>
+                                        <input type="text" class="form-control" id="cardName">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="bank_transfer_details" class="payment-details d-none">
+                                <div class="alert alert-info">
+                                    <p class="mb-2">Please use the following details to make your bank transfer:</p>
+                                    <p class="mb-1"><strong>Bank:</strong> Kenya Commercial Bank</p>
+                                    <p class="mb-1"><strong>Account Name:</strong> Mkulima Smart Ltd</p>
+                                    <p class="mb-1"><strong>Account Number:</strong> 1234567890</p>
+                                    <p class="mb-1"><strong>Branch:</strong> Main Branch</p>
+                                    <p class="mb-0"><strong>Reference:</strong> Your order number will be provided after checkout</p>
+                                </div>
+                                <p class="mb-0 text-muted">Your order will be processed once we confirm your payment.</p>
+                            </div>
+                            
+                            <div id="cash_on_delivery_details" class="payment-details d-none">
+                                <p>Pay with cash upon delivery of your order.</p>
+                                <div class="alert alert-warning">
+                                    <p class="mb-0">Please note that a confirmation call will be made before delivery.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Notes -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="checkout-step">
+                                <div class="step-number">4</div>
+                                <h4 class="step-title">Order Notes</h4>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="orderNotes" class="form-label">Additional Notes (Optional)</label>
+                                <textarea class="form-control" id="orderNotes" name="order_notes" rows="3" placeholder="Any special instructions or information regarding your order"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                I have read and agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="order-summary shadow-sm mb-4">
+                    <h4 class="mb-4">Order Summary</h4>
+                    
+                    <!-- Product List -->
+                    <div class="mb-4">
+                        {% for item in cart.items.all %}
+                            <div class="product-item">
+                                <div class="d-flex">
+                                    {% if item.product.images.filter(is_primary=True).first %}
+                                        <img src="{{ item.product.images.filter(is_primary=True).first.image.url }}" class="product-img-mini" alt="{{ item.product.name }}">
+                                    {% elif item.product.images.first %}
+                                        <img src="{{ item.product.images.first.image.url }}" class="product-img-mini" alt="{{ item.product.name }}">
+                                    {% else %}
+                                        <img src="{% static 'images/product-placeholder.jpg' %}" class="product-img-mini" alt="{{ item.product.name }}">
+                                    {% endif %}
+                                    
+                                    <div class="product-info">
+                                        <p class="mb-0 fw-medium">{{ item.product.name|truncatechars:25 }}</p>
+                                        <small class="text-muted">Qty: {{ item.quantity }}</small>
+                                    </div>
+                                    
+                                    <div class="product-price">
+                                        <p class="mb-0">KSh {{ item.get_total_price }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Cost Breakdown -->
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span>KSh {{ cart.get_total }}</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Delivery Fee</span>
+                        <span id="delivery-fee">KSh 350</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Tax (16% VAT)</span>
+                        <span>KSh {{ cart.get_total|floatformat:"0"|add:0|multiply:0.16|floatformat:"0" }}</span>
+                    </div>
+                    
+                    <div class="summary-item summary-total">
+                        <span>Total</span>
+                        <span id="order-total">KSh {{ cart.get_total|add:350|add:cart.get_total|floatformat:"0"|add:0|multiply:0.16|floatformat:"0" }}</span>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" form="checkout-form" class="btn btn-success btn-lg">
+                            Place Order
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-3">Need Help?</h5>
+                        <p><i class="fas fa-phone-alt me-2"></i> +254 700 123 456</p>
+                        <p><i class="fas fa-envelope me-2"></i> support@mkulimasmart.com</p>
+                        <p class="mb-0"><i class="fas fa-question-circle me-2"></i> <a href="#" class="text-decoration-none">FAQs</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Terms and Conditions Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. General Terms</h6>
+                    <p>By placing an order with Mkulima Smart, you agree to the terms and conditions set forth in this agreement.</p>
+                    
+                    <h6>2. Pricing and Payment</h6>
+                    <p>All prices are in Kenyan Shillings (KSh) and include VAT where applicable. Payment is required at the time of purchase.</p>
+                    
+                    <h6>3. Shipping and Delivery</h6>
+                    <p>Delivery timeframes are estimates and may vary based on your location. Mkulima Smart is not responsible for delays caused by factors outside our control.</p>
+                    
+                    <h6>4. Returns and Refunds</h6>
+                    <p>Products may be returned within 7 days of receipt if they are unused and in their original packaging. Certain products like seeds and perishable items cannot be returned.</p>
+                    
+                    <h6>5. Privacy Policy</h6>
+                    <p>Your personal information will be handled in accordance with our Privacy Policy. We do not share your information with third parties without your consent.</p>
+                    
+                    <h6>6. Liability</h6>
+                    <p>Mkulima Smart's liability is limited to the value of the products purchased.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">I Agree</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectPaymentOption(element, method) {
+        // Update active class
+        const paymentOptions = document.querySelectorAll('.payment-option');
+        paymentOptions.forEach(option => {
+            option.classList.remove('active');
+        });
+        element.classList.add('active');
+        
+        // Update radio button
+        document.getElementById(method === 'mobile_money' ? 'mobileMoney' : 
+                               method === 'card' ? 'creditCard' : 
+                               method === 'bank_transfer' ? 'bankTransfer' : 'cashOnDelivery').checked = true;
+        
+        // Show/hide payment details
+        const paymentDetails = document.querySelectorAll('.payment-details');
+        paymentDetails.forEach(detail => {
+            detail.classList.add('d-none');
+        });
+        document.getElementById(method + '_details').classList.remove('d-none');
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delivery option changes
+        const deliveryOptions = document.querySelectorAll('input[name="delivery_option"]');
+        const deliveryFeeElement = document.getElementById('delivery-fee');
+        const orderTotalElement = document.getElementById('order-total');
+        const subtotal = {{ cart.get_total }};
+        const tax = subtotal * 0.16;
+        
+        deliveryOptions.forEach(option => {
+            option.addEventListener('change', function() {
+                let deliveryFee = 0;
+                
+                if (this.value === 'standard') {
+                    deliveryFee = 350;
+                    deliveryFeeElement.textContent = 'KSh 350';
+                } else if (this.value === 'express') {
+                    deliveryFee = 650;
+                    deliveryFeeElement.textContent = 'KSh 650';
+                } else {
+                    deliveryFeeElement.textContent = 'Free';
+                }
+                
+                const total = subtotal + deliveryFee + tax;
+                orderTotalElement.textContent = 'KSh ' + Math.round(total);
+            });
+        });
+    });
+</script>
+{% endblock %}

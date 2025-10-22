@@ -89,6 +89,21 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
+    }
 </style>
 {% endblock %}
 
@@ -132,7 +147,7 @@
                         <span class="priority-{{ message.priority }} font-semibold">{{ message.get_priority_display }} Priority</span>
                     </div>
                     {% if message.assigned_to %}
-                    <span class="text-sm opacity-90">Assigned to {{ message.assigned_to.username }}</span>
+                    <span class="text-sm opacity-90">Assigned to {{ message.assigned_to.get_full_name|default:message.assigned_to.phone_number }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -195,7 +210,7 @@
                     {% endif %}
                     
                     <div class="flex justify-between items-center text-xs text-gray-500 mt-3">
-                        <span>Analyzed by {{ analysis.analyzed_by.username }} • {{ analysis.analyzed_at|timesince }} ago</span>
+                        <span>Analyzed by {{ analysis.analyzed_by.get_full_name|default:analysis.analyzed_by.phone_number }} • {{ analysis.analyzed_at|timesince }} ago</span>
                         {% if analysis.processing_time %}
                         <span>Processing time: {{ analysis.processing_time }}s</span>
                         {% endif %}
@@ -203,38 +218,75 @@
                 </div>
                 {% endif %}
 
-                <!-- Replies -->
+                <!-- Replies / Chat -->
                 <div class="content-card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                        Replies ({{ replies.count }})
-                    </h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-comments mr-2"></i>Conversation
+                            <span id="message-count" class="text-sm font-normal text-gray-500 ml-2">({{ replies.count }} messages)</span>
+                        </h3>
+                        <div id="connection-status" class="flex items-center text-sm">
+                            <span class="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse"></span>
+                            <span class="text-gray-600">Connecting...</span>
+                        </div>
+                    </div>
                     
+                    <!-- Chat Messages Container -->
+                    <div id="chat-messages" class="space-y-3 max-h-96 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
                     {% for reply in replies %}
-                    <div class="reply-card">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="font-medium text-gray-900">{{ reply.replied_by.username }}</span>
-                                <span class="text-sm text-gray-500 ml-2">{{ reply.get_reply_type_display }}</span>
-                            </div>
-                            <div class="flex items-center space-x-2 text-sm text-gray-500">
-                                {% if reply.sent_via_sms %}
-                                <i class="fas fa-sms text-green-500" title="Sent via SMS"></i>
-                                {% endif %}
-                                <span>{{ reply.created_at|timesince }} ago</span>
+                    <div class="flex {% if reply.replied_by == request.user %}justify-end{% else %}justify-start{% endif %} message-item" data-message-id="{{ reply.id }}">
+                        <div class="max-w-md md:max-w-lg">
+                            <div class="{% if reply.replied_by == request.user %}bg-gradient-to-r from-[#2D5A27] to-[#4A7C3A] text-white{% else %}bg-white border border-gray-200{% endif %} rounded-2xl px-4 py-3 shadow-sm">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-8 h-8 rounded-full {% if reply.replied_by == request.user %}bg-[#C5D86D]{% else %}bg-gray-300{% endif %} flex items-center justify-center text-sm font-semibold">
+                                            {{ reply.replied_by.get_full_name.0|default:reply.replied_by.phone_number.0 }}
+                                        </div>
+                                        <span class="font-medium text-sm {% if reply.replied_by != request.user %}text-gray-900{% endif %}">
+                                            {{ reply.replied_by.get_full_name|default:reply.replied_by.phone_number }}
+                                        </span>
+                                    </div>
+                                    {% if reply.sent_via_sms %}
+                                    <i class="fas fa-sms {% if reply.replied_by == request.user %}text-[#C5D86D]{% else %}text-green-500{% endif %}" title="Sent via SMS"></i>
+                                    {% endif %}
+                                </div>
+                                <p class="{% if reply.replied_by != request.user %}text-gray-700{% endif %} whitespace-pre-wrap leading-relaxed">{{ reply.reply_text }}</p>
+                                <div class="text-xs {% if reply.replied_by == request.user %}text-white text-opacity-80{% else %}text-gray-500{% endif %} mt-2 text-right">
+                                    {{ reply.created_at|date:"M j, g:i A" }}
+                                </div>
                             </div>
                         </div>
-                        <p class="text-gray-700 whitespace-pre-wrap">{{ reply.reply_text }}</p>
                     </div>
                     {% empty %}
-                    <p class="text-gray-500 text-center py-4">No replies yet</p>
+                    <div class="text-center py-8">
+                        <i class="fas fa-comments text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500">No replies yet. Start the conversation!</p>
+                    </div>
                     {% endfor %}
+                    </div>
+                    
+                    <!-- Typing Indicator -->
+                    <div id="typing-indicator" style="display: none;" class="flex items-center space-x-2 text-sm text-gray-500 italic px-4 py-2 bg-gray-100 rounded-lg mb-3">
+                        <div class="flex space-x-1">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                        </div>
+                        <span>Someone is typing...</span>
+                    </div>
                 </div>
-
+                
                 <!-- Reply Form -->
                 <div class="content-card">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Send Reply</h3>
                     
-                    <form method="post" class="reply-form">
+                    <!-- Hidden inputs for WebSocket authentication -->
+                    <input type="hidden" id="thread-id" value="{{ message.id }}">  
+                    <input type="hidden" id="current-user-id" value="{{ request.user.id }}">  
+                    <input type="hidden" id="jwt-token" value="{{ jwt_token }}">
+                    
+                    <!-- Regular form (fallback for non-JS) -->
+                    <form method="post" class="reply-form" id="message-form">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="reply">
                         
@@ -248,24 +300,30 @@
                                 </select>
                             </div>
                             
-                            <div class="flex items-center">
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="send_sms" class="mr-2">
-                                    <span class="text-sm text-gray-700">Send via SMS</span>
-                                </label>
+                            <div class="flex justify-between items-center mt-4">
+                                <div class="flex items-center space-x-3">
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" name="send_sms" class="form-checkbox rounded text-green-600 mr-2">
+                                        <span class="text-sm">Send via SMS</span>
+                                    </label>
+                                    <div class="relative">
+                                        <label for="file-input" class="cursor-pointer bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-md inline-flex items-center transition">
+                                            <i class="fas fa-paperclip mr-1"></i> Attach
+                                        </label>
+                                        <input id="file-input" type="file" class="hidden" accept="image/*">
+                                        <div id="upload-status" class="text-sm text-green-600 mt-1" style="display: none;"></div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition">
+                                    Send Reply
+                                </button>
                             </div>
                         </div>
                         
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Reply Message</label>
-                            <textarea name="reply_text" rows="4" required
-                                      class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                      placeholder="Type your reply to the farmer..."></textarea>
+                            <textarea id="message-input" name="reply_text" rows="5" placeholder="Type your reply here..." required class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1"></textarea>
                         </div>
-                        
-                        <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition">
-                            <i class="fas fa-paper-plane mr-2"></i>Send Reply
-                        </button>
                     </form>
                 </div>
             </div>
@@ -355,7 +413,96 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Sound for notifications -->
+<audio id="notification-sound" src="{% static 'sounds/notification.mp3' %}" preload="auto"></audio>
+
+<!-- Include crypto utilities for end-to-end encryption -->
+<script src="{% static 'js/crypto-utils.js' %}"></script>
+<script src="{% static 'js/chat.js' %}"></script>
 <script>
+// Initialize WebSocket chat manager
+document.addEventListener('DOMContentLoaded', () => {
+    const threadIdEl = document.getElementById('thread-id');
+    const userIdEl = document.getElementById('current-user-id');
+    const tokenEl = document.getElementById('jwt-token');
+    
+    if (threadIdEl && userIdEl && tokenEl) {
+        const threadId = threadIdEl.value;
+        const userId = userIdEl.value;
+        const token = tokenEl.value;
+        
+        console.log('🚀 Initializing chat manager...');
+        console.log('Thread ID:', threadId);
+        console.log('User ID:', userId);
+        
+        // Create and connect chat manager
+        window.chatManager = new ChatManager(threadId, userId);
+        window.chatManager.connect(token);
+        
+        // CRITICAL: Intercept form submission to use WebSocket
+        const messageForm = document.getElementById('message-form');
+        if (messageForm) {
+            messageForm.addEventListener('submit', (e) => {
+                e.preventDefault(); // Prevent traditional POST
+                
+                const messageInput = document.getElementById('message-input');
+                const text = messageInput.value.trim();
+                
+                if (text) {
+                    console.log('📤 Sending message via WebSocket:', text.substring(0, 50) + '...');
+                    
+                    // Send via WebSocket for real-time delivery!
+                    window.chatManager.sendMessage(text);
+                    
+                    // Clear input
+                    messageInput.value = '';
+                    
+                    // Stop typing indicator
+                    window.chatManager.sendTypingStatus(false);
+                    
+                    // Clear draft
+                    localStorage.removeItem('draft_{{ message.id }}');
+                } else {
+                    console.warn('⚠️ Cannot send empty message');
+                }
+            });
+            
+            console.log('✅ Form submission handler attached - messages will be sent via WebSocket');
+        } else {
+            console.error('❌ Message form not found!');
+        }
+        
+        // Set up typing indicator
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+            messageInput.addEventListener('input', () => {
+                if (messageInput.value.trim().length > 0) {
+                    window.chatManager.sendTypingStatus(true);
+                } else {
+                    window.chatManager.sendTypingStatus(false);
+                }
+            });
+            
+            console.log('✅ Typing indicator handler attached');
+        }
+        
+        // Set up file upload
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', () => {
+                window.chatManager.uploadFile(fileInput);
+            });
+        }
+    } else {
+        console.error('❌ Required elements not found:', {
+            hasThreadId: !!threadIdEl,
+            hasUserId: !!userIdEl,
+            hasToken: !!tokenEl
+        });
+    }
+});
+
+// Other utility functions
 function analyzeImage(messageId) {
     const btn = document.getElementById('analyzeBtn');
     const spinner = document.getElementById('loadingSpinner');
@@ -394,9 +541,11 @@ function analyzeImage(messageId) {
 }
 
 function insertTemplate(text) {
-    const textarea = document.querySelector('textarea[name="reply_text"]');
-    textarea.value = text;
-    textarea.focus();
+    const textarea = document.getElementById('message-input');
+    if (textarea) {
+        textarea.value = text;
+        textarea.focus();
+    }
 }
 
 // Auto-save draft functionality
@@ -407,12 +556,12 @@ if (textarea) {
         clearTimeout(draftTimer);
         draftTimer = setTimeout(() => {
             // Save draft to localStorage
-            localStorage.setItem(`draft_${{{ message.id }}}`, this.value);
+            localStorage.setItem(`draft_${{ message.id }}`, this.value);
         }, 1000);
     });
     
     // Load draft on page load
-    const savedDraft = localStorage.getItem(`draft_${{{ message.id }}}`);
+    const savedDraft = localStorage.getItem(`draft_${{ message.id }}`);
     if (savedDraft) {
         textarea.value = savedDraft;
     }

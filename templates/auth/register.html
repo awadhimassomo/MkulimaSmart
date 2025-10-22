@@ -1,0 +1,1115 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block title %}Register - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --brand-primary: #2D5A27;
+    --brand-primary-medium: #4A7C3A;
+    --brand-primary-dark: #1A3316;
+    --brand-accent: #C5D86D;
+    --brand-accent-light: #D4E89A;
+    --brand-accent-dark: #B5C95A;
+    --gradient-primary: linear-gradient(135deg, var(--brand-primary-dark) 0%, var(--brand-primary) 50%, var(--brand-primary-medium) 100%);
+  }
+
+  .auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1rem;
+  }
+
+  .auth-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(45, 90, 39, 0.1);
+    overflow: hidden;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    min-height: 480px;
+  }
+
+  .auth-header {
+    background: var(--gradient-primary);
+    padding: 1.25rem 2rem;
+    color: white;
+  }
+
+  .brand-logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-progress {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    position: relative;
+  }
+
+  .form-progress::before {
+    content: "";
+    position: absolute;
+    top: 30%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255,255,255,0.3);
+    z-index: 1;
+  }
+
+  .progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+    transition: all 0.3s ease;
+  }
+
+  .step-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  .progress-step.active .step-number {
+    background: var(--brand-accent);
+    border-color: var(--brand-accent);
+    color: var(--brand-primary-dark);
+  }
+
+  .progress-step.completed .step-number {
+    background: white;
+    border-color: white;
+    color: var(--brand-primary);
+  }
+
+  .auth-form-section {
+    padding: 1.5rem 2rem 0.5rem;
+    height: 480px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .form-step {
+    display: none;
+  }
+
+  .form-step.active {
+    display: block;
+  }
+
+  .form-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--brand-primary-dark);
+    margin-bottom: 1rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .form-group.two-thirds {
+    grid-column: span 2;
+  }
+
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--brand-primary-dark);
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1.5px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    background: #f8f9fa;
+    box-sizing: border-box;
+    height: 38px;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+  }
+
+  select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 10px;
+  }
+
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .checkbox-item input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+  }
+
+  .checkbox-item label {
+    font-size: 0.8rem;
+    margin: 0;
+    cursor: pointer;
+    line-height: 1.2;
+  }
+
+  .dynamic-input {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid var(--brand-primary);
+  }
+
+  .dynamic-input .form-group {
+    margin-bottom: 0.5rem;
+  }
+
+  .dynamic-input .form-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--brand-primary);
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: end;
+  }
+
+  .input-row .form-control {
+    flex: 1;
+  }
+
+  .btn-sm {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    height: 38px;
+    white-space: nowrap;
+  }
+
+  .fruit-list {
+    margin-top: 0.5rem;
+  }
+
+  .fruit-tag {
+    display: inline-flex;
+    align-items: center;
+    background: var(--brand-accent-light);
+    color: var(--brand-primary-dark);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin: 0.2rem;
+    gap: 0.25rem;
+  }
+
+  .fruit-tag button {
+    background: none;
+    border: none;
+    color: var(--brand-primary);
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding: 1rem 2rem;
+    border-top: 1px solid #e9ecef;
+    background: white;
+    position: sticky;
+    bottom: 0;
+    margin-left: -2rem;
+    margin-right: -2rem;
+    z-index: 10;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+  }
+
+  .btn {
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 110px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #5a6268;
+  }
+
+  .btn-primary {
+    background: var(--brand-primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--brand-primary-dark);
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--brand-primary);
+    color: var(--brand-primary);
+  }
+
+  .btn-outline:hover {
+    background: var(--brand-primary);
+    color: white;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .form-text {
+    font-size: 0.7rem;
+    color: #6c757d;
+    margin-top: 0.2rem;
+    line-height: 1.2;
+  }
+
+  .required {
+    color: #dc3545;
+  }
+
+  .alert {
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+  }
+
+  .alert-danger {
+    background: #fee;
+    border-left: 4px solid #dc3545;
+    color: #721c24;
+  }
+
+  .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.2rem 0 0 0;
+  }
+
+  .errorlist li {
+    color: #dc3545;
+    font-size: 0.7rem;
+    margin-top: 0.2rem;
+  }
+
+  .location-detection {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .location-detection .form-control {
+    flex: 1;
+  }
+
+  @media (max-width: 768px) {
+    .auth-card {
+      max-width: 100%;
+      margin: 0.5rem;
+    }
+
+    .auth-form-section {
+      padding: 1.25rem;
+      height: 350px;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .checkbox-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .input-row {
+      flex-direction: column;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      min-width: 80px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .auth-header {
+      padding: 1rem 1.25rem;
+    }
+
+    .auth-form-section {
+      padding: 1rem;
+      height: 320px;
+    }
+
+    .checkbox-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .location-detection {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+  
+  /* Smart feature animations */
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+  }
+  
+  .form-helper {
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="brand-logo">MKULIMA SMART</div>
+      <div class="form-progress">
+        <div class="progress-step active" data-step="1">
+          <div class="step-number">1</div>
+          <div class="step-label">Personal Info</div>
+        </div>
+        <div class="progress-step" data-step="2">
+          <div class="step-number">2</div>
+          <div class="step-label">Farm Details</div>
+        </div>
+        <div class="progress-step" data-step="3">
+          <div class="step-number">3</div>
+          <div class="step-label">Services</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-form-section">
+      <form method="post" novalidate id="registerForm">
+        {% csrf_token %}
+        
+        <!-- Step 1: Personal Information -->
+        <div class="form-step active" id="step-1">
+          <h3 class="form-title">Personal Information</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="first_name" class="form-label">
+                First Name <span class="required">*</span>
+              </label>
+              <input type="text" id="first_name" name="first_name" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="middle_name" class="form-label">Middle Name</label>
+              <input type="text" id="middle_name" name="middle_name" class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label for="last_name" class="form-label">
+                Last Name <span class="required">*</span>
+              </label>
+              <input type="text" id="last_name" name="last_name" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone_number" class="form-label">
+                Phone <span class="required">*</span>
+                <span id="location-badge" style="display: none; background: #C5D86D; color: #1A3316; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: 600; margin-left: 0.5rem;">📍 Location detected</span>
+              </label>
+              <input type="tel" id="phone_number" name="phone_number" class="form-control" required oninput="detectLocationFromPhone()">
+              <small id="detected-location" class="form-helper" style="display: none; color: #2D5A27; font-weight: 600; margin-top: 0.25rem;"></small>
+            </div>
+            
+            <div class="form-group">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" id="email" name="email" class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label for="nida" class="form-label">NIDA Number</label>
+              <input type="text" id="nida" name="nida" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="farmer_id" class="form-label">Farmer ID</label>
+              <input type="text" id="farmer_id" name="farmer_id" class="form-control">
+            </div>
+            
+            <div class="form-group two-thirds">
+              <label for="address" class="form-label">Address</label>
+              <input type="text" id="address" name="address" class="form-control" placeholder="Street address">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <div></div>
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Farm Details -->
+        <div class="form-step" id="step-2">
+          <h3 class="form-title">Farm Details</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="farm_size" class="form-label">
+                Hectares <span class="required">*</span>
+              </label>
+              <input type="number" id="farm_size" name="farm_size" class="form-control" step="0.1" min="0" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="farm_type" class="form-label">Farm Type</label>
+              <select id="farm_type" name="farm_type" class="form-control">
+                <option value="">Select type</option>
+                <option value="smallholder">Smallholder</option>
+                <option value="commercial">Commercial</option>
+                <option value="cooperative">Cooperative</option>
+                <option value="greenhouse">Greenhouse</option>
+                <option value="hydroponics">Hydroponics</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="soil_type" class="form-label">Soil Type</label>
+              <select id="soil_type" name="soil_type" class="form-control">
+                <option value="">Select soil</option>
+                <option value="clay">Clay</option>
+                <option value="sandy">Sandy</option>
+                <option value="loam">Loam</option>
+                <option value="volcanic">Volcanic</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="location" class="form-label">
+              Location <span class="required">*</span>
+            </label>
+            <div class="location-detection">
+              <input type="text" id="location" name="location" class="form-control" placeholder="Enter your farm location" required>
+              <button type="button" class="btn btn-outline" onclick="detectLocation()">
+                Detect Location
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Crops Producing <span class="required">*</span></label>
+            <div class="checkbox-grid">
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_maize" name="crops" value="maize" onchange="toggleCropInputs()">
+                <label for="crop_maize">Maize</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_beans" name="crops" value="beans" onchange="toggleCropInputs()">
+                <label for="crop_beans">Beans</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_rice" name="crops" value="rice" onchange="toggleCropInputs()">
+                <label for="crop_rice">Rice</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_potato" name="crops" value="potato" onchange="toggleCropInputs()">
+                <label for="crop_potato">Potato</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_coffee" name="crops" value="coffee" onchange="toggleCropInputs()">
+                <label for="crop_coffee">Coffee</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_tea" name="crops" value="tea" onchange="toggleCropInputs()">
+                <label for="crop_tea">Tea</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_vegetables" name="crops" value="vegetables" onchange="toggleCropInputs()">
+                <label for="crop_vegetables">Vegetables</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_fruits" name="crops" value="fruits" onchange="toggleCropInputs()">
+                <label for="crop_fruits">Fruits</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="crop_other" name="crops" value="other" onchange="toggleCropInputs()">
+                <label for="crop_other">Other Crops</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Input for Fruits -->
+          <div class="dynamic-input" id="fruits-input" style="display: none;">
+            <label class="form-label">Specify which fruits you grow:</label>
+            <div class="input-row">
+              <input type="text" id="fruit-input" class="form-control" placeholder="Enter fruit name (e.g., Mango, Orange)">
+              <button type="button" class="btn btn-outline btn-sm" onclick="addFruit()">Add Fruit</button>
+            </div>
+            <div class="fruit-list" id="fruit-list"></div>
+            <input type="hidden" id="fruits-data" name="fruits_data">
+          </div>
+
+          <!-- Dynamic Input for Other Crops -->
+          <div class="dynamic-input" id="other-crops-input" style="display: none;">
+            <label class="form-label">Specify other crops you grow:</label>
+            <div class="input-row">
+              <input type="text" id="other-crop-input" class="form-control" placeholder="Enter crop name">
+              <button type="button" class="btn btn-outline btn-sm" onclick="addOtherCrop()">Add Crop</button>
+            </div>
+            <div class="fruit-list" id="other-crops-list"></div>
+            <input type="hidden" id="other-crops-data" name="other_crops_data">
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
+              ← Previous
+            </button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Services -->
+        <div class="form-step" id="step-3">
+          <h3 class="form-title">Services & Account Setup</h3>
+          
+          <div class="form-group full-width">
+            <label class="form-label">Services Needed</label>
+            <div class="checkbox-grid">
+              <div class="checkbox-item">
+                <input type="checkbox" id="service_market" name="services" value="market_access">
+                <label for="service_market">Market Access</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="service_inputs" name="services" value="inputs">
+                <label for="service_inputs">Farm Inputs</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="service_finance" name="services" value="finance">
+                <label for="service_finance">Finance</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="service_advice" name="services" value="advice">
+                <label for="service_advice">Advice</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="service_weather" name="services" value="weather">
+                <label for="service_weather">Weather</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="service_insurance" name="services" value="insurance">
+                <label for="service_insurance">Insurance</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="password1" class="form-label">
+                Password <span class="required">*</span>
+              </label>
+              <input type="password" id="password1" name="password1" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="password2" class="form-label">
+                Confirm <span class="required">*</span>
+              </label>
+              <input type="password" id="password2" name="password2" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">&nbsp;</label>
+              <button type="button" class="btn btn-outline" style="margin-top: 0.4rem;" onclick="togglePasswordVisibility()">
+                Show Passwords
+              </button>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+              ← Previous
+            </button>
+            <button type="submit" class="btn btn-primary">
+              Complete Registration
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentStep = 1;
+  let fruits = [];
+  let otherCrops = [];
+  let detectedLocation = '';
+  let suggestedCrops = [];
+  
+  // Smart location detection from phone number
+  const PHONE_REGION_MAP = {
+    '255': {
+      '75': 'Arusha',
+      '76': 'Mbeya',
+      '77': 'Mwanza',
+      '78': 'Dodoma',
+      '68': 'Dar es Salaam',
+      '69': 'Dar es Salaam',
+      '71': 'Kilimanjaro',
+      '72': 'Tanga',
+      '73': 'Morogoro',
+      '74': 'Iringa',
+    }
+  };
+  
+  // Regional crop suggestions
+  const REGIONAL_CROPS = {
+    'Arusha': ['maize', 'beans', 'coffee'],
+    'Mbeya': ['maize', 'beans', 'potato'],
+    'Mwanza': ['rice', 'maize', 'vegetables'],
+    'Dodoma': ['maize', 'beans'],
+    'Kilimanjaro': ['coffee', 'maize', 'beans'],
+    'Morogoro': ['rice', 'maize', 'vegetables'],
+    'Iringa': ['maize', 'beans', 'potato'],
+    'Tanga': ['maize', 'vegetables'],
+    'Dar es Salaam': ['vegetables', 'fruits'],
+    'default': ['maize', 'beans']
+  };
+  
+  function detectLocationFromPhone() {
+    const phoneInput = document.getElementById('phone_number');
+    const phoneValue = phoneInput.value.replace(/[^\d+]/g, '');
+    
+    let prefix = '';
+    if (phoneValue.startsWith('+255')) {
+      prefix = phoneValue.substring(4, 6);
+    } else if (phoneValue.startsWith('255')) {
+      prefix = phoneValue.substring(3, 5);
+    } else if (phoneValue.startsWith('0')) {
+      prefix = phoneValue.substring(1, 3);
+    }
+    
+    const location = PHONE_REGION_MAP['255']?.[prefix];
+    
+    if (location) {
+      detectedLocation = location;
+      document.getElementById('location-badge').style.display = 'inline';
+      document.getElementById('detected-location').style.display = 'block';
+      document.getElementById('detected-location').textContent = `We detected your region: ${location}. This will be auto-filled in Step 2.`;
+      
+      // Get crop suggestions for this region
+      suggestedCrops = REGIONAL_CROPS[location] || REGIONAL_CROPS['default'];
+      
+      // Add subtle animation
+      const badge = document.getElementById('location-badge');
+      badge.style.animation = 'pulse 0.5s ease-in-out';
+      setTimeout(() => badge.style.animation = '', 500);
+    } else {
+      detectedLocation = '';
+      document.getElementById('location-badge').style.display = 'none';
+      document.getElementById('detected-location').style.display = 'none';
+      suggestedCrops = [];
+    }
+  }
+  
+  function showSmartNotification(message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #2D5A27 0%, #4A7C3A 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 8px 25px rgba(45, 90, 39, 0.3);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease-out;
+      max-width: 350px;
+      font-size: 0.9rem;
+      border-left: 4px solid #C5D86D;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease-out';
+      setTimeout(() => notification.remove(), 300);
+    }, 5000);
+  }
+
+  function showStep(step) {
+    document.querySelectorAll('.form-step').forEach(formStep => {
+      formStep.classList.remove('active');
+    });
+    document.getElementById(`step-${step}`).classList.add('active');
+    
+    document.querySelectorAll('.progress-step').forEach(progressStep => {
+      const stepNumber = parseInt(progressStep.dataset.step);
+      progressStep.classList.remove('active', 'completed');
+      
+      if (stepNumber === step) {
+        progressStep.classList.add('active');
+      } else if (stepNumber < step) {
+        progressStep.classList.add('completed');
+      }
+    });
+    
+    currentStep = step;
+  }
+
+  function nextStep(step) {
+    if (validateStep(currentStep)) {
+      // Auto-fill location in Step 2 if detected
+      if (step === 2 && detectedLocation) {
+        const locationInput = document.getElementById('location');
+        if (!locationInput.value) {
+          locationInput.value = detectedLocation;
+          locationInput.style.background = 'linear-gradient(135deg, #e8f5e0 0%, #f0f8e8 100%)';
+          locationInput.style.borderColor = '#B5C95A';
+          
+          // Add helper text
+          const locationHelper = document.createElement('small');
+          locationHelper.className = 'form-helper';
+          locationHelper.id = 'location-auto-helper';
+          locationHelper.style.color = '#2D5A27';
+          locationHelper.style.fontWeight = '600';
+          locationHelper.textContent = '✓ Auto-detected from your phone number. You can change this if needed.';
+          
+          if (!document.getElementById('location-auto-helper')) {
+            locationInput.parentElement.appendChild(locationHelper);
+          }
+        }
+        
+        // Pre-select suggested crops
+        if (suggestedCrops.length > 0) {
+          suggestedCrops.forEach(crop => {
+            const cropCheckbox = document.getElementById(`crop_${crop}`);
+            if (cropCheckbox && !cropCheckbox.checked) {
+              cropCheckbox.checked = true;
+              // Add visual feedback
+              const cropItem = cropCheckbox.closest('.checkbox-item');
+              if (cropItem) {
+                cropItem.style.background = 'linear-gradient(135deg, #e8f5e0 0%, #f0f8e8 100%)';
+                cropItem.style.borderColor = '#C5D86D';
+              }
+            }
+          });
+          
+          // Show notification
+          showSmartNotification(`🌱 We've pre-selected ${suggestedCrops.join(', ')} based on your region. You can adjust these selections.`);
+        }
+      }
+      
+      showStep(step);
+    }
+  }
+
+  function prevStep(step) {
+    showStep(step);
+  }
+
+  function validateStep(step) {
+    const currentStepElement = document.getElementById(`step-${step}`);
+    const requiredFields = currentStepElement.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+      if (!field.value.trim()) {
+        isValid = false;
+        field.style.borderColor = '#dc3545';
+      } else {
+        field.style.borderColor = '';
+      }
+    });
+
+    if (step === 2) {
+      const cropCheckboxes = currentStepElement.querySelectorAll('input[name="crops"]:checked');
+      if (cropCheckboxes.length === 0) {
+        isValid = false;
+        alert('Please select at least one crop you are producing.');
+      }
+
+      // Validate fruits if fruits is checked
+      const fruitsChecked = document.getElementById('crop_fruits').checked;
+      if (fruitsChecked && fruits.length === 0) {
+        isValid = false;
+        alert('Please add at least one fruit you grow.');
+      }
+
+      // Validate other crops if other is checked
+      const otherChecked = document.getElementById('crop_other').checked;
+      if (otherChecked && otherCrops.length === 0) {
+        isValid = false;
+        alert('Please add at least one other crop you grow.');
+      }
+    }
+
+    if (step === 3) {
+      const password = document.getElementById('password1').value;
+      const confirmPassword = document.getElementById('password2').value;
+      
+      if (password !== confirmPassword) {
+        isValid = false;
+        alert('Passwords do not match.');
+      }
+      
+      if (password.length < 6) {
+        isValid = false;
+        alert('Password must be at least 6 characters long.');
+      }
+    }
+
+    return isValid;
+  }
+
+  function toggleCropInputs() {
+    const fruitsChecked = document.getElementById('crop_fruits').checked;
+    const otherChecked = document.getElementById('crop_other').checked;
+
+    document.getElementById('fruits-input').style.display = fruitsChecked ? 'block' : 'none';
+    document.getElementById('other-crops-input').style.display = otherChecked ? 'block' : 'none';
+  }
+
+  function addFruit() {
+    const fruitInput = document.getElementById('fruit-input');
+    const fruitName = fruitInput.value.trim();
+    
+    if (fruitName && !fruits.includes(fruitName)) {
+      fruits.push(fruitName);
+      updateFruitList();
+      fruitInput.value = '';
+    }
+  }
+
+  function removeFruit(index) {
+    fruits.splice(index, 1);
+    updateFruitList();
+  }
+
+  function updateFruitList() {
+    const fruitList = document.getElementById('fruit-list');
+    const fruitsData = document.getElementById('fruits-data');
+    
+    fruitList.innerHTML = '';
+    fruits.forEach((fruit, index) => {
+      const fruitTag = document.createElement('div');
+      fruitTag.className = 'fruit-tag';
+      fruitTag.innerHTML = `
+        ${fruit}
+        <button type="button" onclick="removeFruit(${index})">×</button>
+      `;
+      fruitList.appendChild(fruitTag);
+    });
+    
+    fruitsData.value = JSON.stringify(fruits);
+  }
+
+  function addOtherCrop() {
+    const cropInput = document.getElementById('other-crop-input');
+    const cropName = cropInput.value.trim();
+    
+    if (cropName && !otherCrops.includes(cropName)) {
+      otherCrops.push(cropName);
+      updateOtherCropsList();
+      cropInput.value = '';
+    }
+  }
+
+  function removeOtherCrop(index) {
+    otherCrops.splice(index, 1);
+    updateOtherCropsList();
+  }
+
+  function updateOtherCropsList() {
+    const cropsList = document.getElementById('other-crops-list');
+    const cropsData = document.getElementById('other-crops-data');
+    
+    cropsList.innerHTML = '';
+    otherCrops.forEach((crop, index) => {
+      const cropTag = document.createElement('div');
+      cropTag.className = 'fruit-tag';
+      cropTag.innerHTML = `
+        ${crop}
+        <button type="button" onclick="removeOtherCrop(${index})">×</button>
+      `;
+      cropsList.appendChild(cropTag);
+    });
+    
+    cropsData.value = JSON.stringify(otherCrops);
+  }
+
+  function detectLocation() {
+    const locationInput = document.getElementById('location');
+    
+    if (navigator.geolocation) {
+      locationInput.placeholder = "Detecting location...";
+      
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          setTimeout(() => {
+            locationInput.value = "Location detected";
+            locationInput.style.borderColor = '#28a745';
+          }, 1000);
+        },
+        function(error) {
+          locationInput.placeholder = "Enter location manually";
+          alert('Could not detect location. Please enter manually.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  }
+
+  function togglePasswordVisibility() {
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const button = document.querySelector('[onclick="togglePasswordVisibility()"]');
+    
+    if (password.type === 'password') {
+      password.type = 'text';
+      confirmPassword.type = 'text';
+      button.textContent = 'Hide Passwords';
+    } else {
+      password.type = 'password';
+      confirmPassword.type = 'password';
+      button.textContent = 'Show Passwords';
+    }
+  }
+
+  // Allow Enter key to add fruits and other crops
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('fruit-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addFruit();
+      }
+    });
+
+    document.getElementById('other-crop-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addOtherCrop();
+      }
+    });
+  });
+</script>
+{% endblock %}

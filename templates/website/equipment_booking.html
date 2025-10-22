@@ -1,0 +1,208 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block title %}Equipment Rental - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --brand-primary: #2D5A27;
+    --brand-primary-medium: #4A7C3A;
+    --brand-primary-dark: #1A3316;
+    --brand-accent: #C5D86D;
+    --brand-accent-light: #D4E89A;
+    --brand-accent-dark: #B5C95A;
+  }
+
+  .hero-section {
+    background: linear-gradient(135deg, var(--brand-primary-dark) 0%, var(--brand-primary) 100%);
+    padding: 4rem 0 3rem;
+    text-align: center;
+    color: white;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.2rem;
+    color: var(--brand-accent-light);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .services-section {
+    padding: 3rem 0;
+  }
+
+  .service-category {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .service-category:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(45, 90, 39, 0.15);
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--brand-accent-light);
+  }
+
+  .category-icon {
+    font-size: 2.5rem;
+  }
+
+  .category-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-primary-dark);
+    margin: 0;
+  }
+
+  .category-description {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .service-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+  }
+
+  .service-card:hover {
+    border-color: var(--brand-accent);
+    background: white;
+  }
+
+  .service-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--brand-primary-dark);
+    margin-bottom: 0.75rem;
+  }
+
+  .service-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .price-amount {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--brand-primary);
+  }
+
+  .price-unit {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+
+  .book-btn {
+    width: 100%;
+    background: var(--brand-accent);
+    color: var(--brand-primary-dark);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+  }
+
+  .book-btn:hover {
+    background: var(--brand-accent-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(197, 216, 109, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 2rem;
+    }
+    .services-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <h1 class="hero-title">🧰 Equipment Rental</h1>
+    <p class="hero-subtitle">Rent sprayers, planters, weeders, irrigation equipment, and post-harvest tools for efficient farm operations.</p>
+  </div>
+</section>
+
+<!-- Services Section -->
+<section class="services-section">
+  <div class="container">
+    {% for category in equipment_services %}
+    <div class="service-category">
+      <div class="category-header">
+        <div class="category-icon">{{ category.icon }}</div>
+        <div>
+          <h2 class="category-title">{{ category.category }}</h2>
+          <p class="category-description">{{ category.description }}</p>
+        </div>
+      </div>
+
+      <div class="services-grid">
+        {% for service in category.services %}
+        <div class="service-card">
+          <div class="service-name">{{ service.name }}</div>
+          <div class="service-price">
+            <span class="price-amount">TZS {{ service.price }}</span>
+            <span class="price-unit">{{ service.unit }}</span>
+          </div>
+          <button class="book-btn" onclick="bookService('{{ service.name }}', '{{ service.price }}')">
+            📅 Rent Now
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<script>
+function bookService(serviceName, price) {
+  // For now, show alert. Later this can open a booking modal or redirect to booking form
+  alert(`Renting: ${serviceName}\nPrice: TZS ${price}\n\nBooking functionality will be implemented soon.`);
+  
+  // Future implementation:
+  // - Open modal with booking form
+  // - Select date, duration
+  // - Add delivery requirements
+  // - Submit booking request
+}
+</script>
+{% endblock %}

@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+{% load static tailwind_tags %}
+<html lang="en" class="h-full scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mkulima Smart - Empowering Tanzanian farmers with tools, training, and market access">
+  <meta name="keywords" content="farming, agriculture, Tanzania, marketplace, farmers, crops, livestock">
+  <title>{% block title %}Mkulima Smart - Agricultural Marketplace & Resources{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{% static 'images/icon.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'images/icon.png' %}">
+  
+  <!-- Preload critical fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+  {% tailwind_css %}
+  {% block extra_css %}{% endblock %}
+
+  <style>
+    :root {
+      /* Deep Green & Lime Accent Color Palette */
+      --brand-primary: #1A3316;       /* Deep Forest Green */
+      --brand-primary-light: #2D5A27; /* Medium Forest Green */
+      --brand-primary-dark: #0F1F0C;  /* Very Dark Forest Green */
+      --brand-secondary: #2D5A27;     /* Forest Green Secondary */
+      --brand-secondary-light: #4A7C3A; /* Light Forest Green */
+      --brand-secondary-dark: #1A3316;  /* Dark Forest Green */
+      --brand-accent: #C5D86D;        /* Lime Green Accent */
+      --brand-accent-light: #D4E89A;
+      --brand-accent-dark: #B5C95A;
+      --brand-success: #10B981;
+      --brand-warning: #F59E0B;
+      --brand-danger: #EF4444;
+      --brand-surface: #F8F9F5;
+      --brand-surface-light: #FFFFFF;
+      --brand-ink: #1A3316;
+      --brand-ink-light: #4A5568;
+      --brand-border: #E2E8E0;
+    }
+
+    /* Base styles with natural texture */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #F8F9F5 0%, #F0F2EB 50%, #E8ECE0 100%);
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(45, 90, 39, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(139, 69, 19, 0.03) 0%, transparent 50%);
+      @apply antialiased text-gray-800 leading-relaxed;
+    }
+
+    /* Glass effect utilities */
+    .glass {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+
+    .glass-dark {
+      background: rgba(26, 51, 22, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-dune {
+      background: rgba(139, 69, 19, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(139, 69, 19, 0.2);
+    }
+
+    /* Improved focus styles for accessibility */
+    .focus-ring {
+      @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--brand-accent)];
+    }
+
+    .focus-ring-inset {
+      @apply focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--brand-accent)];
+    }
+
+    /* Enhanced button styles with icons */
+    .btn {
+      @apply inline-flex items-center justify-center px-6 py-3 text-base font-semibold rounded-xl transition-all duration-300 focus-ring;
+    }
+
+    .btn-primary {
+      @apply bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-primary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
+    }
+
+    .btn-secondary {
+      @apply bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-secondary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
+    }
+
+    .btn-accent {
+      @apply bg-gradient-to-r from-[var(--brand-accent)] to-[var(--brand-accent-dark)] text-[var(--brand-ink)] shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
+    }
+
+    .btn-outline {
+      @apply border-2 border-[var(--brand-primary)] text-[var(--brand-primary)] bg-transparent hover:bg-[var(--brand-primary)] hover:text-white active:scale-95;
+    }
+
+    .btn-ghost {
+      @apply text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10 active:scale-95;
+    }
+
+    /* Enhanced card styles with glass effect */
+    .card {
+      @apply glass rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300;
+    }
+
+    .card-hover {
+      @apply hover:-translate-y-1 hover:shadow-xl;
+    }
+
+    /* Improved form styles */
+    .form-input {
+      @apply w-full px-4 py-3 rounded-xl border border-gray-300 glass transition-all duration-200 focus-ring focus:border-[var(--brand-primary)];
+    }
+
+    .form-select {
+      @apply form-input pr-10 bg-right bg-no-repeat;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232D5A27' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-size: 1.5em 1.5em;
+    }
+
+    /* Enhanced navigation */
+    .nav-link {
+      @apply inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 focus-ring hover:glass hover:text-[var(--brand-primary)];
+    }
+
+    .nav-link.active {
+      @apply glass text-[var(--brand-primary)] font-semibold;
+    }
+
+    /* Utility classes */
+    .text-balance {
+      text-wrap: balance;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-text-dune {
+      background: linear-gradient(135deg, var(--brand-secondary), var(--brand-secondary-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .animate-slideIn {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    /* Loading states */
+    .loading {
+      @apply opacity-70 pointer-events-none;
+    }
+
+    .loading-spinner {
+      @apply inline-block animate-spin rounded-full border-2 border-solid border-current border-r-transparent;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      @apply bg-gray-100;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      @apply bg-[var(--brand-primary)] rounded-full;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      @apply bg-[var(--brand-primary-dark)];
+    }
+
+    /* Print styles */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Smart Notification System */
+    .smart-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #2D5A27 0%, #4A7C3A 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(45, 90, 39, 0.4);
+      z-index: 10000;
+      max-width: 400px;
+      font-size: 0.95rem;
+      border-left: 4px solid #C5D86D;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideInRight 0.4s ease-out;
+    }
+
+    /* All notification types use the same brand green color */
+    .smart-notification.success,
+    .smart-notification.error,
+    .smart-notification.danger,
+    .smart-notification.warning,
+    .smart-notification.info {
+      background: linear-gradient(135deg, #2D5A27 0%, #4A7C3A 100%);
+      border-left-color: #C5D86D;
+    }
+
+    .notification-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .notification-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .notification-close:hover {
+      opacity: 1;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .smart-notification {
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        max-width: calc(100% - 20px);
+      }
+      
+      @keyframes slideInRight {
+        from {
+          transform: translateY(-100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+  <!-- Skip to main content for accessibility -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-[var(--brand-primary)] text-white px-4 py-2 rounded-lg font-medium">
+    Skip to main content
+  </a>
+
+  <!-- Top Announcement Bar -->
+  <div class="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-primary-dark)] text-white text-sm no-print">
+    <div class="container">
+      <div class="flex items-center justify-between py-2">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-truck text-xs" aria-hidden="true"></i>
+          <span class="hidden sm:inline">Free delivery on orders over TZS 50,000</span>
+          <span class="sm:hidden">Free delivery > TZS 50K</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs">
+          <a href="tel:+255123456789" class="flex items-center gap-1 hover:opacity-90 transition-opacity focus-ring rounded">
+            <i class="fas fa-phone-alt" aria-hidden="true"></i>
+            <span class="hidden sm:inline">+255 123 456 789</span>
+          </a>
+          <span class="w-px h-3 bg-white/20" aria-hidden="true"></span>
+          <a href="mailto:info@mkulimasmart.co.tz" class="hidden md:flex items-center gap-1 hover:opacity-90 transition-opacity focus-ring rounded">
+            <i class="far fa-envelope" aria-hidden="true"></i>
+            <span>info@mkulimasmart.co.tz</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Header -->
+  <header class="sticky top-0 z-40 glass shadow-sm no-print" role="banner">
+    <div class="container">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <div class="flex items-center flex-shrink-0">
+          <a href="{% url 'website:home' %}" class="flex items-center gap-3 focus-ring rounded-2xl p-1" aria-label="Mkulima Smart - Home">
+            <img src="{% static 'images/icon.png' %}" alt="Mkulima Smart Logo" class="h-10 w-auto" width="40" height="40">
+            <span class="hidden sm:block text-xl font-bold gradient-text">Mkulima Smart</span>
+          </a>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden lg:flex items-center gap-6" aria-label="Main navigation">
+          {% with url_name=request.resolver_match.url_name %}
+          <a href="{% url 'website:home' %}" class="nav-link {% if url_name == 'home' %}active{% endif %}">
+            Home
+          </a>
+          <a href="{% url 'website:marketplace' %}" class="nav-link {% if url_name == 'marketplace' %}active{% endif %}">
+            Marketplace
+          </a>
+          <a href="{% url 'website:booking_home' %}" class="nav-link {% if url_name == 'booking_home' %}active{% endif %}">
+            Services
+          </a>
+          <a href="{% url 'website:training_home' %}" class="nav-link {% if url_name == 'training_home' %}active{% endif %}">
+            Training
+          </a>
+          <a href="{% url 'website:about' %}" class="nav-link {% if url_name == 'about' %}active{% endif %}">
+            About
+          </a>
+          {% endwith %}
+        </nav>
+
+        <!-- Right side actions -->
+        <div class="flex items-center gap-2">
+          <!-- Search -->
+          <button class="hidden md:flex p-2 text-gray-600 hover:text-[var(--brand-primary)] rounded-xl hover:glass transition-all focus-ring" aria-label="Search">
+            <i class="fas fa-search text-lg" aria-hidden="true"></i>
+          </button>
+          
+          <!-- Cart -->
+          <a href="#" class="hidden md:flex p-2 text-gray-600 hover:text-[var(--brand-primary)] rounded-xl hover:glass transition-all relative focus-ring" aria-label="Shopping cart with 3 items">
+            <i class="fas fa-shopping-basket text-lg" aria-hidden="true"></i>
+            <span class="absolute -top-1 -right-1 bg-[var(--brand-accent)] text-[var(--brand-ink)] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm">3</span>
+          </a>
+          
+          <!-- Auth Buttons -->
+          {% with url_name=request.resolver_match.url_name %}
+          {% if url_name != 'login' and url_name != 'register' %}
+          <div class="hidden md:flex items-center gap-2">
+            {% if user.is_authenticated %}
+              <a href="{% url 'website:dashboard' %}" class="btn btn-ghost text-sm">
+                <i class="fas fa-user-circle mr-2" aria-hidden="true"></i>
+                Dashboard
+              </a>
+              <a href="{% url 'website:logout' %}" class="btn btn-secondary text-sm">
+                <i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>
+                Logout
+              </a>
+            {% else %}
+              <a href="{% url 'website:login' %}" class="btn btn-primary text-sm">
+                <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i>
+                Sign In
+              </a>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% endwith %}
+          
+          <!-- Mobile menu button (only visible on mobile/tablet) -->
+          <button type="button" class="lg:hidden p-2 text-gray-600 hover:text-[var(--brand-primary)] rounded-xl hover:glass transition-all focus-ring" id="mobile-menu-button" aria-controls="mobile-menu" aria-expanded="false" aria-label="Toggle mobile menu" style="display: none;">
+            <i class="fas fa-bars text-xl" aria-hidden="true"></i>
+          </button>
+          <style>
+            @media (max-width: 1023px) {
+              #mobile-menu-button {
+                display: block !important;
+              }
+            }
+          </style>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div class="lg:hidden hidden absolute top-full left-0 right-0 glass border-t border-gray-200/50 shadow-xl" id="mobile-menu" aria-labelledby="mobile-menu-button">
+      <div class="container py-4">
+        <nav class="space-y-2" aria-label="Mobile navigation">
+          {% with url_name=request.resolver_match.url_name %}
+          <a href="{% url 'website:home' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'home' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
+            <i class="fas fa-home w-6 text-center mr-3" aria-hidden="true"></i>
+            Home
+          </a>
+          <a href="{% url 'website:marketplace' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'marketplace' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
+            <i class="fas fa-seedling w-6 text-center mr-3" aria-hidden="true"></i>
+            Marketplace
+          </a>
+          <a href="{% url 'website:booking_home' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'booking_home' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
+            <i class="fas fa-tractor w-6 text-center mr-3" aria-hidden="true"></i>
+            Services
+          </a>
+          <a href="{% url 'website:training_home' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'training_home' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
+            <i class="fas fa-graduation-cap w-6 text-center mr-3" aria-hidden="true"></i>
+            Training
+          </a>
+          <a href="{% url 'website:about' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'about' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
+            <i class="fas fa-info-circle w-6 text-center mr-3" aria-hidden="true"></i>
+            About
+          </a>
+          {% endwith %}
+          
+          <div class="border-t border-gray-200/50 pt-4 mt-2">
+            <div class="flex gap-2 px-1">
+              <button class="flex-1 btn btn-ghost justify-center py-2.5">
+                <i class="fas fa-search" aria-hidden="true"></i>
+              </button>
+              <a href="#" class="flex-1 btn btn-ghost justify-center py-2.5 relative">
+                <i class="fas fa-shopping-basket" aria-hidden="true"></i>
+                <span class="absolute -top-1 -right-1 bg-[var(--brand-accent)] text-[var(--brand-ink)] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">3</span>
+              </a>
+            </div>
+            
+            {% with url_name=request.resolver_match.url_name %}
+            {% if url_name != 'login' and url_name != 'register' %}
+            <div class="flex gap-2 px-1 mt-2">
+              {% if user.is_authenticated %}
+                <a href="{% url 'website:dashboard' %}" class="flex-1 btn btn-outline justify-center py-2.5 text-sm">
+                  <i class="fas fa-tachometer-alt mr-1" aria-hidden="true"></i>
+                  Dashboard
+                </a>
+                <a href="{% url 'website:logout' %}" class="flex-1 btn btn-secondary justify-center py-2.5 text-sm">
+                  <i class="fas fa-sign-out-alt mr-1" aria-hidden="true"></i>
+                  Logout
+                </a>
+              {% else %}
+                <a href="{% url 'website:login' %}" class="btn btn-primary justify-center py-2.5 text-sm w-full">
+                  <i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i>
+                  Sign In
+                </a>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% endwith %}
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main" class="flex-grow" role="main">
+    {% if messages %}
+    <!-- Django Messages as Smart Notifications -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        {% for message in messages %}
+          window.showSmartNotification(
+            "{{ message|escapejs }}",
+            "{{ message.tags }}"
+          );
+        {% endfor %}
+      });
+    </script>
+    {% endif %}
+    
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Enhanced Footer -->
+  <footer class="text-gray-200 no-print relative overflow-hidden" style="background: linear-gradient(to bottom right, #1A3316, #1A3316, #142510);" role="contentinfo">
+    <!-- Main Footer Content -->
+    <div class="container relative z-10">
+      <!-- Single Row Layout -->
+      <div class="py-4">
+        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-sm">
+          <!-- Logo -->
+          <div class="flex items-center gap-2 mr-4">
+            <img src="{% static 'images/icon.png' %}" alt="Mkulima Smart" class="h-8 w-auto">
+            <span class="text-lg font-bold text-[var(--brand-accent)]">Mkulima Smart</span>
+          </div>
+          
+          <!-- Navigation Links -->
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <a href="{% url 'website:home' %}" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              Home
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="{% url 'website:marketplace' %}" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              Marketplace
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="{% url 'website:about' %}" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              About Us
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="{% url 'website:warehouse_list' %}" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              Warehouse
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="{% url 'website:booking_home' %}" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              Booking
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="{% url 'website:transport_list' %}" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              Transport
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="{% url 'website:training_home' %}" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              Training
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="#" class="text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              Contact
+            </a>
+          </div>
+          
+          <!-- Contact Info -->
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div class="flex items-center gap-1.5 text-gray-300">
+              <i class="fas fa-map-marker-alt text-[var(--brand-accent)] text-xs" aria-hidden="true"></i>
+              <span>Dar es Salaam, Tanzania</span>
+            </div>
+            <span class="text-gray-600">|</span>
+            <a href="tel:+255123456789" class="flex items-center gap-1.5 text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              <i class="fas fa-phone text-[var(--brand-accent)] text-xs" aria-hidden="true"></i>
+              <span>+255 123 456 789</span>
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="mailto:info@mkulimasmart.co.tz" class="flex items-center gap-1.5 text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+              <i class="fas fa-envelope text-[var(--brand-accent)] text-xs" aria-hidden="true"></i>
+              <span class="text-xs">info@mkulimasmart.co.tz</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Newsletter Bar -->
+      <div class="py-4 border-y border-white/10">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h5 class="text-white text-sm font-semibold mb-1">Subscribe to our Newsletter</h5>
+            <p class="text-gray-400 text-xs">Get updates, farming tips and exclusive offers</p>
+          </div>
+          <form class="flex gap-2 w-full md:w-auto" onsubmit="return false;">
+            <input 
+              type="email" 
+              placeholder="Your email address" 
+              class="flex-1 md:w-64 px-3 py-2 text-sm rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-[var(--brand-accent)] focus:ring-1 focus:ring-[var(--brand-accent)] transition-all"
+              required
+            />
+            <button 
+              type="submit" 
+              class="px-6 py-2 bg-[var(--brand-accent)] text-[var(--brand-ink)] rounded-lg hover:bg-[var(--brand-accent-light)] transition-all font-medium text-sm focus-ring flex-shrink-0"
+            >
+              Subscribe
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bottom Section -->
+      <div class="py-6">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-400">
+            <a href="#" class="hover:text-[var(--brand-accent)] transition-colors">Privacy Policy</a>
+            <span class="hidden md:inline text-gray-600">|</span>
+            <a href="#" class="hover:text-[var(--brand-accent)] transition-colors">Terms of Service</a>
+            <span class="hidden md:inline text-gray-600">|</span>
+            <a href="#" class="hover:text-[var(--brand-accent)] transition-colors">Cookie Policy</a>
+            <span class="hidden md:inline text-gray-600">|</span>
+            <a href="#" class="hover:text-[var(--brand-accent)] transition-colors">FAQ</a>
+            <span class="hidden md:inline text-gray-600">|</span>
+            <a href="{% url 'gova_pp:login' %}" class="hover:text-[var(--brand-accent)] transition-colors">Gov App</a>
+          </div>
+          <div class="text-sm text-gray-400 text-center md:text-right">
+            <p>&copy; 2025 Mkulima Smart. All rights reserved.</p>
+            <p class="text-xs text-gray-500 mt-1">Made with <i class="fas fa-heart text-red-400" aria-hidden="true"></i> for Tanzanian Farmers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button 
+      id="backToTop" 
+      class="fixed bottom-6 right-6 w-12 h-12 bg-[var(--brand-accent)] text-[var(--brand-ink)] rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 focus-ring z-50 opacity-0 pointer-events-none flex items-center justify-center"
+      aria-label="Back to top"
+    >
+      <i class="fas fa-arrow-up" aria-hidden="true"></i>
+    </button>
+  </footer>
+
+    
+
+  <!-- Scripts -->
+  <script>
+    // Enhanced mobile menu functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      function toggleMobileMenu() {
+        const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+        const icon = mobileMenuButton.querySelector('i');
+        
+        if (isExpanded) {
+          mobileMenu.classList.add('hidden');
+          mobileMenuButton.setAttribute('aria-expanded', 'false');
+          icon.classList.replace('fa-times', 'fa-bars');
+        } else {
+          mobileMenu.classList.remove('hidden');
+          mobileMenuButton.setAttribute('aria-expanded', 'true');
+          icon.classList.replace('fa-bars', 'fa-times');
+        }
+      }
+      
+      if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', toggleMobileMenu);
+        
+        // Close menu when clicking outside or pressing Escape
+        document.addEventListener('click', (event) => {
+          if (!mobileMenu.contains(event.target) && !mobileMenuButton.contains(event.target)) {
+            if (mobileMenuButton.getAttribute('aria-expanded') === 'true') {
+              toggleMobileMenu();
+            }
+          }
+        });
+        
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && mobileMenuButton.getAttribute('aria-expanded') === 'true') {
+            toggleMobileMenu();
+            mobileMenuButton.focus();
+          }
+        });
+      }
+      
+      // Enhanced form handling
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+          const submitButton = this.querySelector('button[type="submit"]');
+          if (submitButton && !this.classList.contains('prevent-loading')) {
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = `
+              <span class="loading-spinner h-4 w-4 border-2 mr-2"></span>
+              Processing...
+            `;
+            
+            // Revert after 30s timeout (safety net)
+            setTimeout(() => {
+              if (submitButton.disabled) {
+                submitButton.classList.remove('loading');
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+              }
+            }, 30000);
+          }
+        });
+      });
+      
+      // Smooth scrolling with offset for fixed header
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          if (href !== '#' && href.startsWith('#')) {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) {
+              // Close mobile menu if open
+              if (mobileMenu && mobileMenuButton.getAttribute('aria-expanded') === 'true') {
+                toggleMobileMenu();
+              }
+              
+              const headerHeight = document.querySelector('header').offsetHeight;
+              const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+              
+              window.scrollTo({
+                top: targetPosition,
+                behavior: 'smooth'
+              });
+              
+              // Focus the target for accessibility
+              target.setAttribute('tabindex', '-1');
+              target.focus();
+              target.removeAttribute('tabindex');
+            }
+          }
+        });
+      });
+
+      // Back to Top Button functionality
+      const backToTopButton = document.getElementById('backToTop');
+      if (backToTopButton) {
+        // Show/hide button based on scroll position
+        window.addEventListener('scroll', function() {
+          if (window.pageYOffset > 300) {
+            backToTopButton.classList.remove('opacity-0', 'pointer-events-none');
+            backToTopButton.classList.add('opacity-100', 'pointer-events-auto');
+          } else {
+            backToTopButton.classList.add('opacity-0', 'pointer-events-none');
+            backToTopButton.classList.remove('opacity-100', 'pointer-events-auto');
+          }
+        });
+
+        // Scroll to top when clicked
+        backToTopButton.addEventListener('click', function() {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        });
+      }
+
+      // Global Smart Notification Function
+      window.showSmartNotification = function(message, type = 'default', duration = 5000) {
+        // Map Django message tags to notification types
+        const typeMap = {
+          'success': 'success',
+          'error': 'error',
+          'danger': 'error',
+          'warning': 'warning',
+          'info': 'info',
+          'default': 'default'
+        };
+        
+        const notificationType = typeMap[type] || 'default';
+        
+        // Icon map
+        const iconMap = {
+          'success': '✓',
+          'error': '✕',
+          'warning': '⚠',
+          'info': 'ℹ',
+          'default': '🌱'
+        };
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `smart-notification ${notificationType}`;
+        
+        // Add icon
+        const icon = document.createElement('span');
+        icon.className = 'notification-icon';
+        icon.textContent = iconMap[notificationType];
+        notification.appendChild(icon);
+        
+        // Add message
+        const messageSpan = document.createElement('span');
+        messageSpan.textContent = message;
+        notification.appendChild(messageSpan);
+        
+        // Add close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'notification-close';
+        closeBtn.innerHTML = '×';
+        closeBtn.setAttribute('aria-label', 'Close notification');
+        closeBtn.onclick = function() {
+          notification.style.animation = 'slideOutRight 0.3s ease-out';
+          setTimeout(() => notification.remove(), 300);
+        };
+        notification.appendChild(closeBtn);
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after duration
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+          }
+        }, duration);
+      };
+
+      // Override default alert() to use smart notifications
+      window.alert = function(message) {
+        window.showSmartNotification(message, 'info');
+      };
+
+      // Global Phone Number Standardization for Tanzania (+255)
+      function standardizePhoneInput(input) {
+        // Remove any non-digit characters except plus
+        let value = input.value.replace(/[^\d+]/g, '');
+        
+        // If starts with 0, replace with +255
+        if (value.startsWith('0')) {
+          value = '+255' + value.substring(1);
+        }
+        // If starts with 255, add +
+        else if (value.startsWith('255') && !value.startsWith('+255')) {
+          value = '+' + value;
+        }
+        // If doesn't start with +255, add it
+        else if (!value.startsWith('+255') && value.length > 0) {
+          // Remove any existing + at the start
+          value = value.replace(/^\+/, '');
+          value = '+255' + value;
+        }
+        
+        // Limit to +255 + 9 digits (total 13 characters)
+        if (value.length > 13) {
+          value = value.substring(0, 13);
+        }
+        
+        input.value = value;
+        return value;
+      }
+
+      // Initialize phone standardization for all tel inputs
+      function initPhoneStandardization() {
+        document.querySelectorAll('input[type="tel"]').forEach(input => {
+          // Add placeholder
+          if (!input.placeholder) {
+            input.placeholder = '+255 XXX XXX XXX';
+          }
+          
+          // Set initial value with +255 if empty
+          if (!input.value || input.value.trim() === '') {
+            input.value = '+255';
+          }
+          
+          // Prevent deleting the +255 prefix
+          input.addEventListener('keydown', function(e) {
+            const cursorPos = this.selectionStart;
+            const value = this.value;
+            
+            // Prevent deleting +255 prefix
+            if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPos <= 4) {
+              e.preventDefault();
+              return false;
+            }
+          });
+          
+          // Handle focus - ensure +255 is present
+          input.addEventListener('focus', function() {
+            if (!this.value || this.value.trim() === '') {
+              this.value = '+255';
+            }
+            // Move cursor after +255
+            setTimeout(() => {
+              if (this.value === '+255') {
+                this.setSelectionRange(4, 4);
+              }
+            }, 10);
+          });
+          
+          // Handle input changes
+          input.addEventListener('input', function() {
+            standardizePhoneInput(this);
+          });
+          
+          // Handle paste
+          input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const digitsOnly = pastedText.replace(/[^\d]/g, '');
+            
+            // If pasted text starts with 255 or 0, handle it
+            if (digitsOnly.startsWith('255')) {
+              this.value = '+' + digitsOnly;
+            } else if (digitsOnly.startsWith('0')) {
+              this.value = '+255' + digitsOnly.substring(1);
+            } else {
+              this.value = '+255' + digitsOnly;
+            }
+            
+            standardizePhoneInput(this);
+          });
+          
+          // Standardize existing value
+          if (input.value && input.value !== '+255') {
+            standardizePhoneInput(input);
+          }
+        });
+      }
+
+      // Initialize on page load
+      initPhoneStandardization();
+
+      // Re-initialize for dynamically added inputs
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) { // Element node
+              if (node.tagName === 'INPUT' && node.type === 'tel') {
+                initPhoneStandardization();
+              } else if (node.querySelector) {
+                const telInputs = node.querySelectorAll('input[type="tel"]');
+                if (telInputs.length > 0) {
+                  initPhoneStandardization();
+                }
+              }
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+
+      // Make standardizePhoneInput available globally
+      window.standardizePhoneInput = standardizePhoneInput;
+    });
+  </script>
+  
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

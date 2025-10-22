@@ -1,0 +1,386 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - Mkulima Smart Marketplace{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{% static "images/marketplace-bg.jpg" %}') no-repeat center center;
+        background-size: cover;
+        padding: 100px 0;
+        color: white;
+    }
+    
+    .product-card {
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .product-img {
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .discount-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #dc3545;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-weight: 600;
+        font-size: 12px;
+    }
+    
+    .price-section {
+        display: flex;
+        align-items: center;
+    }
+    
+    .original-price {
+        text-decoration: line-through;
+        color: #6c757d;
+        margin-right: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .discount-price {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .stock-badge {
+        font-size: 0.8rem;
+        padding: 2px 8px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-top: 5px;
+    }
+    
+    .in-stock {
+        background-color: #e6f7ed;
+        color: #28a745;
+    }
+    
+    .low-stock {
+        background-color: #fff3cd;
+        color: #ffc107;
+    }
+    
+    .out-of-stock {
+        background-color: #f8d7da;
+        color: #dc3545;
+    }
+    
+    .filter-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        text-align: left;
+        padding: 10px 15px;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    
+    .filter-collapse {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Category Hero Section -->
+<section class="category-hero">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="display-4 mb-4">{{ category.name }}</h1>
+                <p class="lead mb-4">{{ category.description|default:"Browse our selection of quality products in this category." }}</p>
+                <form action="{% url 'website:marketplace' %}" method="get" class="d-flex">
+                    <input class="form-control me-2" type="search" placeholder="Search in {{ category.name }}..." name="q" value="">
+                    <input type="hidden" name="category" value="{{ category.id }}">
+                    <button class="btn btn-light" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Products Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Filters Column -->
+            <div class="col-lg-3 mb-4">
+                <h4 class="mb-4">Filters</h4>
+                
+                <!-- Price Range Filter -->
+                <button class="filter-btn" type="button" data-bs-toggle="collapse" data-bs-target="#priceCollapse" aria-expanded="true" aria-controls="priceCollapse">
+                    Price Range
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="collapse show filter-collapse" id="priceCollapse">
+                    <div class="mb-3">
+                        <label for="minPrice" class="form-label">Min Price (KSh)</label>
+                        <input type="number" class="form-control" id="minPrice" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxPrice" class="form-label">Max Price (KSh)</label>
+                        <input type="number" class="form-control" id="maxPrice" min="0">
+                    </div>
+                </div>
+                
+                <!-- Availability Filter -->
+                <button class="filter-btn" type="button" data-bs-toggle="collapse" data-bs-target="#availabilityCollapse" aria-expanded="true" aria-controls="availabilityCollapse">
+                    Availability
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="collapse show filter-collapse" id="availabilityCollapse">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="inStock" checked>
+                        <label class="form-check-label" for="inStock">
+                            In Stock
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="outOfStock">
+                        <label class="form-check-label" for="outOfStock">
+                            Out of Stock
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Sort By Filter -->
+                <button class="filter-btn" type="button" data-bs-toggle="collapse" data-bs-target="#sortCollapse" aria-expanded="true" aria-controls="sortCollapse">
+                    Sort By
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="collapse show filter-collapse" id="sortCollapse">
+                    <select class="form-select" aria-label="Sort products">
+                        <option value="newest" selected>Newest First</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="name_asc">Name: A to Z</option>
+                        <option value="name_desc">Name: Z to A</option>
+                    </select>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-success" type="button">Apply Filters</button>
+                    <button class="btn btn-outline-secondary" type="button">Clear All</button>
+                </div>
+            </div>
+            
+            <!-- Products Column -->
+            <div class="col-lg-9">
+                <div class="row g-4">
+                    {% for product in products %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card product-card">
+                                {% if product.discount_price %}
+                                    <div class="discount-badge">
+                                        {% with discount=product.discount_price|floatformat:"0" original=product.price|floatformat:"0" %}
+                                            {% widthratio discount 100 100 as discount_percent %}
+                                            {% widthratio original 100 100 as original_percent %}
+                                            {{ original_percent|add:"-"|add:discount_percent }}% OFF
+                                        {% endwith %}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if product.images.filter(is_primary=True).first %}
+                                    <img src="{{ product.images.filter(is_primary=True).first.image.url }}" class="product-img card-img-top" alt="{{ product.name }}">
+                                {% elif product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" class="product-img card-img-top" alt="{{ product.name }}">
+                                {% else %}
+                                    <img src="{% static 'images/product-placeholder.jpg' %}" class="product-img card-img-top" alt="{{ product.name }}">
+                                {% endif %}
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ product.name|truncatechars:40 }}</h5>
+                                    
+                                    <div class="price-section mb-3">
+                                        {% if product.discount_price %}
+                                            <span class="original-price">KSh {{ product.price }}</span>
+                                            <span class="discount-price">KSh {{ product.discount_price }}</span>
+                                        {% else %}
+                                            <span class="fw-bold">KSh {{ product.price }}</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if product.stock > 10 %}
+                                        <span class="stock-badge in-stock">In Stock</span>
+                                    {% elif product.stock > 0 %}
+                                        <span class="stock-badge low-stock">Low Stock ({{ product.stock }} left)</span>
+                                    {% else %}
+                                        <span class="stock-badge out-of-stock">Out of Stock</span>
+                                    {% endif %}
+                                    
+                                    <div class="d-grid gap-2 mt-3">
+                                        <a href="{{ product.get_absolute_url }}" class="btn btn-outline-success">View Details</a>
+                                        {% if product.stock > 0 and not product.requires_quote %}
+                                            <a href="{% url 'website:add_to_cart' product.id %}" class="btn btn-success">Add to Cart</a>
+                                        {% elif product.requires_quote %}
+                                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#quoteModal{{ product.id }}">
+                                                Request Quote
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quote Modal -->
+                            {% if product.requires_quote %}
+                                <div class="modal fade" id="quoteModal{{ product.id }}" tabindex="-1" aria-labelledby="quoteModalLabel{{ product.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="quoteModalLabel{{ product.id }}">Request Quote for {{ product.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form>
+                                                    <div class="mb-3">
+                                                        <label for="name{{ product.id }}" class="form-label">Name</label>
+                                                        <input type="text" class="form-control" id="name{{ product.id }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="email{{ product.id }}" class="form-label">Email</label>
+                                                        <input type="email" class="form-control" id="email{{ product.id }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="phone{{ product.id }}" class="form-label">Phone Number</label>
+                                                        <input type="tel" class="form-control" id="phone{{ product.id }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="quantity{{ product.id }}" class="form-label">Quantity</label>
+                                                        <input type="number" class="form-control" id="quantity{{ product.id }}" min="1" value="1" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="message{{ product.id }}" class="form-label">Additional Information</label>
+                                                        <textarea class="form-control" id="message{{ product.id }}" rows="3"></textarea>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-success">Submit Quote Request</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                No products available in this category at the moment.
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Related Categories Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">You May Also Like</h2>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- This would typically be populated with related categories from the backend -->
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-seedling fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Seeds</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-prescription-bottle fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Fertilizers</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tractor fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Farm Tools</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-laptop fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Smart Farming</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter toggle icons
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('fa-chevron-down')) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                } else {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

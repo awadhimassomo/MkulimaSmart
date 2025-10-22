@@ -12,16 +12,26 @@ import json
 import openai
 from django.conf import settings
 from .models import FarmerMessage, ImageAnalysis, Alert
-from credits.views import send_card_sms
+
+# Make credits import optional
+try:
+    from credits.views import send_card_sms
+    CREDITS_AVAILABLE = True
+except ImportError:
+    CREDITS_AVAILABLE = False
+    print("Credits module not available. SMS functionality will be disabled.")
+
 import json
 import time
 import base64
 import requests
+import jwt
+from datetime import datetime, timedelta
 from openai import OpenAI
 from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from .models import FarmerMessage, GovernmentReply, ImageAnalysis
-from credits.views import send_card_sms  # Import existing SMS utility
 
 def government_login_required(view_func):
     """Custom login required decorator that redirects to government login page"""
@@ -41,23 +51,23 @@ def government_login(request):
         return redirect('gova_pp:dashboard')
     
     if request.method == 'POST':
-        username = request.POST.get('username')
+        phone_number = request.POST.get('phone_number')
         password = request.POST.get('password')
         
-        if username and password:
-            user = authenticate(request, username=username, password=password)
+        if phone_number and password:
+            user = authenticate(request, phone_number=phone_number, password=password)
             if user is not None:
                 # Check if user has permission to access government dashboard
                 if user.is_staff or user.is_superuser:
                     login(request, user)
-                    messages.success(request, f'Welcome to GOVA PP Dashboard, {user.firstName or user.username}!')
+                    messages.success(request, f'Welcome to GOVA PP Dashboard, {user.get_full_name() or user.phone_number}!')
                     return redirect('gova_pp:dashboard')
                 else:
                     messages.error(request, 'You do not have permission to access the government dashboard.')
             else:
-                messages.error(request, 'Invalid username or password.')
+                messages.error(request, 'Invalid phone number or password.')
         else:
-            messages.error(request, 'Please enter both username and password.')
+            messages.error(request, 'Please enter both phone number and password.')
     
     return render(request, 'gova_pp/login.html')
 
@@ -172,20 +182,23 @@ def message_detail(request, message_id):
                 )
                 
                 # Send SMS if requested
-                if send_sms_option and message.farmer_phone:
+                if message.farmer_phone and CREDITS_AVAILABLE:
                     try:
                         sms_response = send_card_sms(
                             phone_number=message.farmer_phone,
-                            message=f"GOVA Response: {reply_text}"
+                            message=f"RE: {message.subject}\n\n{reply_text}",
+                            sender_id='GOVA-PP',
+                            is_unicode=True
                         )
-                        reply.sent_via_sms = True
-                        reply.sms_reference = f"GOVA_{reply.id}"
-                        reply.save()
-                        messages.success(request, 'Reply sent successfully via SMS!')
+                        # Log SMS response for debugging
+                        print(f"SMS Response: {sms_response}")
                     except Exception as e:
-                        messages.warning(request, f'Reply saved but SMS failed: {str(e)}')
+                        print(f"Failed to send SMS: {str(e)}")
+                        messages.warning(request, "Message sent but SMS notification failed.")
+                elif message.farmer_phone and not CREDITS_AVAILABLE:
+                    print("SMS not sent: Credits module not available")
                 else:
-                    messages.success(request, 'Reply saved successfully!')
+                    messages.success(request, 'Reply sent successfully!')
                 
                 # Update message status
                 message.status = 'replied'
@@ -208,12 +221,22 @@ def message_detail(request, message_id):
             messages.success(request, 'Message assigned to you!')
             return redirect('gova_pp:message_detail', message_id=message.id)
     
+    # Generate JWT token for WebSocket authentication
+    payload = {
+        'uid': request.user.id,  # Using 'uid' to match the middleware's expected key
+        'phone_number': request.user.phone_number,
+        'exp': datetime.utcnow() + timedelta(hours=24),
+        'thread_id': str(message_id)
+    }
+    jwt_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+    
     context = {
         'message': message,
         'replies': replies,
         'analysis': analysis,
         'reply_types': [('answer', 'Answer'), ('advice', 'Agricultural Advice'), ('referral', 'Referral'), ('follow_up', 'Follow-up Question')],
         'status_choices': FarmerMessage.STATUS_CHOICES,
+        'jwt_token': jwt_token,
     }
     
     return render(request, 'gova_pp/message_detail.html', context)
@@ -427,17 +450,21 @@ def send_alert(request, alert_id):
         # Send SMS to each farmer
         for farmer in farmers:
             try:
-                # Use existing SMS utility
-                response = send_card_sms(
-                    phone=farmer.phone,
-                    message=sms_message,
-                    sender="KIKAPU",
-                    reference=f"ALERT_{alert.id}_{farmer.id}"
-                )
-                
-                if response and response.get('status') == 'success':
-                    sent_count += 1
+                # Send SMS to farmer if credits module is available
+                if hasattr(settings, 'CREDITS_AVAILABLE') and settings.CREDITS_AVAILABLE:
+                    try:
+                        response = send_card_sms(
+                            phone=farmer.phone,
+                            message=sms_message,
+                            sender="KIKAPU",
+                            reference=f"ALERT_{alert.id}_{farmer.id}"
+                        )
+                        sent_count += 1
+                    except Exception as e:
+                        print(f"Failed to send SMS to {farmer.phone}: {str(e)}")
+                        failed_count += 1
                 else:
+                    print(f"SMS not sent to {farmer.phone}: Credits module not available")
                     failed_count += 1
                     
             except Exception as e:

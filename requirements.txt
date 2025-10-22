@@ -1,0 +1,18 @@
+Django>=4.0
+whitenoise==6.6.0
+django-tailwind
+
+# WebSocket support
+channels>=4.0.0
+daphne>=4.0.0
+channels-redis>=4.1.0
+
+# API support
+djangorestframework>=3.14.0
+django-cors-headers>=4.0.0
+
+# Authentication
+PyJWT>=2.8.0
+
+# HTTP requests
+requests>=2.31.0

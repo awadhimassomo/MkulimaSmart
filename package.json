@@ -1,0 +1,17 @@
+{
+  "name": "mkulima-smart",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000M\u0000k\u0000u\u0000l\u0000i\u0000m\u0000a\u0000-\u0000s\u0000m\u0000a\u0000r\u0000t\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
+  }
+}

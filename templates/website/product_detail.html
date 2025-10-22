@@ -1,0 +1,430 @@
+{% extends 'website/base.html' %}
+{% load static %}
+{% load product_filters %}
+
+{% block title %}{{ product.name }} - Mkulima Smart Marketplace{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-detail {
+        padding-top: 120px;
+        padding-bottom: 60px;
+    }
+    
+    .product-main-img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .thumbnail-img {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+    
+    .thumbnail-img:hover, .thumbnail-img.active {
+        opacity: 1;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    
+    .price-section {
+        display: flex;
+        align-items: center;
+    }
+    
+    .original-price {
+        text-decoration: line-through;
+        color: #6c757d;
+        margin-right: 10px;
+        font-size: 1.1rem;
+    }
+    
+    .discount-price {
+        color: #dc3545;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    
+    .regular-price {
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    
+    .product-action-btn {
+        height: 50px;
+    }
+    
+    .stock-badge {
+        font-size: 0.9rem;
+        padding: 4px 10px;
+        border-radius: 3px;
+        display: inline-block;
+    }
+    
+    .in-stock {
+        background-color: #e6f7ed;
+        color: #28a745;
+    }
+    
+    .low-stock {
+        background-color: #fff3cd;
+        color: #ffc107;
+    }
+    
+    .out-of-stock {
+        background-color: #f8d7da;
+        color: #dc3545;
+    }
+    
+    .product-description {
+        white-space: pre-line;
+    }
+    
+    .related-product-card {
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .related-product-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .related-product-img {
+        height: 160px;
+        object-fit: cover;
+    }
+    
+    .tab-content {
+        padding: 20px;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="product-detail">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'website:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'website:marketplace' %}">Marketplace</a></li>
+                <li class="breadcrumb-item"><a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+            </ol>
+        </nav>
+        
+        <div class="row">
+            <!-- Product Images -->
+            <div class="col-lg-6 mb-4">
+                <div class="mb-3">
+                    {% if product.images.filter(is_primary=True).first %}
+                        <img id="mainProductImage" src="{{ product.images.filter(is_primary=True).first.image.url }}" class="product-main-img" alt="{{ product.name }}">
+                    {% elif product.images.first %}
+                        <img id="mainProductImage" src="{{ product.images.first.image.url }}" class="product-main-img" alt="{{ product.name }}">
+                    {% else %}
+                        <img id="mainProductImage" src="{% static 'images/product-placeholder.jpg' %}" class="product-main-img" alt="{{ product.name }}">
+                    {% endif %}
+                </div>
+                
+                {% if product.images.count > 1 %}
+                    <div class="row g-2">
+                        {% for image in product.images.all %}
+                            <div class="col-3">
+                                <img src="{{ image.image.url }}" class="thumbnail-img{% if image.is_primary %} active{% endif %}" alt="{{ product.name }} - Image {{ forloop.counter }}" onclick="changeMainImage(this.src)">
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Product Info -->
+            <div class="col-lg-6">
+                <h1 class="mb-2">{{ product.name }}</h1>
+                <p class="text-muted mb-3">Category: <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></p>
+                
+                <div class="price-section mb-4">
+                    {% if product.discount_price %}
+                        <span class="original-price">KSh {{ product.price }}</span>
+                        <span class="discount-price">KSh {{ product.discount_price }}</span>
+                    {% else %}
+                        <span class="regular-price">KSh {{ product.price }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    {% if product.stock > 10 %}
+                        <span class="stock-badge in-stock">In Stock</span>
+                    {% elif product.stock > 0 %}
+                        <span class="stock-badge low-stock">Low Stock ({{ product.stock }} left)</span>
+                    {% else %}
+                        <span class="stock-badge out-of-stock">Out of Stock</span>
+                    {% endif %}
+                </div>
+                
+                {% if product.stock > 0 and not product.requires_quote %}
+                    <form action="{% url 'website:add_to_cart' product.id %}" method="post" class="mb-4">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="1" max="{{ product.stock }}" value="1" required>
+                            </div>
+                            <div class="col-md-8 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success btn-lg product-action-btn w-100">Add to Cart</button>
+                            </div>
+                        </div>
+                    </form>
+                {% elif product.requires_quote %}
+                    <button type="button" class="btn btn-secondary btn-lg product-action-btn w-100 mb-4" data-bs-toggle="modal" data-bs-target="#quoteModal">
+                        Request Quote
+                    </button>
+                {% endif %}
+                
+                <div class="d-grid gap-2 mb-4">
+                    <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center" type="button">
+                        <i class="far fa-heart me-2"></i> Add to Wishlist
+                    </button>
+                    <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center" type="button">
+                        <i class="fas fa-share-alt me-2"></i> Share Product
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Quick Details</h5>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th scope="row" style="width: 40%">Supplier</th>
+                                <td>{{ product.supplier.get_full_name|default:product.supplier.username }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Category</th>
+                                <td>{{ product.category.name }}</td>
+                            </tr>
+                            {% if product.is_hydroponics %}
+                                <tr>
+                                    <th scope="row">Hydroponics</th>
+                                    <td>Yes</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Product Details Tabs -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab" aria-controls="description" aria-selected="true">Description</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications" type="button" role="tab" aria-controls="specifications" aria-selected="false">Specifications</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="false">Reviews</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" type="button" role="tab" aria-controls="shipping" aria-selected="false">Shipping & Returns</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="productTabsContent">
+                    <!-- Description Tab -->
+                    <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                        <p class="product-description">{{ product.description }}</p>
+                    </div>
+                    
+                    <!-- Specifications Tab -->
+                    <div class="tab-pane fade" id="specifications" role="tabpanel" aria-labelledby="specifications-tab">
+                        <div class="alert alert-info">
+                            Detailed specifications for this product are not available.
+                        </div>
+                    </div>
+                    
+                    <!-- Reviews Tab -->
+                    <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                        <div class="alert alert-info mb-4">
+                            No reviews yet for this product. Be the first to leave a review!
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Write a Review</h5>
+                                <form>
+                                    <div class="mb-3">
+                                        <label for="reviewRating" class="form-label">Rating</label>
+                                        <div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="rating" id="rating1" value="1">
+                                                <label class="form-check-label" for="rating1">1</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="rating" id="rating2" value="2">
+                                                <label class="form-check-label" for="rating2">2</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="rating" id="rating3" value="3">
+                                                <label class="form-check-label" for="rating3">3</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="rating" id="rating4" value="4">
+                                                <label class="form-check-label" for="rating4">4</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="rating" id="rating5" value="5" checked>
+                                                <label class="form-check-label" for="rating5">5</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="reviewTitle" class="form-label">Title</label>
+                                        <input type="text" class="form-control" id="reviewTitle" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="reviewComment" class="form-label">Comment</label>
+                                        <textarea class="form-control" id="reviewComment" rows="3" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">Submit Review</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Tab -->
+                    <div class="tab-pane fade" id="shipping" role="tabpanel" aria-labelledby="shipping-tab">
+                        <h5>Shipping Information</h5>
+                        <p>We offer nationwide delivery with the following options:</p>
+                        <ul>
+                            <li>Standard Delivery: 3-5 business days</li>
+                            <li>Express Delivery: 1-2 business days (available in select areas)</li>
+                        </ul>
+                        
+                        <h5>Return Policy</h5>
+                        <p>If you are not satisfied with your purchase, you can return the product within 7 days of delivery. Please note the following conditions:</p>
+                        <ul>
+                            <li>Product must be unused and in its original packaging</li>
+                            <li>Return shipping costs are the responsibility of the customer</li>
+                            <li>Some products (seeds, perishable items) cannot be returned</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Products Section -->
+        <section class="my-5">
+            <h2 class="mb-4">Related Products</h2>
+            
+            <div class="row g-4">
+                {% for related_product in related_products %}
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card related-product-card">
+                            {% if related_product.images.filter(is_primary=True).first %}
+                                <img src="{{ related_product.images.filter(is_primary=True).first.image.url }}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
+                            {% elif related_product.images.first %}
+                                <img src="{{ related_product.images.first.image.url }}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
+                            {% else %}
+                                <img src="{% static 'images/product-placeholder.jpg' %}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <h5 class="card-title">{{ related_product.name|truncatechars:30 }}</h5>
+                                
+                                <div class="mb-2">
+                                    {% if related_product.discount_price %}
+                                        <span class="text-decoration-line-through text-muted me-1">KSh {{ related_product.price }}</span>
+                                        <span class="fw-bold text-danger">KSh {{ related_product.discount_price }}</span>
+                                    {% else %}
+                                        <span class="fw-bold">KSh {{ related_product.price }}</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <a href="{{ related_product.get_absolute_url }}" class="btn btn-outline-success btn-sm w-100">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            No related products available.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+    
+    <!-- Quote Modal -->
+    {% if product.requires_quote %}
+        <div class="modal fade" id="quoteModal" tabindex="-1" aria-labelledby="quoteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="quoteModalLabel">Request Quote for {{ product.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="quoteName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="quoteName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="quoteEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="quoteEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="quotePhone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="quotePhone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="quoteQuantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quoteQuantity" min="1" value="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="quoteMessage" class="form-label">Additional Information</label>
+                                <textarea class="form-control" id="quoteMessage" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Submit Quote Request</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function changeMainImage(src) {
+        document.getElementById('mainProductImage').src = src;
+        
+        // Update active thumbnail
+        const thumbnails = document.querySelectorAll('.thumbnail-img');
+        thumbnails.forEach(thumb => {
+            if (thumb.src === src) {
+                thumb.classList.add('active');
+            } else {
+                thumb.classList.remove('active');
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,624 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}About Us - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #2e7d32;
+        --primary-light: #60ad5e;
+        --secondary: #ff9800;
+        --dark: #2c3e50;
+        --light: #f8f9fa;
+        --gray: #6c757d;
+    }
+    
+    .about-hero {
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5)), 
+                    url('{% static "images/about-bg.jpg" %}') no-repeat center center/cover;
+        padding: 120px 0 100px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .about-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to bottom, transparent, var(--light));
+        z-index: 1;
+    }
+    
+    .mission-vision-card {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        height: 100%;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border-radius: 15px;
+        overflow: hidden;
+        background: white;
+        border-top: 4px solid var(--primary);
+    }
+    
+    .mission-vision-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+    
+    .mission-vision-icon {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 20px;
+        margin: -40px auto 1.5rem;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .mission-vision-card:hover .mission-vision-icon {
+        transform: rotate(10deg) scale(1.1);
+    }
+    
+    .team-member-card {
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border-radius: 15px;
+        overflow: hidden;
+        height: 100%;
+        background: white;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .team-member-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        opacity: 0;
+        transition: all 0.4s ease;
+        z-index: -1;
+    }
+    
+    .team-member-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+    
+    .team-member-card:hover::before {
+        height: 100%;
+        opacity: 0.05;
+    }
+    
+    .team-member-img {
+        height: 250px;
+        object-fit: cover;
+        transition: all 0.5s ease;
+    }
+    
+    .team-member-card:hover .team-member-img {
+        transform: scale(1.05);
+    }
+    
+    .social-icons a {
+        color: var(--gray);
+        margin: 0 5px;
+        transition: all 0.3s ease;
+        width: 35px;
+        height: 35px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #f1f3f5;
+    }
+    
+    .social-icons a:hover {
+        color: white;
+        background: var(--primary);
+        transform: translateY(-3px);
+    }
+    
+    .timeline {
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .timeline::after {
+        content: '';
+        position: absolute;
+        width: 6px;
+        background-color: #27ae60;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        margin-left: -3px;
+    }
+    
+    .timeline-container {
+        padding: 10px 40px;
+        position: relative;
+        background-color: inherit;
+        width: 50%;
+    }
+    
+    .timeline-container::after {
+        content: '';
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        right: -13px;
+        background-color: white;
+        border: 4px solid #27ae60;
+        top: 15px;
+        border-radius: 50%;
+        z-index: 1;
+    }
+    
+    .left {
+        left: 0;
+    }
+    
+    .right {
+        left: 50%;
+    }
+    
+    .left::before {
+        content: " ";
+        height: 0;
+        position: absolute;
+        top: 22px;
+        width: 0;
+        z-index: 1;
+        right: 30px;
+        border: medium solid white;
+        border-width: 10px 0 10px 10px;
+        border-color: transparent transparent transparent white;
+    }
+    
+    .right::before {
+        content: " ";
+        height: 0;
+        position: absolute;
+        top: 22px;
+        width: 0;
+        z-index: 1;
+        left: 30px;
+        border: medium solid white;
+        border-width: 10px 10px 10px 0;
+        border-color: transparent white transparent transparent;
+    }
+    
+    .right::after {
+        left: -12px;
+    }
+    
+    .timeline-content {
+        padding: 20px 30px;
+        background-color: white;
+        position: relative;
+        border-radius: 6px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .partner-logo {
+        height: 80px;
+        object-fit: contain;
+        filter: grayscale(100%);
+        transition: filter 0.3s ease, transform 0.3s ease;
+        margin: 1rem;
+    }
+    
+    .partner-logo:hover {
+        filter: grayscale(0%);
+        transform: scale(1.05);
+    }
+    
+    .value-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 10px 20px rgba(46, 125, 50, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .value-item:hover .value-icon {
+        transform: rotate(10deg) scale(1.1);
+    }
+    
+    @media screen and (max-width: 768px) {
+        .timeline::after {
+            left: 31px;
+        }
+        
+        .timeline-container {
+            width: 100%;
+            padding-left: 70px;
+            padding-right: 25px;
+        }
+        
+        .timeline-container::before {
+            left: 60px;
+            border: medium solid white;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent white transparent transparent;
+        }
+        
+        .left::after, .right::after {
+            left: 18px;
+        }
+        
+        .right {
+            left: 0%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="about-hero">
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-10">
+                <h1 class="display-3 fw-bold mb-4">About Mkulima Smart</h1>
+                <div class="divider mx-auto bg-white mb-4" style="width: 80px; height: 4px; border-radius: 2px;"></div>
+                <p class="lead mb-4" style="font-size: 1.5rem; max-width: 800px; margin: 0 auto;">Empowering farmers with innovative technology and comprehensive services to cultivate sustainable and profitable agricultural businesses across Africa.</p>
+                <a href="#contact" class="btn btn-light btn-lg mt-4 px-4 py-2" style="border-radius: 50px; font-weight: 500; transition: all 0.3s ease;">
+                    Get in Touch <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-down">
+        <a href="#who-we-are" class="scroll-link">
+            <i class="fas fa-chevron-down"></i>
+        </a>
+    </div>
+</section>
+
+<!-- Company Overview Section -->
+<section id="who-we-are" class="py-5 position-relative overflow-hidden" style="padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Story</span>
+            <h2 class="display-5 fw-bold mb-4">Who We Are</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+        </div>
+        
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <div class="position-relative">
+                    <img src="{% static 'images/about-overview.jpg' %}" alt="Mkulima Smart Team" class="img-fluid rounded-3 shadow-lg" style="border: 10px solid white;">
+                    <div class="position-absolute" style="width: 200px; height: 200px; background: rgba(46, 125, 50, 0.1); top: -30px; left: -30px; z-index: -1; border-radius: 30px;"></div>
+                    <div class="position-absolute" style="width: 150px; height: 150px; background: rgba(255, 152, 0, 0.1); bottom: -30px; right: -30px; z-index: -1; border-radius: 20px;"></div>
+                </div>
+            <div class="col-lg-6">
+                <h2 class="mb-4">Who We Are</h2>
+                <p>Mkulima Smart is a leading agricultural technology company that connects farmers with the resources, tools, knowledge, and markets they need to thrive in today's competitive landscape.</p>
+                <p>Founded in 2020, we have grown from a simple marketplace to a comprehensive platform offering e-commerce, storage solutions, transportation services, training programs, and innovative farming solutions.</p>
+                <p>Our team consists of agricultural experts, technology specialists, and business professionals passionate about transforming African agriculture through sustainable practices and modern technology.</p>
+                <p>We serve thousands of farmers across the region, helping them increase productivity, reduce waste, and connect directly with buyers for better profits.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mission and Vision Section -->
+<section class="py-5 position-relative" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Purpose</span>
+            <h2 class="display-5 fw-bold mb-4">Mission & Vision</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+            <p class="lead" style="max-width: 700px; margin: 0 auto;">Driving agricultural transformation through innovation, sustainability, and community empowerment.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card mission-vision-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mission-vision-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3>Our Mission</h3>
+                        <p>To empower farmers with technology, knowledge, and market access, enabling sustainable agricultural practices and improved livelihoods.</p>
+                        <p>We strive to create an ecosystem where farmers can easily access all they need to grow their operations, from quality inputs to reliable buyers, while implementing environmentally responsible farming methods.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mission-vision-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mission-vision-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h3>Our Vision</h3>
+                        <p>To transform African agriculture into a technologically advanced, sustainable, and profitable sector that ensures food security while supporting rural development.</p>
+                        <p>We envision a future where small-scale farmers have the same advantages as large commercial operations through shared resources, knowledge, and market opportunities.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Values Section -->
+<section class="py-5 position-relative" style="padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Foundation</span>
+            <h2 class="display-5 fw-bold mb-4">Core Values</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+            <p class="lead" style="max-width: 700px; margin: 0 auto;">Guiding principles that shape our decisions and actions every day.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h4>Integrity</h4>
+                    <p>We operate with honesty, transparency, and fairness in all our dealings with farmers, suppliers, and partners.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h4>Innovation</h4>
+                    <p>We continuously seek new technologies and approaches to solve agricultural challenges and improve efficiency.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>Community</h4>
+                    <p>We believe in building strong networks of farmers, suppliers, and buyers who support each other's success.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h4>Sustainability</h4>
+                    <p>We promote farming practices that preserve natural resources and protect the environment for future generations.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <h4>Equity</h4>
+                    <p>We work to ensure fair opportunities and access for all farmers, regardless of size or resources.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Impact</h4>
+                    <p>We measure our success by the positive difference we make in farmers' productivity and prosperity.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Team Section -->
+<section class="py-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Experts</span>
+            <h2 class="display-5 fw-bold mb-4">Meet Our Team</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+            <p class="lead" style="max-width: 700px; margin: 0 auto;">Passionate individuals dedicated to transforming agriculture in Africa.</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- CEO -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="CEO">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">John Kamau</h5>
+                        <p class="text-muted">CEO & Founder</p>
+                        <p class="small">Agricultural economist with 15+ years experience in agribusiness and technology ventures.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- COO -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="COO">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">Sarah Odhiambo</h5>
+                        <p class="text-muted">Chief Operations Officer</p>
+                        <p class="small">Supply chain expert with a passion for streamlining agricultural logistics.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CTO -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="CTO">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">David Mwangi</h5>
+                        <p class="text-muted">Chief Technology Officer</p>
+                        <p class="small">Software engineer specialized in agricultural technology and IoT solutions.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-github"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Head of Training -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="Head of Training">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">Grace Njeri</h5>
+                        <p class="text-muted">Head of Training</p>
+                        <p class="small">Agricultural education specialist with a focus on practical skill development.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="#" class="btn btn-outline-success">View Full Team</a>
+        </div>
+    </div>
+</section>
+
+<!-- Our Journey Timeline -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Journey</h2>
+        
+        <div class="timeline">
+            <div class="timeline-container left">
+                <div class="timeline-content">
+                    <h4>2020</h4>
+                    <p>Founded as a simple online marketplace connecting farmers directly to buyers.</p>
+                </div>
+            </div>
+            <div class="timeline-container right">
+                <div class="timeline-content">
+                    <h4>2021</h4>
+                    <p>Expanded services to include warehouse booking and transportation solutions.</p>
+                </div>
+            </div>
+            <div class="timeline-container left">
+                <div class="timeline-content">
+                    <h4>2022</h4>
+                    <p>Launched our farmer training programs and introduced smart hydroponics solutions.</p>
+                </div>
+            </div>
+            <div class="timeline-container right">
+                <div class="timeline-content">
+                    <h4>2022</h4>
+                    <p>Partnered with Kikapu to enhance payment and financial services for farmers.</p>
+                </div>
+            </div>
+            <div class="timeline-container left">
+                <div class="timeline-content">
+                    <h4>2023</h4>
+                    <p>Reached 10,000 active farmers on the platform across multiple counties.</p>
+                </div>
+            </div>
+            <div class="timeline-container right">
+                <div class="timeline-content">
+                    <h4>2024</h4>
+                    <p>Expanding to neighboring countries while introducing new technological innovations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Partners Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Partners</h2>
+        
+        <div class="d-flex flex-wrap justify-content-center align-items-center">
+            <img src="https://via.placeholder.com/150x80?text=Kikapu" class="partner-logo" alt="Kikapu">
+            <img src="https://via.placeholder.com/150x80?text=Ministry+of+Agriculture" class="partner-logo" alt="Ministry of Agriculture">
+            <img src="https://via.placeholder.com/150x80?text=KARI" class="partner-logo" alt="Kenya Agricultural Research Institute">
+            <img src="https://via.placeholder.com/150x80?text=EAFA" class="partner-logo" alt="East African Farmers Association">
+            <img src="https://via.placeholder.com/150x80?text=Agri-Tech+Hub" class="partner-logo" alt="Agri-Tech Innovation Hub">
+        </div>
+    </div>
+</section>
+
+<!-- Contact Info Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Get In Touch</h2>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-map-marker-alt fa-3x text-success mb-3"></i>
+                        <h4>Our Location</h4>
+                        <p>Agriculture House, Haile Selassie Avenue<br>Nairobi, Kenya</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-phone fa-3x text-success mb-3"></i>
+                        <h4>Call Us</h4>
+                        <p>+254 712 345 678<br>+254 798 765 432</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-envelope fa-3x text-success mb-3"></i>
+                        <h4>Email Us</h4>
+                        <p>info@mkulimasmart.co.ke<br>support@mkulimasmart.co.ke</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="#" class="btn btn-success btn-lg">Contact Us</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

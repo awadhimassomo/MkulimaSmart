@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,11 +30,18 @@ SECRET_KEY = 'django-insecure-!%u-pkmyt&9%(=(vfy%c2=3z2j327#pv$365=rn2kcqdt%c1mn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.90.70', '*']
 
+
+# Custom user model
+AUTH_USER_MODEL = 'website.User'
+
+# Authentication URLs - use custom login pages
+LOGIN_URL = '/en/login/'  # Redirect to custom login page (with language prefix)
+LOGIN_REDIRECT_URL = '/en/dashboard/'  # Redirect after successful login
+LOGOUT_REDIRECT_URL = '/en/'  # Redirect after logout
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,13 +49,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'gova_pp',
+    'rest_framework',
     'website',
+    'authentication',  # Kikapu-Led Registration sync and analytics
+    'gova_pp',
+    'predictions',
+    'training',
+    'marketplace',
+    'tailwind',
+    'theme',
+    'channels',
+    'chat',  # Add the chat app so Django can find its templates
 ]
+
+NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # Add LocaleMiddleware for translations
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -71,6 +96,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'MkulimaSmart.wsgi.application'
+
+# ASGI application for Channels
+ASGI_APPLICATION = "MkulimaSmart.asgi.application"
+
+# Channel layers for WebSocket communication
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 
 # Database
@@ -106,7 +141,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-us'  # Default language
 
 TIME_ZONE = 'UTC'
 
@@ -114,13 +149,108 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Available languages for the site
+from django.utils.translation import gettext_lazy as _
+
+LANGUAGES = (
+    ('en', _('English')),
+    ('sw', _('Swahili')),
+)
+
+# Where Django looks for translation files
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# Media files (Uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Weather API Settings
+# Load API keys from environment variables for security
+import os
+OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
+
+# Django REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'gova_pp.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ]
+}
+
+# Kikapu Webhook Configuration
+# Configure these in your environment variables or .env file
+KIKAPU_WEBHOOK_URL = os.environ.get('KIKAPU_WEBHOOK_URL', '')  # e.g., 'https://kikapu.com/webhooks/mkulima-profile-completion'
+KIKAPU_WEBHOOK_SECRET = os.environ.get('KIKAPU_WEBHOOK_SECRET', '')  # Secret key for webhook authentication
+KIKAPU_WEBHOOK_TIMEOUT = int(os.environ.get('KIKAPU_WEBHOOK_TIMEOUT', '10'))  # Timeout in seconds
+KIKAPU_WEBHOOK_MAX_RETRIES = int(os.environ.get('KIKAPU_WEBHOOK_MAX_RETRIES', '3'))  # Max retry attempts
+
+# Kikapu OAuth Configuration
+# For cross-platform login (Login with Kikapu)
+KIKAPU_OAUTH_BASE_URL = os.environ.get('KIKAPU_OAUTH_BASE_URL', 'http://localhost:8001')  # Kikapu server URL
+KIKAPU_OAUTH_CLIENT_ID = os.environ.get('KIKAPU_OAUTH_CLIENT_ID', 'mkulima_smart')  # OAuth client ID
+KIKAPU_OAUTH_CLIENT_SECRET = os.environ.get('KIKAPU_OAUTH_CLIENT_SECRET', 'mkulima_smart_secret_key_2024')  # OAuth client secret
+KIKAPU_OAUTH_REDIRECT_URI = os.environ.get('KIKAPU_OAUTH_REDIRECT_URI', 'http://localhost:8000/auth/kikapu/callback')  # OAuth callback URL
+
+TAILWIND_APP_NAME = 'theme'
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
+# Configure logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'gova_pp': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

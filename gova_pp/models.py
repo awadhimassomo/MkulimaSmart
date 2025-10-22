@@ -68,7 +68,7 @@ class GovernmentReply(models.Model):
         ordering = ['-created_at']
         
     def __str__(self):
-        return f"Reply to {self.message.farmer_name} by {self.replied_by.username}"
+        return f"Reply to {self.message.farmer_name} by {self.replied_by.phone_number}"
 
 class ImageAnalysis(models.Model):
     """AI-powered image analysis results"""

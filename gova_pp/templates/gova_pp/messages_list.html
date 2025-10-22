@@ -149,7 +149,7 @@
                                 {% endif %}
                                 <span><i class="fas fa-clock mr-1"></i>{{ message.created_at|timesince }} ago</span>
                                 {% if message.assigned_to %}
-                                <span><i class="fas fa-user mr-1"></i>Assigned to {{ message.assigned_to.username }}</span>
+                                <span><i class="fas fa-user mr-1"></i>Assigned to {{ message.assigned_to.get_full_name|default:message.assigned_to.phone_number }}</span>
                                 {% endif %}
                             </div>
                         </div>

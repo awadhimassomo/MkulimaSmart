@@ -1,0 +1,243 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .dashboard-card {
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+  }
+  .dashboard-card-header {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    font-weight: bold;
+  }
+  .dashboard-card-body {
+    padding: 1rem;
+  }
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .stat-box {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+  }
+  .stat-label {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  .stat-trend {
+    font-size: 0.85rem;
+  }
+  .trend-up {
+    color: #28a745;
+  }
+  .trend-down {
+    color: #dc3545;
+  }
+  .chart-container {
+    height: 300px;
+    margin-bottom: 1rem;
+  }
+  table.prediction-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.prediction-table th,
+  table.prediction-table td {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+  }
+  table.prediction-table th {
+    background-color: #f8f9fa;
+    text-align: left;
+  }
+</style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label='predictions' %}">Predictions</a>
+  &rsaquo; Dashboard
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h1>Prediction Quality Dashboard</h1>
+  <p class="help">This dashboard provides insights into the quality and performance of the prediction system.</p>
+  
+  <!-- Overview statistics -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">Overview</div>
+    <div class="dashboard-card-body">
+      <div class="stats-container">
+        <div class="stat-box">
+          <div class="stat-label">Total Predictions</div>
+          <div class="stat-value">{{ total_predictions }}</div>
+          <div class="stat-trend {% if prediction_trend > 0 %}trend-up{% elif prediction_trend < 0 %}trend-down{% endif %}">
+            {% if prediction_trend > 0 %}
+              <i class="fas fa-arrow-up"></i> {{ prediction_trend }}% from last week
+            {% elif prediction_trend < 0 %}
+              <i class="fas fa-arrow-down"></i> {{ prediction_trend|abs }}% from last week
+            {% else %}
+              No change from last week
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-label">Average Accuracy</div>
+          <div class="stat-value">{{ accuracy_pct }}%</div>
+          <div class="stat-trend {% if accuracy_trend > 0 %}trend-up{% elif accuracy_trend < 0 %}trend-down{% endif %}">
+            {% if accuracy_trend > 0 %}
+              <i class="fas fa-arrow-up"></i> {{ accuracy_trend }}% from last month
+            {% elif accuracy_trend < 0 %}
+              <i class="fas fa-arrow-down"></i> {{ accuracy_trend|abs }}% from last month
+            {% else %}
+              No change from last month
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-label">Manual Rain Observations</div>
+          <div class="stat-value">{{ manual_observations }}</div>
+          <div class="stat-trend {% if observation_trend > 0 %}trend-up{% elif observation_trend < 0 %}trend-down{% endif %}">
+            {% if observation_trend > 0 %}
+              <i class="fas fa-arrow-up"></i> {{ observation_trend }}% from last month
+            {% elif observation_trend < 0 %}
+              <i class="fas fa-arrow-down"></i> {{ observation_trend|abs }}% from last month
+            {% else %}
+              No change from last month
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-label">Active Farms</div>
+          <div class="stat-value">{{ active_farms }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Prediction accuracy by type -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">Prediction Accuracy by Type</div>
+    <div class="dashboard-card-body">
+      <div class="chart-container">
+        <canvas id="predictionTypeChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent predictions with actual outcomes -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">Recent Predictions</div>
+    <div class="dashboard-card-body">
+      {% if recent_predictions %}
+      <table class="prediction-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Farm</th>
+            <th>Type</th>
+            <th>Predicted</th>
+            <th>Actual</th>
+            <th>Accuracy</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prediction in recent_predictions %}
+          <tr>
+            <td>{{ prediction.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ prediction.farm.name }}</td>
+            <td>{{ prediction.get_type_display }}</td>
+            <td>{{ prediction.predicted_value }}</td>
+            <td>{{ prediction.actual_value|default:"Pending" }}</td>
+            <td>
+              {% if prediction.accuracy is not None %}
+                {{ prediction.accuracy }}%
+              {% else %}
+                N/A
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>No recent predictions to display.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{{ block.super }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Prediction accuracy by type chart
+    const typeCtx = document.getElementById('predictionTypeChart').getContext('2d');
+    
+    // Safe way to handle the Django template variables
+    const predictionTypes = JSON.parse('{{ prediction_types|escapejs }}');
+    const predictionTypeAccuracy = JSON.parse('{{ prediction_type_accuracy|escapejs }}');
+    
+    const typeChart = new Chart(typeCtx, {
+      type: 'bar',
+      data: {
+        labels: predictionTypes,
+        datasets: [{
+          label: 'Accuracy (%)',
+          data: predictionTypeAccuracy,
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(255, 206, 86, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(153, 102, 255, 0.5)',
+            'rgba(255, 159, 64, 0.5)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

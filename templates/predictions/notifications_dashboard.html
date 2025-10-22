@@ -1,0 +1,168 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/predictions.css' %}">
+<style>
+  .notification-card {
+    transition: all 0.2s ease-in-out;
+    margin-bottom: 1rem;
+    border-left: 5px solid transparent;
+  }
+  .notification-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  .notification-card.unread {
+    border-left-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+  .notification-card.high {
+    border-left-color: #dc3545;
+  }
+  .notification-card.medium {
+    border-left-color: #fd7e14;
+  }
+  .notification-card.low {
+    border-left-color: #28a745;
+  }
+  .notification-meta {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+  .badge-category {
+    font-size: 0.8rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h1>{{ title }}</h1>
+      <p class="lead">Stay updated with your farm predictions and alerts</p>
+    </div>
+  </div>
+  
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5>
+            Your Notifications
+            {% if unread_count %}
+            <span class="badge badge-primary">{{ unread_count }} unread</span>
+            {% endif %}
+          </h5>
+        </div>
+        
+        <div>
+          <form action="{% url 'predictions:notifications_dashboard' %}" method="get" class="form-inline">
+            <div class="form-group mr-2">
+              <select name="category" class="form-control form-control-sm" title="Filter by category" aria-label="Filter by notification category">
+                <option value="">All Categories</option>
+                <option value="prediction">Prediction Update</option>
+                <option value="weather">Weather Alert</option>
+                <option value="pest">Pest/Disease Alert</option>
+                <option value="system">System Notification</option>
+                <option value="tip">Farming Tip</option>
+              </select>
+            </div>
+            <div class="form-group mr-2">
+              <select name="read" class="form-control form-control-sm" title="Filter by read status" aria-label="Filter by notification read status">
+                <option value="">All Notifications</option>
+                <option value="false">Unread Only</option>
+                <option value="true">Read Only</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+            
+            {% if unread_count %}
+            <a href="{% url 'predictions:mark_all_read' %}" class="btn btn-sm btn-outline-primary ml-2">
+              Mark All Read
+            </a>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+      {% if notifications %}
+        {% for notification in notifications %}
+          <div class="card notification-card {% if not notification.is_read %}unread{% endif %} {{ notification.priority }}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <h5 class="card-title mb-1">
+                  <a href="{% url 'predictions:notification_detail' notification.id %}">
+                    {{ notification.title }}
+                  </a>
+                </h5>
+                <span class="badge badge-{{ notification.priority }} badge-category">
+                  {{ notification.category_display }}
+                </span>
+              </div>
+              
+              <p class="card-text text-truncate">{{ notification.message }}</p>
+              
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="notification-meta">
+                  <small>{{ notification.time_since }}</small>
+                  {% if notification.farm %}
+                  <small class="ml-2">Farm: {{ notification.farm.name }}</small>
+                  {% endif %}
+                </div>
+                
+                <div>
+                  {% if not notification.is_read %}
+                  <a href="{% url 'predictions:mark_notification_read' notification.id %}" class="btn btn-sm btn-outline-secondary">
+                    Mark Read
+                  </a>
+                  {% endif %}
+                  <a href="{% url 'predictions:notification_detail' notification.id %}" class="btn btn-sm btn-primary">
+                    View
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        
+        {% if is_paginated %}
+        <nav aria-label="Notification pagination">
+          <ul class="pagination justify-content-center">
+          {# Remove whitespace between list items by using Django comments and removing line breaks #}
+          {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li><li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}
+          {% for num in page_obj.paginator.page_range %}{% if page_obj.number == num %}<li class="page-item active"><span class="page-link">{{ num }} <span class="sr-only">(current)</span></span></li>{% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>{% endif %}{% endfor %}
+          {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li><li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>{% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+      {% else %}
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle mr-2"></i>
+          You don't have any notifications at this time. Check back later!
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  $(document).ready(function() {
+    // Auto-select filter options based on URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('category')) {
+      $('select[name="category"]').val(urlParams.get('category'));
+    }
+    if (urlParams.has('read')) {
+      $('select[name="read"]').val(urlParams.get('read'));
+    }
+  });
+</script>
+{% endblock %}

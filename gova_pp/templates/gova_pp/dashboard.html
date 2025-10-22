@@ -1,12 +1,12 @@
 {% extends 'gova_pp/base.html' %}
 {% load static %}
 
-{% block title %}Smart Mkulima Government Dashboard{% endblock %}
+{% block title %}Mkulima Smart Government Dashboard{% endblock %}
 
 {% block extra_css %}
 <style>
     .stat-card {
-        background: linear-gradient(135deg, #395144 0%, #4E6C50 100%);
+        background: linear-gradient(135deg, #1A3316 0%, #2D5A27 100%);
         border-radius: 12px;
         padding: 1.5rem;
         color: white;
@@ -32,7 +32,7 @@
         background: white;
         border-radius: 8px;
         padding: 1rem;
-        border-left: 4px solid #395144;
+        border-left: 4px solid #2D5A27;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         margin-bottom: 1rem;
     }
@@ -71,12 +71,12 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h2 mb-1 text-success">
-                        <i class="fas fa-leaf me-2"></i>
-                        Smart Mkulima Dashboard
-                    </h1>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <img src="{% static 'images/icon.png' %}" alt="Mkulima Smart" style="height: 40px; width: auto;">
+                        <h1 class="h2 mb-0" style="color: #2D5A27;">Mkulima Smart Dashboard</h1>
+                    </div>
                     <p class="text-muted mb-0">Government Agricultural Support & Communication Platform</p>
-                    <small class="text-muted">Welcome back, {{ user.firstName|default:user.username }}! Manage farmer communications and provide agricultural support.</small>
+                    <small class="text-muted">Welcome back, {{ user.get_full_name|default:user.phone_number }}! Manage farmer communications and provide agricultural support.</small>
                 </div>
                 <div class="text-end">
                     <div class="badge bg-success fs-6 p-2">

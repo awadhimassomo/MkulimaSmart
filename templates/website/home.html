@@ -1,0 +1,607 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Mkulima Smart - Bringing Innovation to Your Farming Journey{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Clean Modern Styles */
+  .hero-section {
+    background: linear-gradient(rgba(26, 51, 22, 0.7), rgba(26, 51, 22, 0.8)), 
+                url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1600&q=80') center/cover no-repeat;
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  
+  .hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .hero-subtitle {
+    font-size: 1.25rem;
+    color: #e5e7eb;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+    max-width: 600px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .mission-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .mission-card h3 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .mission-card p {
+    color: #e5e7eb !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .section-subtitle {
+    font-size: 1.125rem;
+    color: #666;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 4rem;
+    line-height: 1.6;
+  }
+  
+  .feature-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    height: 100%;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Service Cards with Images */
+  .service-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    height: 280px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .service-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .service-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .service-card:hover .service-card-image {
+    transform: scale(1.05);
+  }
+  
+  .service-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 70%, transparent 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 1.5rem;
+    color: white;
+  }
+  
+  .service-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+  }
+  
+  .service-card-description {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  /* Service Stat Cards */
+  .service-stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.4s ease;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .service-stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(45, 90, 39, 0.25);
+    background: linear-gradient(135deg, #2D5A27, #1A3316);
+    border-color: #2D5A27;
+  }
+  
+  .service-stat-card:hover .service-stat-number {
+    color: #C5D86D;
+  }
+  
+  .service-stat-card:hover .service-stat-title {
+    color: #ffffff;
+  }
+  
+  .service-stat-card:hover .service-stat-description {
+    color: #e5e7eb;
+  }
+  
+  .service-stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2D5A27;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+  
+  .service-stat-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.75rem;
+  }
+  
+  .service-stat-description {
+    font-size: 0.875rem;
+    color: #666;
+    line-height: 1.5;
+  }
+  
+  .feature-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #2D5A27, #1A3316);
+  }
+  
+  .feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+  }
+  
+  .feature-description {
+    color: #666;
+    line-height: 1.6;
+  }
+  
+  .stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    color: #666;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #2D5A27, #1A3316);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(45, 90, 39, 0.3);
+  }
+  
+  .btn-secondary {
+    background: transparent;
+    color: #2D5A27;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: 2px solid #2D5A27;
+  }
+  
+  .btn-secondary:hover {
+    background: #2D5A27;
+    color: white;
+  }
+  
+  /* Tab Styles */
+  .tab-nav {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+  
+  .tab-btn {
+    padding: 1rem 2rem;
+    border: none;
+    background: none;
+    color: #666;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .tab-btn.active {
+    background: #2D5A27;
+    color: white;
+  }
+  
+  .tab-btn:not(.active):hover {
+    background: rgba(45, 90, 39, 0.1);
+    color: #2D5A27;
+  }
+  
+  .tab-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  /* Grid Layouts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+  
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+  }
+  
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+  }
+  
+  /* Section Spacing */
+  .section {
+    padding: 6rem 0;
+  }
+  
+  .section-light {
+    background: #fafafa;
+  }
+  
+  .section-accent {
+    background: linear-gradient(135deg, #2D5A27, #1A3316);
+    color: white;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 2.5rem;
+    }
+    
+    .section-title {
+      font-size: 2rem;
+    }
+    
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .tab-nav {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .tab-btn {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-content">
+    <div class="grid-2" style="align-items: center; gap: 4rem;">
+      <div>
+        <h1 class="hero-title">
+          Bringing Innovation to<br>
+          <span style="color: #2D5A27;">Your Farming Journey</span>
+        </h1>
+        <p class="hero-subtitle">
+          Empowering Tanzanian farmers with modern technology, sustainable practices, and direct market access to transform agriculture for generations to come.
+        </p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <a href="{% url 'website:marketplace' %}" class="btn-primary">
+            Get Started
+            <i class="fas fa-arrow-right"></i>
+          </a>
+          <a href="{% url 'website:about' %}" class="btn-secondary">
+            Learn More
+          </a>
+        </div>
+      </div>
+      
+      <div class="mission-card">
+        <h3 style="font-size: 1.5rem; font-weight: 600; color: #1a1a1a; margin-bottom: 1.5rem;">Our Mission</h3>
+        <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+          To empower Tanzanian farmers with cutting-edge technology and sustainable agricultural practices that maximize productivity, reduce waste, and increase profitability.
+        </p>
+        <p style="color: #666; line-height: 1.6;">
+          We believe in supporting our farming communities with education, resources, and market access, ensuring a bright future for generations to come.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- About Section -->
+<section class="section">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+    <h2 class="section-title">Who We Are</h2>
+    <p class="section-subtitle">
+      With years of expertise in both farming and technology, we're committed to helping farmers grow smarter and achieve better yields.
+    </p>
+    
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="about">About Us</button>
+      <button class="tab-btn" data-tab="journey">Our Journey</button>
+      <button class="tab-btn" data-tab="vision">Our Vision</button>
+      <button class="tab-btn" data-tab="mission">Our Mission</button>
+    </div>
+    
+    <div class="tab-content">
+      <div id="about-tab">
+        <div style="text-align: center;">
+          <p style="font-size: 1.125rem; color: #666; line-height: 1.7; max-width: 800px; margin: 0 auto;">
+            By combining innovation with sustainability, we empower farmers to increase productivity, reduce waste, and contribute to a healthier planet. Together, we are shaping the future of farming, ensuring it thrives for generations to come.
+          </p>
+        </div>
+      </div>
+      
+      <div id="journey-tab" style="display: none;">
+        <div style="text-align: center;">
+          <p style="font-size: 1.125rem; color: #666; line-height: 1.7; max-width: 800px; margin: 0 auto;">
+            From a small initiative to empower local farmers, Mkulima Smart has grown into a comprehensive platform serving thousands of farmers across Tanzania. Our journey has been driven by a passion for innovation and a commitment to sustainable agriculture.
+          </p>
+        </div>
+      </div>
+      
+      <div id="vision-tab" style="display: none;">
+        <div style="text-align: center;">
+          <p style="font-size: 1.125rem; color: #666; line-height: 1.7; max-width: 800px; margin: 0 auto;">
+            To become the leading agricultural technology platform in East Africa, transforming traditional farming practices through innovation, education, and market access.
+          </p>
+        </div>
+      </div>
+      
+      <div id="mission-tab" style="display: none;">
+        <div style="text-align: center;">
+          <p style="font-size: 1.125rem; color: #666; line-height: 1.7; max-width: 800px; margin: 0 auto;">
+            To empower Tanzanian farmers with cutting-edge technology, quality inputs, and direct market access that maximize productivity and profitability while promoting sustainable agricultural practices.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="section section-light">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+    <div class="grid-3">
+      <div style="text-align: center;">
+        <div class="stat-number">10+</div>
+        <div class="stat-label">Years of Innovation</div>
+        <p style="color: #666; margin-top: 1rem; font-size: 0.875rem;">
+          Pioneering agricultural advancements across Tanzania
+        </p>
+      </div>
+      
+      <div style="text-align: center;">
+        <div class="stat-number">5,000+</div>
+        <div class="stat-label">Active Farmers</div>
+        <p style="color: #666; margin-top: 1rem; font-size: 0.875rem;">
+          Trusted by farming communities nationwide
+        </p>
+      </div>
+      
+      <div style="text-align: center;">
+        <div class="stat-number">85%</div>
+        <div class="stat-label">Satisfaction Rate</div>
+        <p style="color: #666; margin-top: 1rem; font-size: 0.875rem;">
+          Consistently delivering on our promises
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Services Section -->
+<section class="section" style="background: #fafafa;">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+    <h2 class="section-title">Everything You Need for Modern Farming</h2>
+    <p class="section-subtitle">
+      Comprehensive solutions designed to support every aspect of modern farming
+    </p>
+    
+    <div class="grid-4" style="gap: 1.5rem;">
+      <!-- Stat Card: Marketplace -->
+      <div class="service-stat-card">
+        <div class="service-stat-number">500+</div>
+        <h3 class="service-stat-title">Marketplace</h3>
+        <p class="service-stat-description">
+          Quality products from trusted suppliers. Seeds, fertilizers, tools and equipment delivered to your farm.
+        </p>
+      </div>
+      
+      <!-- Image Card: Logistics -->
+      <div class="service-card">
+        <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80" alt="Logistics" class="service-card-image">
+        <div class="service-card-overlay">
+          <h3 class="service-card-title">Logistics</h3>
+          <p class="service-card-description">
+            Reliable transport services from farm to market. Timely delivery you can count on.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Stat Card: Storage -->
+      <div class="service-stat-card">
+        <div class="service-stat-number">24/7</div>
+        <h3 class="service-stat-title">Storage Solutions</h3>
+        <p class="service-stat-description">
+          Modern, secure facilities to protect your harvest and inputs. Keep your produce safe and fresh year-round.
+        </p>
+      </div>
+      
+      <!-- Image Card: Training -->
+      <div class="service-card">
+        <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&q=80" alt="Training" class="service-card-image">
+        <div class="service-card-overlay">
+          <h3 class="service-card-title">Training</h3>
+          <p class="service-card-description">
+            Expert-led programs to enhance your farming skills and adopt best practices.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section section-accent">
+  <div style="max-width: 800px; margin: 0 auto; padding: 0 2rem; text-align: center;">
+    <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1.5rem;">Ready to Transform Your Farming?</h2>
+    <p style="font-size: 1.125rem; margin-bottom: 2.5rem; opacity: 0.9;">
+      Join thousands of farmers who are already increasing their yields and profits with Mkulima Smart
+    </p>
+    
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      {% if user.is_authenticated %}
+        <a href="{% url 'website:dashboard' %}" class="btn-primary" style="background: #B5C95A; color: white; font-weight: 700; box-shadow: 0 4px 20px rgba(181, 201, 90, 0.4); border: 2px solid rgba(255, 255, 255, 0.2);">
+          Go to Dashboard
+        </a>
+      {% else %}
+        <a href="{% url 'website:register' %}" class="btn-primary" style="background: #B5C95A; color: white; font-weight: 700; box-shadow: 0 4px 20px rgba(181, 201, 90, 0.4); border: 2px solid rgba(255, 255, 255, 0.2);">
+          Sign Up Now
+        </a>
+      {% endif %}
+      <a href="{% url 'website:marketplace' %}" class="btn-secondary" style="border-color: rgba(255, 255, 255, 0.6); color: white;">
+        Visit Marketplace
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content > div');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-tab');
+        
+        // Update active tab button
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Show target tab content
+        tabContents.forEach(content => {
+          content.style.display = 'none';
+        });
+        document.getElementById(targetTab + '-tab').style.display = 'block';
+      });
+    });
+    
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}
