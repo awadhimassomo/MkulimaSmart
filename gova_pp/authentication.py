@@ -16,13 +16,22 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         logger.debug("JWTAuth: Starting authentication process")
         
-        # Debug all request headers
+        # Debug all request headers and important request data
         headers = {k: v for k, v in request.META.items() if k.startswith('HTTP_')}
         logger.debug(f"JWTAuth: All request headers: {headers}")
+        logger.debug(f"JWTAuth: Request method: {request.method}")
+        logger.debug(f"JWTAuth: Request path: {request.path}")
+        
+        # Log raw request body for debugging (but be careful with sensitive data)
+        try:
+            if request.body:
+                logger.debug(f"JWTAuth: Request body (first 500 chars): {str(request.body)[:500]}")
+        except Exception as e:
+            logger.debug(f"JWTAuth: Could not read request body: {str(e)}")
         
         # First try Authorization header
         auth_header = get_authorization_header(request).decode('utf-8').strip() if get_authorization_header(request) else ''
-        logger.debug(f"JWTAuth: Authorization header: '{auth_header}'")
+        logger.debug(f"JWTAuth: Raw Authorization header: '{auth_header}'")
         
         token = None
         
@@ -53,11 +62,13 @@ class JWTAuthentication(authentication.BaseAuthentication):
             if len(auth_parts) == 1:
                 token = auth_parts[0]
                 logger.debug("JWTAuth: Using token-only format")
+                logger.debug(f"JWTAuth: Extracted token (first 20 chars): {token[:20]}...")
             # Handle Authorization: <scheme> <token> format
             elif len(auth_parts) == 2:
                 # Extract token regardless of scheme (Bearer, Token, JWT)
                 scheme, token = auth_parts
                 logger.debug(f"JWTAuth: Using scheme '{scheme}' with token")
+                logger.debug(f"JWTAuth: Extracted token (first 20 chars): {token[:20]}...")
             else:
                 logger.debug(f"JWTAuth: Invalid format with {len(auth_parts)} parts")
                 raise exceptions.AuthenticationFailed(

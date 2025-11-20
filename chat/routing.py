@@ -1,5 +1,8 @@
 from django.urls import path
+from . import consumers
 
-# Define empty URL patterns that will be populated in asgi.py
-websocket_urlpatterns = []
+# WebSocket URL patterns for chat
+websocket_urlpatterns = [
+    path('ws/chat/<int:thread_id>/', consumers.ChatConsumer.as_asgi()),
+]
 

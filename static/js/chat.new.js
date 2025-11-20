@@ -74,17 +74,10 @@ class ChatManager {
         this.reconnectTimeout = null;
         this.connectionTimeout = null;
         this.reconnecting = false;
-        this.seenMessageIds = new Set();  // Track seen messages to prevent duplicates
     }
 
     // Connect to WebSocket
     connect(token) {
-        // Prevent duplicate connections
-        if (this.socket && (this.socket.readyState === WebSocket.CONNECTING || this.socket.readyState === WebSocket.OPEN)) {
-            console.log('⚠️ WebSocket already connected or connecting, skipping...');
-            return;
-        }
-        
         // Close existing connection if any
         if (this.socket) {
             console.log('Closing existing WebSocket connection...');
@@ -122,7 +115,6 @@ class ChatManager {
         this.socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                console.log('📨 WebSocket message received:', data);
                 this.handleIncomingMessage(data);
             } catch (error) {
                 console.error('❌ Error parsing WebSocket message:', error);
@@ -189,37 +181,6 @@ class ChatManager {
         }
     }
 
-    sendTextMessage(text) {
-        console.log('📝 Sending text message:', text);
-        
-        // Display message locally immediately for sender
-        const localMessage = {
-            type: 'message.created',
-            sender_id: this.userId,
-            sender_name: 'You',
-            content: text,
-            timestamp: new Date().toISOString(),
-            has_media: false
-        };
-        this.addMessageToChat(localMessage);
-        
-        // Send to other participant via WebSocket
-        return this.sendMessage({
-            type: 'message_new',
-            text: text,
-            thread_id: this.threadId,
-            sender: this.userId
-        });
-    }
-
-    sendTypingStatus(isTyping) {
-        return this.sendMessage({
-            type: isTyping ? 'typing_start' : 'typing_stop',
-            thread_id: this.threadId,
-            user: this.userId
-        });
-    }
-
     handleIncomingMessage(data) {
         try {
             console.log('📨 Received message:', data);
@@ -244,23 +205,6 @@ class ChatManager {
     }
 
     handleNewMessage(data) {
-        // Check for duplicate messages using message ID
-        const messageId = data.id || data.message_id;
-        if (messageId && this.seenMessageIds.has(messageId)) {
-            console.log('⚠️ Duplicate message detected, skipping:', messageId);
-            return;
-        }
-        
-        // Add to seen messages
-        if (messageId) {
-            this.seenMessageIds.add(messageId);
-            // Keep only last 100 message IDs to prevent memory leak
-            if (this.seenMessageIds.size > 100) {
-                const firstId = this.seenMessageIds.values().next().value;
-                this.seenMessageIds.delete(firstId);
-            }
-        }
-        
         if (data.sender === this.userId) {
             console.log('Skipping own message');
             return;
@@ -268,11 +212,11 @@ class ChatManager {
 
         const message = {
             type: 'message.created',
-            sender_id: data.sender || data.sender_id,
+            sender_id: data.sender,
             sender_name: data.sender_name || 'User',
             content: data.text || data.content || '',
-            timestamp: data.timestamp || data.created_at || new Date().toISOString(),
-            has_media: data.has_media || data.media_type === 'image' || data.media?.type === 'image',  // Use has_media from backend!
+            timestamp: data.timestamp || new Date().toISOString(),
+            has_media: data.media_type === 'image' || data.media?.type === 'image',
             media_id: data.media_id || data.media?.id,
             media_mime: data.media_type || data.media?.type,
             media_url: data.media_url || data.media?.url,
@@ -338,59 +282,28 @@ class ChatManager {
     }
 
     createMediaContent(message) {
-        console.log('🖼️ createMediaContent called with:', {
-            has_media: message.has_media,
-            media_url: message.media_url,
-            media_id: message.media_id
-        });
-        
-        if (!message.has_media || !message.media_url) {
-            console.log('⚠️ Skipping media - missing has_media or media_url');
-            return '';
-        }
+        if (!message.has_media || !message.media_url) return '';
 
         console.log('🖼️ Processing media message:', message);
-        console.log('  media_mime:', message.media_mime);
         
-        const isCurrentUser = message.sender_id === this.userId;
-        
-        // Show image if media_mime is 'image/*' OR if it's not set but we have a media_url (fallback)
-        const isImage = message.media_mime?.startsWith('image/') || !message.media_mime;
-        
-        if (isImage) {
+        if (message.media_mime?.startsWith('image/')) {
             if (message.media_nonce_b64 && message.wrapped_keys) {
                 return `
-                    <div class="media-container my-2 relative group">
+                    <div class="media-container my-2">
                         <div class="media-placeholder" id="media-${message.media_id}">
                             <div class="animate-pulse flex items-center justify-center bg-gray-200 rounded-lg w-full h-32">
                                 <span class="text-gray-500">Decrypting image...</span>
                             </div>
                         </div>
-                        ${isCurrentUser ? `
-                            <button onclick="window.chatManager.deleteImage('${message.media_id}')" 
-                                    class="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-bold text-sm shadow-lg"
-                                    title="Delete image">
-                                ×
-                            </button>
-                        ` : ''}
                         ${message.content ? `<p class="text-sm mt-2">${message.content}</p>` : ''}
                     </div>
                 `;
             } else {
                 return `
-                    <div class="my-2 relative group">
+                    <div class="my-2">
                         <img src="${message.media_url}" 
                              alt="${message.file_name || 'Image'}" 
-                             class="max-w-full h-auto rounded-lg border border-[#D4E89A] cursor-pointer hover:opacity-90 transition-opacity"
-                             onclick="openImageModal('${message.media_url}', '${message.media_id}')">
-                        ${isCurrentUser ? `
-                            <button onclick="event.stopPropagation(); window.chatManager.deleteImage('${message.media_id || message.timestamp}')" 
-                                    class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-bold shadow-lg z-10"
-                                    title="Delete image"
-                                    style="backdrop-filter: blur(2px);">
-                                ×
-                            </button>
-                        ` : ''}
+                             class="max-w-full h-auto rounded-lg border border-[#D4E89A]">
                     </div>
                 `;
             }
@@ -448,32 +361,6 @@ class ChatManager {
             typingContainer.style.display = 'block';
         } else {
             typingContainer.style.display = 'none';
-        }
-    }
-    
-    deleteImage(mediaId) {
-        // Confirm deletion
-        if (!confirm('Are you sure you want to delete this image?')) {
-            return;
-        }
-        
-        console.log('Deleting image:', mediaId);
-        
-        // Send delete message through WebSocket
-        this.sendMessage({
-            type: 'delete_media',
-            media_id: mediaId,
-            thread_id: this.threadId,
-            sender: this.userId
-        });
-        
-        // Remove image from UI immediately for better UX
-        const imageContainer = document.querySelector(`#media-${mediaId}`);
-        if (imageContainer) {
-            const mediaParent = imageContainer.closest('.media-container') || imageContainer.closest('.my-2');
-            if (mediaParent) {
-                mediaParent.innerHTML = '<p class="text-xs text-gray-500 italic">Image deleted</p>';
-            }
         }
     }
 }

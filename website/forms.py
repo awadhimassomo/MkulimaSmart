@@ -6,6 +6,13 @@ import json
 
 class FarmerRegistrationForm(UserCreationForm):
     """Form for farmer registration"""
+    user_type = forms.ChoiceField(
+        label=_("Account Type"),
+        choices=[('farmer', 'Farmer'), ('supplier', 'Supplier')],
+        required=True,
+        help_text=_("Select your account type"),
+    )
+    
     phone_number = forms.CharField(
         label=_("Phone Number"),
         max_length=15,
@@ -45,7 +52,7 @@ class FarmerRegistrationForm(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ('phone_number', 'first_name', 'last_name', 'email')
+        fields = ('user_type', 'phone_number', 'first_name', 'last_name', 'email')
     
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
@@ -58,12 +65,21 @@ class FarmerRegistrationForm(UserCreationForm):
     def save(self, commit=True, farm_data=None, crops_data=None):
         """Save user and optionally create farm and crops"""
         user = super().save(commit=False)
-        user.is_farmer = True
+        
+        # Set user type based on selection
+        user_type = self.cleaned_data.get('user_type', 'farmer')
+        if user_type == 'farmer':
+            user.is_farmer = True
+            user.is_supplier = False
+        elif user_type == 'supplier':
+            user.is_farmer = False
+            user.is_supplier = True
+        
         if commit:
             user.save()
             
-            # Create farm if farm data provided
-            if farm_data:
+            # Create farm only if user is a farmer and farm data is provided
+            if user.is_farmer and farm_data:
                 farm = Farm.objects.create(
                     owner=user,
                     name=farm_data.get('name', f"{user.get_full_name()}'s Farm"),

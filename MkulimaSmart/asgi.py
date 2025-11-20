@@ -24,11 +24,15 @@ from chat.jwt_middleware import JWTAuthMiddleware
 from chat.test_consumer import TestConsumer
 from chat.consumers import ChatConsumer
 
+# Import WebSocket URLs from different apps
+from gova_pp.routing import websocket_urlpatterns as gova_ws_urls
+from chat.routing import websocket_urlpatterns as chat_ws_urls
+
 # Define WebSocket URL patterns here after Django is initialized
 websocket_urlpatterns = [
-    path('ws/chat/<str:thread_id>/', ChatConsumer.as_asgi()),
-    path('ws/test/', TestConsumer.as_asgi()),  # Simple test endpoint
-]
+    # Test endpoint
+    path('ws/test/', TestConsumer.as_asgi()),
+] + chat_ws_urls + gova_ws_urls  # Include chat and gova_pp WebSocket URLs
 
 application = ProtocolTypeRouter({
     "http": django_asgi_app,

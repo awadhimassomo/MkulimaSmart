@@ -375,9 +375,9 @@
   <div class="hero-content">
     <div class="grid-2" style="align-items: center; gap: 4rem;">
       <div>
-        <h1 class="hero-title">
-          Bringing Innovation to<br>
-          <span style="color: #2D5A27;">Your Farming Journey</span>
+        <h1 class="hero-title" style="line-height: 1.2;">
+          <span style="display: block; font-size: 2.5rem; margin-bottom: 0.5rem;">Bringing Innovation to</span>
+          <span style="display: block; font-size: 3.5rem; font-weight: 800; color: #ffffff; line-height: 1.1;">Your Farming Journey</span>
         </h1>
         <p class="hero-subtitle">
           Empowering Tanzanian farmers with modern technology, sustainable practices, and direct market access to transform agriculture for generations to come.
@@ -387,7 +387,7 @@
             Get Started
             <i class="fas fa-arrow-right"></i>
           </a>
-          <a href="{% url 'website:about' %}" class="btn-secondary">
+          <a href="{% url 'website:about' %}" class="btn-secondary" style="border-color: white; color: white;">
             Learn More
           </a>
         </div>
@@ -411,13 +411,14 @@
   <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
     <h2 class="section-title">Who We Are</h2>
     <p class="section-subtitle">
-      With years of expertise in both farming and technology, we're committed to helping farmers grow smarter and achieve better yields.
+      <span class="font-bold text-xl">The Future of African Agriculture. Engineered for Tanzania.</span><br>
+      <span class="text-sm text-gray-600 mt-2 block">Powered by <span class="text-[var(--brand-accent)] font-bold">KIKAPU</span> - The Digital Basket for Agriculture, Climate & Circular Solutions.</span>
     </p>
     
     <div class="tab-nav">
       <button class="tab-btn active" data-tab="about">About Us</button>
       <button class="tab-btn" data-tab="journey">Our Journey</button>
-      <button class="tab-btn" data-tab="vision">Our Vision</button>
+      <button class="tab-btn" data-tab="vision">Our North Star</button>
       <button class="tab-btn" data-tab="mission">Our Mission</button>
     </div>
     
@@ -425,7 +426,7 @@
       <div id="about-tab">
         <div style="text-align: center;">
           <p style="font-size: 1.125rem; color: #666; line-height: 1.7; max-width: 800px; margin: 0 auto;">
-            By combining innovation with sustainability, we empower farmers to increase productivity, reduce waste, and contribute to a healthier planet. Together, we are shaping the future of farming, ensuring it thrives for generations to come.
+            <strong>Mkulima Smart</strong> is the intelligent interface to Tanzania's agricultural future. Powered by <strong class="text-[var(--brand-accent)]">KIKAPU</strong>—the comprehensive digital infrastructure that seamlessly integrates farmers, markets, climate data, and circular economy solutions—we deliver real-time insights, AI-powered analysis, verified inputs, and immediate market access. We don't just provide tools. We engineer predictable profitability and guaranteed sustainability for every Tanzanian farmer.
           </p>
         </div>
       </div>
@@ -440,16 +441,18 @@
       
       <div id="vision-tab" style="display: none;">
         <div style="text-align: center;">
+          <h3 style="font-size: 1.5rem; color: var(--brand-primary); margin-bottom: 1.5rem; font-weight: 700;">Our North Star</h3>
           <p style="font-size: 1.125rem; color: #666; line-height: 1.7; max-width: 800px; margin: 0 auto;">
-            To become the leading agricultural technology platform in East Africa, transforming traditional farming practices through innovation, education, and market access.
+            To create a <strong>friction-free, digitally integrated agricultural economy</strong> where sustainability and profitability are not a trade-off, but a <strong>guarantee</strong>.
           </p>
         </div>
       </div>
       
       <div id="mission-tab" style="display: none;">
         <div style="text-align: center;">
+          <h3 style="font-size: 1.5rem; color: var(--brand-primary); margin-bottom: 1.5rem; font-weight: 700;">Our Mission</h3>
           <p style="font-size: 1.125rem; color: #666; line-height: 1.7; max-width: 800px; margin: 0 auto;">
-            To empower Tanzanian farmers with cutting-edge technology, quality inputs, and direct market access that maximize productivity and profitability while promoting sustainable agricultural practices.
+            To deliver the intelligent, end-to-end digital infrastructure that <strong>links every Tanzanian farmer directly</strong> to verified inputs, essential services, and immediate market demand. We make farming a <strong>profitable, predictable, and sustainable enterprise</strong>.
           </p>
         </div>
       </div>
@@ -490,13 +493,13 @@
 
 <!-- Services Section -->
 <section class="section" style="background: #fafafa;">
-  <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+  <div style="max-width: 1600px; margin: 0 auto; padding: 0 2rem;">
     <h2 class="section-title">Everything You Need for Modern Farming</h2>
     <p class="section-subtitle">
       Comprehensive solutions designed to support every aspect of modern farming
     </p>
     
-    <div class="grid-4" style="gap: 1.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.5rem;">
       <!-- Stat Card: Marketplace -->
       <div class="service-stat-card">
         <div class="service-stat-number">500+</div>
@@ -533,6 +536,26 @@
           <h3 class="service-card-title">Training</h3>
           <p class="service-card-description">
             Expert-led programs to enhance your farming skills and adopt best practices.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Stat Card: Finance -->
+      <div class="service-stat-card">
+        <div class="service-stat-number">10M+</div>
+        <h3 class="service-stat-title">Finance</h3>
+        <p class="service-stat-description">
+          Access affordable loans, credit facilities, and financial planning services tailored for farmers.
+        </p>
+      </div>
+      
+      <!-- Image Card: Insurance -->
+      <div class="service-card">
+        <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80" alt="Insurance" class="service-card-image">
+        <div class="service-card-overlay">
+          <h3 class="service-card-title">Insurance</h3>
+          <p class="service-card-description">
+            Comprehensive crop and livestock insurance to protect your investment against unexpected losses.
           </p>
         </div>
       </div>

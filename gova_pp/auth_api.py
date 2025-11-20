@@ -61,11 +61,13 @@ def obtain_token(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
     
-    # Create the JWT payload with expiration in 24 hours
+    # Create the JWT payload with extended expiration for WebSocket
+    # Using 24 hours for WebSocket connections to prevent frequent disconnections
+    expiration_hours = 24
     payload = {
         'uid': user.id,
         'phone_number': user.phone_number,
-        'exp': datetime.utcnow() + timedelta(hours=24),
+        'exp': datetime.utcnow() + timedelta(hours=expiration_hours),
     }
     
     # Include thread_id if provided
@@ -78,5 +80,6 @@ def obtain_token(request):
     return Response({
         'token': token,
         'user_id': user.id,
-        'expires_at': (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        'expires_at': (datetime.utcnow() + timedelta(hours=expiration_hours)).isoformat(),
+        'expires_in_hours': expiration_hours
     })

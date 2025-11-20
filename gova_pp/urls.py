@@ -31,6 +31,7 @@ urlpatterns = [
     # Messages
     path('messages/', views.messages_list, name='messages_list'),
     path('messages/<int:message_id>/', views.message_detail, name='message_detail'),
+    path('messages/<int:message_id>/delete-image/', views.delete_message_image, name='delete_message_image'),
     
     # Image Analysis
     path('analyze-image/<int:message_id>/', views.analyze_image, name='analyze_image'),

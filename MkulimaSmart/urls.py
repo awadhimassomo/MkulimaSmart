@@ -6,6 +6,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 """
 from django.contrib import admin
 from django.urls import path, include
+import os
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
@@ -28,8 +29,14 @@ urlpatterns = [
     # API URLs (no language prefix)
     path('api/', include('website.api_urls')),
     
+    # Ecop (E-Cooperative) API endpoints
+    path('api/ecop/', include('ecop.urls')),
+    
     # Direct access to chat API endpoints for mobile app integration
     path('api/chat/threads/', chat_api.chat_threads_endpoint, name='direct_chat_threads'),
+    
+    # File upload endpoint for chat media
+    path('api/chat/upload/', chat_api.upload_media, name='chat_upload_media'),
     
     # Route encrypted media messages to our new ThreadMessageCreateView 
     path('api/chat/threads/<int:thread_id>/messages/', ThreadMessageCreateView.as_view(), name='encrypted_chat_messages'),
@@ -57,7 +64,7 @@ urlpatterns += i18n_patterns(
     # Include website URLs
     path('', include('website.urls', namespace='website')),
     
-    # Gova PP App
+    # Gov app App
     path('gova-pp/', include('gova_pp.urls', namespace='gova_pp')),
     
     # Predictions App
@@ -70,7 +77,31 @@ urlpatterns += i18n_patterns(
     prefix_default_language=True
 )
 
-# Serve media files in development
+from django.views.static import serve
+from django.urls import re_path
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Always serve media files (in production, this should be handled by your web server)
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {
+        'document_root': settings.MEDIA_ROOT,
+        'show_indexes': settings.DEBUG,  # Only show index in debug mode
+    }),
+]
+
+# In development, serve static files through Django
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Log media serving configuration
+logger.info(f"Serving media files from: {settings.MEDIA_ROOT}")
+logger.info(f"Media URL: {settings.MEDIA_URL}")
+logger.info(f"Static URL: {settings.STATIC_URL}")
+logger.info(f"Static root: {settings.STATIC_ROOT}")
+
+# Ensure media directories exist
+os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+os.makedirs(os.path.join(settings.MEDIA_ROOT, 'chat_media'), exist_ok=True)

@@ -341,14 +341,14 @@
           <span class="sm:hidden">Free delivery > TZS 50K</span>
         </div>
         <div class="flex items-center gap-4 text-xs">
-          <a href="tel:+255123456789" class="flex items-center gap-1 hover:opacity-90 transition-opacity focus-ring rounded">
+          <a href="tel:+255687046323" class="flex items-center gap-1 hover:opacity-90 transition-opacity focus-ring rounded">
             <i class="fas fa-phone-alt" aria-hidden="true"></i>
-            <span class="hidden sm:inline">+255 123 456 789</span>
+            <span class="hidden sm:inline">+255 687 046 323</span>
           </a>
           <span class="w-px h-3 bg-white/20" aria-hidden="true"></span>
-          <a href="mailto:info@mkulimasmart.co.tz" class="hidden md:flex items-center gap-1 hover:opacity-90 transition-opacity focus-ring rounded">
+          <a href="mailto:awadhi.massomo@sotechtz.com" class="hidden md:flex items-center gap-1 hover:opacity-90 transition-opacity focus-ring rounded">
             <i class="far fa-envelope" aria-hidden="true"></i>
-            <span>info@mkulimasmart.co.tz</span>
+            <span>awadhi.massomo@sotechtz.com</span>
           </a>
         </div>
       </div>
@@ -575,17 +575,17 @@
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div class="flex items-center gap-1.5 text-gray-300">
               <i class="fas fa-map-marker-alt text-[var(--brand-accent)] text-xs" aria-hidden="true"></i>
-              <span>Dar es Salaam, Tanzania</span>
+              <span>Arusha, Tanzania</span>
             </div>
             <span class="text-gray-600">|</span>
-            <a href="tel:+255123456789" class="flex items-center gap-1.5 text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+            <a href="tel:+255687046323" class="flex items-center gap-1.5 text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
               <i class="fas fa-phone text-[var(--brand-accent)] text-xs" aria-hidden="true"></i>
-              <span>+255 123 456 789</span>
+              <span>+255 687 046 323</span>
             </a>
             <span class="text-gray-600">|</span>
-            <a href="mailto:info@mkulimasmart.co.tz" class="flex items-center gap-1.5 text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
+            <a href="mailto:awadhi.massomo@sotechtz.com" class="flex items-center gap-1.5 text-gray-300 hover:text-[var(--brand-accent)] transition-colors">
               <i class="fas fa-envelope text-[var(--brand-accent)] text-xs" aria-hidden="true"></i>
-              <span class="text-xs">info@mkulimasmart.co.tz</span>
+              <span class="text-xs">awadhi.massomo@sotechtz.com</span>
             </a>
           </div>
         </div>
@@ -630,8 +630,15 @@
             <a href="{% url 'gova_pp:login' %}" class="hover:text-[var(--brand-accent)] transition-colors">Gov App</a>
           </div>
           <div class="text-sm text-gray-400 text-center md:text-right">
-            <p>&copy; 2025 Mkulima Smart. All rights reserved.</p>
-            <p class="text-xs text-gray-500 mt-1">Made with <i class="fas fa-heart text-red-400" aria-hidden="true"></i> for Tanzanian Farmers</p>
+            <p class="font-semibold text-gray-300">&copy; 2025 Mkulima Smart. All rights reserved.</p>
+            <p class="text-xs text-gray-500 mt-1">Powered by <span class="text-[var(--brand-accent)] font-semibold">Kikapu</span></p>
+            <p class="text-xs text-gray-500 mt-2">
+              <i class="fas fa-building mr-1" aria-hidden="true"></i>Sotech Limited Tanzania<br>
+              <i class="fas fa-map-marker-alt mr-1 mt-1" aria-hidden="true"></i>Arusha, Tanzania<br>
+              <i class="fas fa-phone mr-1 mt-1" aria-hidden="true"></i><a href="tel:+255687046323" class="hover:text-[var(--brand-accent)] transition-colors">+255 687 046 323</a><br>
+              <i class="fas fa-envelope mr-1 mt-1" aria-hidden="true"></i><a href="mailto:awadhi.massomo@sotechtz.com" class="hover:text-[var(--brand-accent)] transition-colors">awadhi.massomo@sotechtz.com</a>
+            </p>
+            <p class="text-xs text-gray-600 mt-2">Made with <i class="fas fa-heart text-red-400" aria-hidden="true"></i> for Tanzanian Farmers</p>
           </div>
         </div>
       </div>
@@ -650,6 +657,27 @@
     
 
   <!-- Scripts -->
+  <script src="{% static 'js/chat.js' %}"></script>
+  <script>
+    // Initialize chat system when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if we're on a page that uses the chat
+      const chatContainer = document.getElementById('chat-container');
+      if (chatContainer) {
+        const threadId = chatContainer.dataset.threadId;
+        const userId = chatContainer.dataset.userId;
+        
+        if (threadId && userId) {
+          try {
+            window.chatManager = new ChatManager(threadId, userId);
+            chatManager.connect();
+          } catch (error) {
+            console.error('Failed to initialize chat:', error);
+          }
+        }
+      }
+    });
+  </script>
   <script>
     // Enhanced mobile menu functionality
     document.addEventListener('DOMContentLoaded', function() {

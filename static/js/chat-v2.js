@@ -191,19 +191,6 @@ class ChatManager {
 
     sendTextMessage(text) {
         console.log('📝 Sending text message:', text);
-        
-        // Display message locally immediately for sender
-        const localMessage = {
-            type: 'message.created',
-            sender_id: this.userId,
-            sender_name: 'You',
-            content: text,
-            timestamp: new Date().toISOString(),
-            has_media: false
-        };
-        this.addMessageToChat(localMessage);
-        
-        // Send to other participant via WebSocket
         return this.sendMessage({
             type: 'message_new',
             text: text,
@@ -381,10 +368,9 @@ class ChatManager {
                     <div class="my-2 relative group">
                         <img src="${message.media_url}" 
                              alt="${message.file_name || 'Image'}" 
-                             class="max-w-full h-auto rounded-lg border border-[#D4E89A] cursor-pointer hover:opacity-90 transition-opacity"
-                             onclick="openImageModal('${message.media_url}', '${message.media_id}')">
+                             class="max-w-full h-auto rounded-lg border border-[#D4E89A]">
                         ${isCurrentUser ? `
-                            <button onclick="event.stopPropagation(); window.chatManager.deleteImage('${message.media_id || message.timestamp}')" 
+                            <button onclick="window.chatManager.deleteImage('${message.media_id || message.timestamp}')" 
                                     class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-bold shadow-lg z-10"
                                     title="Delete image"
                                     style="backdrop-filter: blur(2px);">

@@ -1,6 +1,9 @@
+import os
+import uuid
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.core.validators import FileExtensionValidator
 
 class FarmerMessage(models.Model):
     """Messages from farmers through Mkulima Smart app"""
@@ -48,6 +51,182 @@ class FarmerMessage(models.Model):
         
     def __str__(self):
         return f"{self.farmer_name} - {self.subject[:50]}"
+
+
+def chat_media_upload_path(instance, filename):
+    """Generate upload path for chat media files"""
+    ext = filename.split('.')[-1].lower()
+    # Generate a unique filename with timestamp and random string
+    unique_id = f"{int(timezone.now().timestamp())}_{uuid.uuid4().hex[:8]}"
+    filename = f"{unique_id}.{ext}"
+    # Create a path like: chat_media/user_id/YYYY/MM/DD/filename.extension
+    date_path = timezone.now().strftime('%Y/%m/%d')
+    return os.path.join('chat_media', str(instance.uploaded_by.id), date_path, filename)
+
+
+class ChatMedia(models.Model):
+    """
+    Model for storing chat media files (images, documents, etc.)
+    """
+    MEDIA_TYPES = [
+        ('image', 'Image'),
+        ('document', 'Document'),
+        ('audio', 'Audio'),
+        ('video', 'Video'),
+        ('other', 'Other'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    file = models.FileField(
+        upload_to=chat_media_upload_path,
+        validators=[
+            FileExtensionValidator(allowed_extensions=[
+                'jpg', 'jpeg', 'png', 'gif', 'webp',  # Images
+                'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods',  # Documents
+                'mp3', 'wav', 'ogg', 'm4a',  # Audio
+                'mp4', 'mov', 'avi', 'webm', 'mkv',  # Video
+                'txt', 'csv', 'json', 'zip', 'rar'  # Text & Archives
+            ])
+        ]
+    )
+    file_name = models.CharField(max_length=255, help_text="Original filename")
+    file_size = models.PositiveIntegerField(help_text="File size in bytes")
+    mime_type = models.CharField(max_length=100, help_text="File MIME type")
+    message_type = models.CharField(
+        max_length=10, 
+        choices=MEDIA_TYPES, 
+        default='document',
+        help_text="Type of media file"
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        related_name='uploaded_chat_media',
+        help_text="User who uploaded the file"
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, help_text="When the file was uploaded")
+    expires_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="When the file should expire (optional)"
+    )
+    is_encrypted = models.BooleanField(
+        default=False,
+        help_text="Whether the file is encrypted"
+    )
+    encryption_key = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Encryption key (if applicable)"
+    )
+    
+    # Add a method to get the public URL for the file
+    def get_absolute_url(self):
+        """Get the absolute URL for this media file"""
+        if not self.file or not hasattr(self.file, 'url'):
+            return ""
+        
+        # Check if we're in debug mode
+        debug = getattr(settings, 'DEBUG', False)
+        
+        if not debug:
+            return self.file.url
+            
+        # In debug mode, try to get the current request for better URL construction
+        try:
+            # Try to get request from thread local
+            from threading import local
+            _thread_locals = local()
+            
+            if hasattr(_thread_locals, 'request'):
+                request = _thread_locals.request
+            else:
+                # Fallback to creating a dummy request with default values
+                from django.http import HttpRequest
+                request = HttpRequest()
+                request.META = {}
+                request.META['SERVER_NAME'] = 'localhost'
+                request.META['SERVER_PORT'] = '8000'
+            
+            # Build the URL
+            scheme = 'https' if getattr(request, 'is_secure', lambda: False)() else 'http'
+            host = request.get_host() if hasattr(request, 'get_host') else 'localhost:8000'
+            
+            # Ensure we have a proper host
+            if not host or host == 'testserver':
+                host = 'localhost:8000'
+            
+            # Ensure the URL is properly formatted
+            file_url = self.file.url
+            if not file_url.startswith('/'):
+                file_url = f'/{file_url}'
+            
+            return f"{scheme}://{host}{file_url}"
+                
+        except Exception as e:
+            # If anything fails, fall back to a simple URL
+            return f"http://localhost:8000{self.file.url}"
+        
+        # In production, use the storage's URL method
+        return self.file.url
+    
+    # Add a property for backward compatibility
+    @property
+    def file_url(self):
+        return self.get_absolute_url()
+        
+    def __str__(self):
+        return f"{self.file_name} ({self.get_message_type_display()})"
+        
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Chat Media'
+        verbose_name_plural = 'Chat Media'
+    
+    # Metadata
+    width = models.PositiveIntegerField(null=True, blank=True, help_text="Image width in pixels")
+    height = models.PositiveIntegerField(null=True, blank=True, help_text="Image height in pixels")
+    duration = models.FloatField(null=True, blank=True, help_text="Media duration in seconds")
+    
+    class Meta:
+        verbose_name = 'Chat Media'
+        verbose_name_plural = 'Chat Media'
+        ordering = ['-uploaded_at']
+    
+    def __str__(self):
+        return f"{self.file_name} ({self.get_message_type_display()})"
+    
+    def file_url(self):
+        """Get the full URL for the file"""
+        if self.file and hasattr(self.file, 'url'):
+            return self.file.url
+        return None
+    
+    def file_extension(self):
+        """Get the file extension in lowercase"""
+        return os.path.splitext(self.file_name)[1].lower()
+    
+    def is_image(self):
+        """Check if the file is an image"""
+        return self.mime_type.startswith('image/') or self.file_extension() in ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+    
+    def is_document(self):
+        """Check if the file is a document"""
+        return self.mime_type.startswith('application/') or self.file_extension() in ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv']
+    
+    def is_media(self):
+        """Check if the file is a media file (audio/video)"""
+        return self.mime_type.startswith(('audio/', 'video/')) or self.file_extension() in ['.mp3', '.wav', '.ogg', '.mp4', '.mov', '.avi']
+    
+    def delete(self, *args, **kwargs):
+        """Delete the file from storage when the model is deleted"""
+        if self.file:
+            storage, path = self.file.storage, self.file.path
+            super().delete(*args, **kwargs)
+            storage.delete(path)
+        else:
+            super().delete(*args, **kwargs)
+
 
 class GovernmentReply(models.Model):
     """Government replies to farmer messages"""

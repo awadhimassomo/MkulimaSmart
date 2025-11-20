@@ -60,7 +60,7 @@ def government_login(request):
                 # Check if user has permission to access government dashboard
                 if user.is_staff or user.is_superuser:
                     login(request, user)
-                    messages.success(request, f'Welcome to GOVA PP Dashboard, {user.get_full_name() or user.phone_number}!')
+                    messages.success(request, f'Welcome to GOV  APP Dashboard, {user.get_full_name() or user.phone_number}!')
                     return redirect('gova_pp:dashboard')
                 else:
                     messages.error(request, 'You do not have permission to access the government dashboard.')
@@ -79,7 +79,7 @@ def government_logout(request):
 
 @government_login_required
 def dashboard(request):
-    """Main GOVA PP dashboard"""
+    """Main GOV APP dashboard"""
     # Get statistics
     total_messages = FarmerMessage.objects.count()
     new_messages = FarmerMessage.objects.filter(status='new').count()
@@ -579,6 +579,43 @@ def reports(request):
     }
     
     return render(request, 'gova_pp/reports.html', context)
+
+
+@government_login_required
+@require_http_methods(["POST"])
+def delete_message_image(request, message_id):
+    """Delete image from a farmer message"""
+    try:
+        message = get_object_or_404(FarmerMessage, id=message_id)
+        
+        # Delete the image file if it exists
+        if message.image_file:
+            try:
+                message.image_file.delete(save=False)
+            except Exception as e:
+                print(f"Error deleting image file: {e}")
+        
+        # Clear image-related fields
+        message.image_url = None
+        message.image_file = None
+        message.has_image = False
+        message.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Image deleted successfully'
+        })
+        
+    except FarmerMessage.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Message not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 @csrf_exempt
