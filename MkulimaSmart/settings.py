@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-!%u-pkmyt&9%(=(vfy%c2=3z2j327#pv$365=rn2kcqdt%c1mn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.90.70', '*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.90.70', 'mkulimasmart.co.tz', 'www.mkulimasmart.co.tz']
 
 
 # Custom user model
@@ -108,6 +108,12 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://www.mkulimasmart.co.tz",
+    "https://mkulimasmart.co.tz",  # if you want both with and without www
+]
+
 
 
 # Database
