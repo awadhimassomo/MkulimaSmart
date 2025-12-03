@@ -4,21 +4,503 @@
 {% block title %}GOV APP - Message Details{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    /* ... (Your existing CSS styles remain here) ... */
-    .message-header {
-        background: linear-gradient(135deg, #395144 0%, #4E6C50 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
+    * {
+        font-family: 'Inter', sans-serif;
     }
-    /* ... (rest of styles: content-card, reply-card, etc.) ... */
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+    }
+
+    /* Split Screen Container */
+    .split-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        height: calc(100vh - 120px);
+        max-width: 1800px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    /* Panel Base Styles */
+    .chat-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: all 0.3s ease;
+    }
+
+    .chat-panel:hover {
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+    /* Panel Headers */
+    .panel-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        background: linear-gradient(135deg, #1A3316 0%, #2D5A27 100%);
+        color: white;
+    }
+
+    .ai-panel .panel-header {
+        background: linear-gradient(135deg, #C5D86D 0%, #B5C95A 100%);
+        color: #1A3316;
+    }
+
+    .panel-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .panel-subtitle {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin-top: 0.25rem;
+    }
+
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    /* Messages Area */
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 2rem;
+        background: #fafbfc;
+    }
+
+    .message-bubble {
+        max-width: 75%;
+        margin-bottom: 1.5rem;
+        animation: messageSlideIn 0.3s ease-out;
+    }
+
+    @keyframes messageSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message-bubble.sent {
+        margin-left: auto;
+    }
+
+    .message-content {
+        padding: 1rem 1.25rem;
+        border-radius: 18px;
+        position: relative;
+        word-wrap: break-word;
+    }
+
+    .message-bubble.received .message-content {
+        background: white;
+        color: #1f2937;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border-bottom-left-radius: 4px;
+    }
+
+    .message-bubble.sent .message-content {
+        background: linear-gradient(135deg, #2D5A27 0%, #4A7C3A 100%);
+        color: white;
+        box-shadow: 0 2px 12px rgba(45, 90, 39, 0.3);
+        border-bottom-right-radius: 4px;
+    }
+
+    .message-meta {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .message-bubble.sent .message-meta {
+        justify-content: flex-end;
+    }
+
+    /* AI Message Styles */
+    .ai-message {
+        background: linear-gradient(135deg, #f8faf5 0%, #f0f4e8 100%);
+        border-left: 3px solid #C5D86D;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .ai-message-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #2D5A27;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .ai-message-text {
+        color: #374151;
+        line-height: 1.6;
+    }
+
+    /* Suggested Actions */
+    .suggested-actions {
+        padding: 1.5rem 2rem;
+        background: white;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .suggested-actions-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 0.75rem;
+    }
+
+    .action-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .action-pill {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border: 1px solid #d1d5db;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .action-pill:hover {
+        background: linear-gradient(135deg, #C5D86D 0%, #B5C95A 100%);
+        color: #1A3316;
+        border-color: #C5D86D;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(197, 216, 109, 0.3);
+    }
+
+    /* Input Area */
+    .input-container {
+        padding: 1.5rem 2rem;
+        background: white;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .input-wrapper {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+
+    .input-field {
+        flex: 1;
+        min-height: 44px;
+        max-height: 120px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        resize: none;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .input-field:focus {
+        outline: none;
+        border-color: #2D5A27;
+        box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+    }
+
+    .ai-panel .input-field:focus {
+        border-color: #C5D86D;
+        box-shadow: 0 0 0 3px rgba(197, 216, 109, 0.1);
+    }
+
+    .send-button {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #2D5A27 0%, #4A7C3A 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .send-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(45, 90, 39, 0.3);
+    }
+
+    .send-button:active {
+        transform: scale(0.95);
+    }
+
+    .ai-panel .send-button {
+        background: linear-gradient(135deg, #C5D86D 0%, #B5C95A 100%);
+        color: #1A3316;
+    }
+
+    .ai-panel .send-button:hover {
+        box-shadow: 0 4px 12px rgba(197, 216, 109, 0.3);
+    }
+
+    .attach-button {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #f3f4f6;
+        color: #6b7280;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .attach-button:hover {
+        background: #e5e7eb;
+        transform: scale(1.05);
+    }
+
+    /* Typing Indicator */
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        max-width: 100px;
+        margin-bottom: 1rem;
+    }
+
+    .typing-dots {
+        display: flex;
+        gap: 4px;
+    }
+
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #9ca3af;
+        animation: typingBounce 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+
+        0%,
+        60%,
+        100% {
+            transform: translateY(0);
+        }
+
+        30% {
+            transform: translateY(-8px);
+        }
+    }
+
+    /* Mobile Tabs */
+    .mobile-tabs {
+        display: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .split-container {
+            grid-template-columns: 1fr;
+            height: calc(100vh - 180px);
+        }
+
+        .mobile-tabs {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .mobile-tab {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-tab.active {
+            background: linear-gradient(135deg, #2D5A27 0%, #4A7C3A 100%);
+            color: white;
+        }
+
+        .chat-panel {
+            display: none;
+        }
+
+        .chat-panel.active {
+            display: flex;
+        }
+
+        .message-bubble {
+            max-width: 85%;
+        }
+    }
+
+    /* File Preview */
+    .file-preview {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .message-bubble.received .file-preview {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    /* Scrollbar Styling */
+    .messages-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .messages-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .messages-container::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+    }
+
+    .messages-container::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+
+    /* Context Panel */
+    .context-panel {
+        background: linear-gradient(135deg, #f0f4e8 0%, #e8f0dc 100%);
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border-left: 3px solid #C5D86D;
+    }
+
+    .context-title {
+        font-weight: 600;
+        color: #2D5A27;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .context-item {
+        font-size: 0.875rem;
+        color: #1A3316;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Loading Animation */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen">
+    <!-- Header -->
     <div class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
@@ -27,7 +509,8 @@
                     <p class="text-gray-600 mt-1">Communication with {{ message.farmer_name }}</p>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="{% url 'gova_pp:messages_list' %}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                    <a href="{% url 'gova_pp:messages_list' %}"
+                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Messages
                     </a>
                 </div>
@@ -35,451 +518,377 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="message-header">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-2xl font-bold mb-2">{{ message.subject }}</h2>
-                    <div class="flex items-center space-x-4 text-sm opacity-90">
-                        <span><i class="fas fa-user mr-1"></i>{{ message.farmer_name }}</span>
-                        <span><i class="fas fa-phone mr-1"></i>{{ message.farmer_phone }}</span>
-                        {% if message.farmer_location %}
-                        <span><i class="fas fa-map-marker-alt mr-1"></i>{{ message.farmer_location }}</span>
-                        {% endif %}
-                        <span><i class="fas fa-clock mr-1"></i>{{ message.created_at|date:"M d, Y H:i" }}</span>
-                    </div>
-                </div>
-                <div class="flex flex-col items-end space-y-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="status-badge status-{{ message.status }}">{{ message.get_status_display }}</span>
-                        <span class="priority-{{ message.priority }} font-semibold">{{ message.get_priority_display }} Priority</span>
-                    </div>
-                    {% if message.assigned_to %}
-                    <span class="text-sm opacity-90">Assigned to {{ message.assigned_to.get_full_name|default:message.assigned_to.phone_number }}</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-6">
-                <div class="content-card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Original Message</h3>
-                    <div class="prose max-w-none">
-                        <p class="text-gray-700 whitespace-pre-wrap">{{ message.message }}</p>
-                    </div>
-                </div>
-
-                {% if analysis %}
-                <div class="analysis-card">
-                    </div>
-                {% endif %}
-
-                <div class="content-card">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">
-                            <i class="fas fa-comments mr-2"></i>Conversation
-                            <span id="message-count" class="text-sm font-normal text-gray-500 ml-2"></span> 
-                        </h3>
-                        <div id="connection-status" class="flex items-center text-sm">
-                            <span class="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse"></span>
-                            <span class="text-gray-600">Connecting...</span>
-                        </div>
-                    </div>
-                    
-                    <div id="chat-messages" class="space-y-3 max-h-96 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
-                        
-                        {% if replies %}
-                        {% else %}
-                        <div class="text-center py-8 no-messages">
-                            <i class="fas fa-comments text-gray-300 text-4xl mb-3"></i>
-                            <p class="text-gray-500">No messages found in history or real-time yet.</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div id="typing-indicator" style="display: none;" class="flex items-center space-x-2 text-sm text-gray-500 italic px-4 py-2 bg-gray-100 rounded-lg mb-3">
-                        <div class="flex space-x-1">
-                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
-                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-                        </div>
-                        <span>Someone is typing...</span>
-                    </div>
-                </div>
-                
-                <div class="content-card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Send Reply</h3>
-                    
-                    <input type="hidden" id="thread-id" value="{{ message.id }}">  
-                    <input type="hidden" id="current-user-id" value="{{ request.user.id }}">  
-                    <input type="hidden" id="jwt-token" value="{{ jwt_token }}">
-                    
-                    <form method="post" class="reply-form" id="message-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="reply">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Reply Type</label>
-                                <select name="reply_type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                                     {% for value, label in reply_types %}
-                                     <option value="{{ value }}">{{ label }}</option>
-                                     {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <div class="flex justify-between items-center mt-4">
-                                <div class="flex items-center space-x-3">
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" name="send_sms" class="form-checkbox rounded text-green-600 mr-2">
-                                        <span class="text-sm">Send via SMS</span>
-                                    </label>
-                                    <div class="relative">
-                                        <div class="flex flex-col space-y-2">
-                                            <label for="file-input" class="cursor-pointer bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-md inline-flex items-center transition">
-                                                <i class="fas fa-images mr-1"></i> Add Images
-                                            </label>
-                                            <input id="file-input" type="file" class="hidden" accept="image/*" multiple>
-                                            <div id="file-preview" class="flex flex-wrap gap-2 mt-2"></div>
-                                            <div id="upload-status" class="text-sm text-green-600 mt-1"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition">
-                                    Send Reply
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Reply Message</label>
-                            <textarea id="message-input" name="reply_text" rows="5" placeholder="Type your reply here..." required class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1"></textarea>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="space-y-6">
-                <div class="content-card">
-                   </div>
-                <div class="content-card">
-                   </div>
-                <div class="content-card">
-                   </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Image Modal -->
-<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center p-4" style="display: none;">
-    <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-auto relative">
-        <!-- Close Button -->
-        <button onclick="closeImageModal()" class="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg z-10" title="Close">
-            <i class="fas fa-times"></i>
+    <!-- Mobile Tabs -->
+    <div class="mobile-tabs max-w-7xl mx-auto">
+        <button class="mobile-tab active" onclick="switchTab('customer')">
+            <i class="fas fa-comments mr-2"></i>Customer Service
         </button>
-        
-        <!-- Modal Content -->
-        <div class="p-6">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Image from Conversation</h3>
-            
-            <!-- Image Display -->
-            <div class="mb-4">
-                <img id="modalImage" src="" alt="Chat image" class="max-w-full h-auto rounded-lg mx-auto">
+        <button class="mobile-tab" onclick="switchTab('ai')">
+            <i class="fas fa-robot mr-2"></i>AI Assistant
+        </button>
+    </div>
+
+    <!-- Split Screen Container -->
+    <div class="split-container">
+        <!-- Customer Service Chat Panel -->
+        <div class="chat-panel customer-panel active" id="customer-panel">
+            <!-- Header -->
+            <div class="panel-header">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="panel-title">
+                            <i class="fas fa-user-circle"></i>
+                            {{ message.farmer_name }}
+                        </div>
+                        <div class="panel-subtitle">
+                            <i class="fas fa-phone mr-1"></i>{{ message.farmer_phone }}
+                            {% if message.farmer_location %}
+                            <i class="fas fa-map-marker-alt ml-3 mr-1"></i>{{ message.farmer_location }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="status-indicator">
+                        <span class="status-dot" id="connection-status-dot"></span>
+                        <span id="connection-status-text">Connected</span>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-xs">{{ message.get_status_display
+                        }}</span>
+                    <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-xs">{{ message.get_priority_display
+                        }} Priority</span>
+                </div>
             </div>
-            
-            <!-- Action Buttons -->
-            <div class="flex gap-3 justify-center">
-                <button onclick="analyzeModalImage()" class="bg-gradient-to-r from-[#2D5A27] to-[#4A7C3A] text-white px-6 py-3 rounded-lg hover:from-[#1A3316] hover:to-[#2D5A27] transition flex items-center gap-2 shadow-md">
-                    <i class="fas fa-brain"></i>
-                    Analyze with AI
-                </button>
-                <button onclick="downloadImage()" class="bg-[#C5D86D] hover:bg-[#B5C95A] text-[#1A3316] px-6 py-3 rounded-lg transition flex items-center gap-2 shadow-md">
-                    <i class="fas fa-download"></i>
-                    Download
-                </button>
+
+            <!-- Messages -->
+            <div class="messages-container" id="chat-messages">
+                <!-- Original Message -->
+                <div class="message-bubble received">
+                    <div class="message-content">
+                        <div class="font-semibold mb-1">Original Message</div>
+                        {{ message.message }}
+                    </div>
+                    <div class="message-meta">
+                        <span>{{ message.created_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic messages will be added here via JavaScript -->
+            </div>
+
+            <!-- Typing Indicator -->
+            <div id="typing-indicator" style="display: none; padding: 0 2rem;">
+                <div class="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="file" id="file-input" style="display: none;" accept="image/*" multiple>
+                    <button class="attach-button" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <textarea id="message-input" class="input-field" placeholder="Type your message..."
+                        rows="1"></textarea>
+                    <button class="send-button" id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Assistant Panel -->
+        <div class="chat-panel ai-panel" id="ai-panel">
+            <!-- Header -->
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-robot"></i>
+                    AI Assistant
+                </div>
+                <div class="panel-subtitle">
+                    Context-aware support for your conversation
+                </div>
+            </div>
+
+            <!-- AI Messages -->
+            <div class="messages-container" id="ai-messages">
+                <!-- Context Panel -->
+                <div class="context-panel">
+                    <div class="context-title">
+                        <i class="fas fa-info-circle mr-1"></i>Conversation Context
+                    </div>
+                    <div class="context-item"><strong>Farmer:</strong> {{ message.farmer_name }}</div>
+                    <div class="context-item"><strong>Subject:</strong> {{ message.subject }}</div>
+                    <div class="context-item"><strong>Status:</strong> {{ message.get_status_display }}</div>
+                    <div class="context-item"><strong>Priority:</strong> {{ message.get_priority_display }}</div>
+                </div>
+
+                <!-- Welcome Message -->
+                <div class="ai-message">
+                    <div class="ai-message-header">
+                        <i class="fas fa-sparkles"></i>
+                        AI Assistant
+                    </div>
+                    <div class="ai-message-text">
+                        Hello! I'm here to help you respond to this farmer's inquiry. I can:
+                        <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                            <li>Suggest relevant responses</li>
+                            <li>Provide agricultural information</li>
+                            <li>Help draft professional replies</li>
+                            <li>Analyze attached images</li>
+                        </ul>
+                        Ask me anything!
+                    </div>
+                </div>
+
+                <!-- Dynamic AI messages will be added here -->
+            </div>
+
+            <!-- Suggested Actions -->
+            <div class="suggested-actions">
+                <div class="suggested-actions-title">Quick Actions</div>
+                <div class="action-pills">
+                    <button class="action-pill" onclick="askAI('What agricultural advice can I provide?')">
+                        <i class="fas fa-seedling mr-1"></i>Crop Advice
+                    </button>
+                    <button class="action-pill" onclick="askAI('Draft a professional response')">
+                        <i class="fas fa-pen mr-1"></i>Draft Response
+                    </button>
+                    <button class="action-pill" onclick="askAI('Summarize this conversation')">
+                        <i class="fas fa-list mr-1"></i>Summarize
+                    </button>
+                    <button class="action-pill" onclick="askAI('Suggest next steps')">
+                        <i class="fas fa-forward mr-1"></i>Next Steps
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Input Area -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea id="ai-input" class="input-field" placeholder="Ask AI anything about this conversation..."
+                        rows="1"></textarea>
+                    <button class="send-button" id="ai-send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Hidden Inputs for WebSocket -->
+<input type="hidden" id="thread-id" value="{{ message.id }}">
+<input type="hidden" id="current-user-id" value="{{ request.user.id }}">
+<input type="hidden" id="jwt-token" value="{{ jwt_token }}">
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/ai_assistant.js' %}"></script>
 <script src="{% static 'js/crypto-utils.js' %}"></script>
 <script src="{% static 'js/chat.js' %}"></script>
 <script>
-// Check all images for errors on page load
-document.addEventListener('DOMContentLoaded', () => {
-    // Check for broken images immediately after page loads
-    setTimeout(() => {
-        const images = document.querySelectorAll('.message-image');
-        images.forEach(img => {
-            if (img.complete && img.naturalHeight === 0) {
-                const messageId = img.getAttribute('data-message-id');
-                if (messageId && typeof handleImageError === 'function') {
-                    handleImageError(img, parseInt(messageId));
-                }
-            }
+    // Auto-resize textareas
+    document.querySelectorAll('.input-field').forEach(textarea => {
+        textarea.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
-    }, 100);
-    
-    // Initialize WebSocket chat manager
-    // ... (Full initialization script from the last response goes here) ...
-    const threadIdEl = document.getElementById('thread-id');
-    const userIdEl = document.getElementById('current-user-id');
-    const tokenEl = document.getElementById('jwt-token');
-    
-    if (threadIdEl && userIdEl && tokenEl) {
-        const threadId = threadIdEl.value;
-        const userId = userIdEl.value;
-        const token = tokenEl.value;
-        
-        console.log(' Initializing chat manager...');
-        
-        window.chatManager = new ChatManager(threadId, userId);
-        window.chatManager.connect(token);
-        
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
+    });
 
-        if (messageForm && messageInput) {
-            messageForm.addEventListener('submit', (e) => {
-                e.preventDefault(); 
+    // Mobile tab switching
+    function switchTab(tab) {
+        const customerPanel = document.getElementById('customer-panel');
+        const aiPanel = document.getElementById('ai-panel');
+        const tabs = document.querySelectorAll('.mobile-tab');
+
+        tabs.forEach(t => t.classList.remove('active'));
+
+        if (tab === 'customer') {
+            tabs[0].classList.add('active');
+            customerPanel.classList.add('active');
+            aiPanel.classList.remove('active');
+        } else {
+            tabs[1].classList.add('active');
+            aiPanel.classList.add('active');
+            customerPanel.classList.remove('active');
+        }
+    }
+
+    // Initialize WebSocket chat
+    document.addEventListener('DOMContentLoaded', () => {
+        const threadIdEl = document.getElementById('thread-id');
+        const userIdEl = document.getElementById('current-user-id');
+        const tokenEl = document.getElementById('jwt-token');
+
+        if (threadIdEl && userIdEl && tokenEl) {
+            const threadId = threadIdEl.value;
+            const userId = userIdEl.value;
+            const token = tokenEl.value;
+
+            console.log('🚀 Initializing chat manager...');
+
+            window.chatManager = new ChatManager(threadId, userId);
+            window.chatManager.connect(token);
+
+            // Send message
+            const sendButton = document.getElementById('send-button');
+            const messageInput = document.getElementById('message-input');
+
+            sendButton.addEventListener('click', () => {
                 const text = messageInput.value.trim();
-                
                 if (text) {
                     window.chatManager.sendTextMessage(text);
                     messageInput.value = '';
-                    window.chatManager.sendTypingStatus(false);
-                    localStorage.removeItem(`draft_${threadId}`);
-                } else {
-                    console.warn('⚠️ Cannot send empty message');
+                    messageInput.style.height = 'auto';
                 }
             });
-            
-            // Typing Indicator Handler
-            messageInput.addEventListener('input', () => {
-                const text = messageInput.value.trim();
-                if (text.length > 0) {
-                    window.chatManager.sendTypingStatus(true);
-                } else {
-                    window.chatManager.sendTypingStatus(false);
+
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendButton.click();
                 }
-                
-                // Auto-save draft logic
-                clearTimeout(window.chatManager.draftTimer); 
-                window.chatManager.draftTimer = setTimeout(() => {
-                    localStorage.setItem(`draft_${threadId}`, messageInput.value);
-                }, 1000);
             });
-            
-            // Load draft on page load
-            const savedDraft = localStorage.getItem(`draft_${threadId}`);
-            if (savedDraft) { messageInput.value = savedDraft; }
-        }
-    } else {
-        console.error('❌ Required elements not found. Chat initialization failed.');
-    }
-});
-
-function analyzeImage(messageId) {
-    // ... (analyzeImage implementation) ...
-}
-
-function handleImageError(imgElement, messageId) {
-    console.warn('Image failed to load for message:', messageId);
-    
-    // Get the image container
-    const wrapper = document.getElementById(`image-wrapper-${messageId}`);
-    if (!wrapper) return;
-    
-    // Replace with error message and prominent delete button
-    wrapper.innerHTML = `
-        <div class="bg-red-50 border-2 border-red-200 rounded-lg p-6 text-center">
-            <div class="mb-4">
-                <i class="fas fa-image-slash text-red-400 text-5xl"></i>
-            </div>
-            <p class="text-red-600 font-semibold mb-2">Image Not Found</p>
-            <p class="text-gray-600 text-sm mb-4">The image file is missing or has been moved.</p>
-            <button onclick="deleteMessageImage(${messageId})" 
-                    class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg">
-                <i class="fas fa-trash-alt mr-2"></i>Remove Broken Image
-            </button>
-        </div>
-    `;
-}
-
-function deleteMessageImage(messageId) {
-    if (!confirm('Are you sure you want to delete this image reference?')) {
-        return;
-    }
-    
-    console.log('Deleting image for message:', messageId);
-    
-    // Show loading state
-    const wrapper = document.getElementById(`image-wrapper-${messageId}`);
-    if (wrapper) {
-        wrapper.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i><p class="text-gray-500 mt-2">Deleting...</p></div>';
-    }
-    
-    // Send delete request to backend
-    // Use correct URL with language prefix and hyphen (gova-pp not gova_pp)
-    const currentPath = window.location.pathname;
-    const languageMatch = currentPath.match(/^\/(en|sw)\//);  // Match /en/ or /sw/
-    const languageCode = languageMatch ? languageMatch[1] : 'en';
-    
-    fetch(`/${languageCode}/gova-pp/messages/${messageId}/delete-image/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({
-            message_id: messageId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove entire image section from UI
-            const imageSection = document.getElementById(`image-section-${messageId}`);
-            if (imageSection) {
-                imageSection.innerHTML = '<div class="bg-green-50 border border-green-200 rounded-lg p-3 text-center"><i class="fas fa-check-circle text-green-600 mr-2"></i><span class="text-green-700">Image reference removed successfully</span></div>';
-                
-                // Fade out after 3 seconds
-                setTimeout(() => {
-                    imageSection.style.transition = 'opacity 0.5s';
-                    imageSection.style.opacity = '0';
-                    setTimeout(() => imageSection.remove(), 500);
-                }, 3000);
-            }
-        } else {
-            alert('Failed to delete image: ' + (data.error || 'Unknown error'));
-            // Restore the error state
-            if (wrapper) {
-                wrapper.innerHTML = '<div class="text-red-600 p-4">Failed to delete. Please try again.</div>';
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error deleting image:', error);
-        alert('Failed to delete image. Please try again.');
-        if (wrapper) {
-            wrapper.innerHTML = '<div class="text-red-600 p-4">Network error. Please try again.</div>';
         }
     });
-}
 
-// Helper function to get CSRF token
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+    // AI Assistant Functions
+    let aiMessageCount = 0;
+
+    function askAI(question) {
+        const aiInput = document.getElementById('ai-input');
+        aiInput.value = question;
+        sendAIMessage();
+    }
+
+    function sendAIMessage() {
+        const aiInput = document.getElementById('ai-input');
+        const text = aiInput.value.trim();
+
+        if (!text) return;
+
+        // Add user question to AI chat
+        addAIMessage(text, 'user');
+        aiInput.value = '';
+        aiInput.style.height = 'auto';
+
+        // Show loading
+        const loadingId = 'loading-' + Date.now();
+        addAIMessage('<div class="loading-spinner"></div> Thinking...', 'ai', loadingId);
+
+        // Simulate AI response (replace with actual API call)
+        setTimeout(() => {
+            removeAIMessage(loadingId);
+
+            // Generate contextual response based on the question
+            let response = getAIResponse(text);
+            addAIMessage(response, 'ai');
+        }, 1500);
+    }
+
+    function getAIResponse(question) {
+        const lowerQuestion = question.toLowerCase();
+
+        if (lowerQuestion.includes('crop') || lowerQuestion.includes('agricultural')) {
+            return `Based on the farmer's location and season, I recommend:
+        <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+            <li>Check current weather conditions</li>
+            <li>Consider drought-resistant crops</li>
+            <li>Suggest irrigation best practices</li>
+            <li>Provide pest control information</li>
+        </ul>
+        Would you like me to draft a detailed response?`;
+        } else if (lowerQuestion.includes('draft') || lowerQuestion.includes('response')) {
+            return `Here's a professional response draft:
+        <div style="background: white; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; color: #374151;">
+        "Dear ${document.querySelector('.panel-title') ? document.querySelector('.panel-title').textContent.trim().split('\n')[1].trim() : 'Farmer'},
+        
+        Thank you for reaching out. Based on your inquiry, I recommend...
+        
+        Best regards,
+        Government Agricultural Extension"
+        </div>
+        Click "Copy to Customer Chat" to use this response.`;
+        } else if (lowerQuestion.includes('summarize')) {
+            return `<strong>Conversation Summary:</strong>
+        <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+            <li><strong>Topic:</strong> {{ message.subject }}</li>
+            <li><strong>Status:</strong> {{ message.get_status_display }}</li>
+            <li><strong>Priority:</strong> {{ message.get_priority_display }}</li>
+            <li><strong>Messages:</strong> ${document.querySelectorAll('#chat-messages .message-bubble').length} exchanged</li>
+        </ul>`;
+        } else if (lowerQuestion.includes('next steps')) {
+            return `<strong>Recommended Next Steps:</strong>
+        <ol style="margin-top: 0.5rem; margin-left: 1.5rem;">
+            <li>Acknowledge the farmer's concern</li>
+            <li>Provide specific agricultural guidance</li>
+            <li>Offer follow-up resources</li>
+            <li>Schedule a site visit if needed</li>
+            <li>Update case status to "In Progress"</li>
+        </ol>`;
+        } else {
+            return `I understand you're asking about "${question}". 
+        
+        I can help you with:
+        • Agricultural advice and recommendations
+        • Drafting professional responses
+        • Analyzing the conversation context
+        • Suggesting action items
+        
+        What specific aspect would you like help with?`;
         }
     }
-    return cookieValue;
-}
 
-// Image Modal Functions
-let currentModalImageUrl = '';
-let currentModalMediaId = '';
+    function addAIMessage(text, sender, id = null) {
+        const aiMessages = document.getElementById('ai-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = sender === 'user' ? 'message-bubble sent' : 'ai-message';
+        if (id) messageDiv.id = id;
 
-function openImageModal(imageUrl, mediaId) {
-    currentModalImageUrl = imageUrl;
-    currentModalMediaId = mediaId;
-    
-    const modal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    
-    modalImage.src = imageUrl;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    
-    // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
-}
+        if (sender === 'user') {
+            messageDiv.innerHTML = `
+            <div class="message-content" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                ${text}
+            </div>
+            <div class="message-meta" style="justify-content: flex-end;">
+                <span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+        `;
+        } else {
+            messageDiv.innerHTML = `
+            <div class="ai-message-header">
+                <i class="fas fa-robot"></i>
+                AI Assistant
+            </div>
+            <div class="ai-message-text">
+                ${text}
+            </div>
+        `;
+        }
 
-function closeImageModal() {
-    const modal = document.getElementById('imageModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    
-    // Restore body scroll
-    document.body.style.overflow = '';
-}
-
-function analyzeModalImage() {
-    // Get the message ID from the current page URL
-    const messageId = {{ message.id }};
-    
-    // Close modal and trigger the existing analyze function
-    closeImageModal();
-    
-    // Scroll to analysis section or trigger analysis
-    if (typeof analyzeImage === 'function') {
-        analyzeImage(messageId);
-    } else {
-        // Fallback: redirect to analysis
-        const currentPath = window.location.pathname;
-        const languageMatch = currentPath.match(/^\/(en|sw)\//);  
-        const languageCode = languageMatch ? languageMatch[1] : 'en';
-        window.location.href = `/${languageCode}/gova-pp/messages/${messageId}/analyze/`;
+        aiMessages.appendChild(messageDiv);
+        aiMessages.scrollTop = aiMessages.scrollHeight;
     }
-}
 
-function downloadImage() {
-    if (!currentModalImageUrl) return;
-    
-    // Create temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = currentModalImageUrl;
-    link.download = currentModalImageUrl.split('/').pop() || 'image.jpg';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// Close modal on escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeImageModal();
+    function removeAIMessage(id) {
+        const element = document.getElementById(id);
+        if (element) element.remove();
     }
-});
 
-// Close modal when clicking outside the content
-document.getElementById('imageModal')?.addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeImageModal();
-    }
-});
-
-// Event delegation for dynamically added images in chat
-// This works even if chat.js is cached!
-document.addEventListener('click', function(e) {
-    // Check if clicked element is an image in the conversation
-    if (e.target.tagName === 'IMG' && e.target.closest('#conversation-messages')) {
-        const imgSrc = e.target.src;
-        const mediaId = e.target.getAttribute('data-media-id') || 'unknown';
-        
-        console.log('Image clicked via delegation:', imgSrc);
-        openImageModal(imgSrc, mediaId);
-    }
-});
-
-function insertTemplate(text) {
-    const textarea = document.getElementById('message-input');
-    if (textarea) {
-        textarea.value = text;
-        textarea.focus();
-    }
-}
+    // AI send button
+    document.getElementById('ai-send-button')?.addEventListener('click', sendAIMessage);
+    document.getElementById('ai-input')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendAIMessage();
+        }
+    });
 </script>
 {% endblock %}

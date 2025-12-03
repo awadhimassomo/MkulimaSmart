@@ -5,6 +5,7 @@ from . import api_views
 from . import auth_api
 from . import chat_api
 from . import webhook_views
+from . import ai_views
 from django.conf import settings
 
 app_name = 'gova_pp'
@@ -12,6 +13,7 @@ app_name = 'gova_pp'
 # Set up DRF router for API endpoints
 router = DefaultRouter()
 router.register(r'api/messages', api_views.MessageViewSet, basename='message')
+router.register(r'api/chat-media', api_views.ChatMediaViewSet, basename='chat-media')
 
 urlpatterns = [
     # Authentication
@@ -35,6 +37,11 @@ urlpatterns = [
     
     # Image Analysis
     path('analyze-image/<int:message_id>/', views.analyze_image, name='analyze_image'),
+    
+    # AI Assistant endpoints
+    path('api/ai/chat/', ai_views.ai_chat, name='ai_chat'),
+    path('api/ai/suggest/<int:thread_id>/', ai_views.suggest_response, name='suggest_response'),
+    path('api/ai/analyze/<int:thread_id>/', ai_views.analyze_conversation, name='analyze_conversation'),
     
     # API endpoints
     path('api/receive-message/', views.receive_farmer_message, name='receive_farmer_message'),

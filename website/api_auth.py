@@ -91,9 +91,11 @@ class UserLogoutAPIView(APIView):
     
     def post(self, request):
         try:
-            refresh_token = request.data['refresh']
-            token = RefreshToken(refresh_token)
-            token.blacklist()
+            refresh_token = request.data.get('refresh')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            
             logout(request)
             return Response({
                 'status': 'success',

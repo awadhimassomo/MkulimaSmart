@@ -120,6 +120,50 @@ class ChatMedia(models.Model):
         help_text="Encryption key (if applicable)"
     )
     
+    thumbnail = models.ImageField(
+        upload_to='chat_media/thumbnails/', 
+        blank=True, 
+        null=True,
+        help_text="Thumbnail for image files"
+    )
+
+    def save(self, *args, **kwargs):
+        # Generate thumbnail if it's an image and doesn't have one
+        if self.file and self.is_image() and not self.thumbnail:
+            try:
+                self.make_thumbnail()
+            except Exception as e:
+                # Don't block saving if thumbnail generation fails
+                print(f"Error generating thumbnail: {e}")
+                
+        super().save(*args, **kwargs)
+
+    def make_thumbnail(self):
+        from PIL import Image
+        from io import BytesIO
+        from django.core.files.base import ContentFile
+        
+        # Open the original image
+        img = Image.open(self.file)
+        
+        # Convert to RGB if necessary
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+            
+        # Resize maintaining aspect ratio
+        img.thumbnail((300, 300))
+        
+        # Save to memory
+        thumb_io = BytesIO()
+        img.save(thumb_io, 'JPEG', quality=85)
+        
+        # Create a filename for the thumbnail
+        name = os.path.basename(self.file.name)
+        thumb_name = f"thumb_{name}"
+        
+        # Save the thumbnail to the field
+        self.thumbnail.save(thumb_name, ContentFile(thumb_io.getvalue()), save=False)
+    
     # Add a method to get the public URL for the file
     def get_absolute_url(self):
         """Get the absolute URL for this media file"""

@@ -84,6 +84,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.handle_media_ack(data)
                 elif message_type == 'text_message':
                     await self.handle_text_message(data)
+                elif message_type == 'message_new':
+                    await self.handle_message_new(data)
                 else:
                     logger.warning(f"Unknown message type: {message_type}")
                     await self.send_error("unknown_message_type", "Unsupported message type")
@@ -224,12 +226,49 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # For now, we'll just acknowledge receipt
         await self.send_ack("binary_data", "received")
     
+    async def handle_message_new(self, data):
+        """Handle message_new type from client (flat structure)."""
+        try:
+            text = data.get('text', '').strip()
+            if not text:
+                raise ValueError("Message text cannot be empty")
+            
+            # Create message in database
+            message = await self.create_message(
+                thread_id=self.thread_id,
+                user_id=self.user.id,
+                text=text
+            )
+            
+            # Broadcast to all in the thread
+            await self.channel_layer.group_send(
+                self.thread_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': {
+                        'id': str(message.id),
+                        'text': message.text,
+                        'sender_id': self.user.id,
+                        'sender_name': self.user.get_full_name(),
+                        'timestamp': message.created_at.isoformat(),
+                        'type': 'text'
+                    }
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Error handling message_new: {str(e)}", exc_info=True)
+            await self.send_error("message_error", str(e))
+
     async def chat_message(self, event):
         """Send chat message to WebSocket."""
-        await self.send(text_data=json.dumps({
-            'type': 'chat_message',
-            'message': event['message']
-        }))
+        # Flatten the message for the client and use 'message_new' type
+        message_data = event['message']
+        response = {
+            'type': 'message_new',
+            **message_data
+        }
+        await self.send(text_data=json.dumps(response))
     
     async def send_ack(self, media_id, status):
         """Send acknowledgment for a media message."""

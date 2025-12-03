@@ -177,6 +177,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "text": caption,
                     "media_id": media_id,
                     "media_url": media_url,
+                    "thumbnail_url": media.thumbnail.url if media and media.thumbnail else None,
+                    "media_type": "image" if media and media.is_image() else "other",
+                    "mime_type": media.mime_type if media else None,
                     "has_media": True,
                     "sender_id": self.scope["user"].id,
                     "sender": self.scope["user"].id,
@@ -197,6 +200,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "event": t, 
                 "payload": {"user": self.scope["user"].id}
             })
+        elif t == "ping":
+            # Just acknowledge pings to keep connection alive/happy and logs clean
+            await self.send(text_data=json.dumps({"type": "pong"}))
         else:
             logger.warning(f"[WEBSOCKET] [Thread:{self.thread_id}] Unknown message type: {t}")
 
@@ -251,6 +257,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "has_media": event["has_media"],
             "media_id": event["media_id"],
             "media_mime": event["media_mime"],
+            "thumbnail_url": event.get("thumbnail_url"),
             "timestamp": event["timestamp"],
         }
         
@@ -276,6 +283,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "success": True,       # Flutter also checks for success == true
             "type": "media_ack",   # Optional but good practice
             "media_url": event.get("media_url"),
+            "thumbnail_url": event.get("thumbnail_url"),
             "uploaded_by": event.get("uploaded_by"),
             "timestamp": event.get("timestamp")
         }

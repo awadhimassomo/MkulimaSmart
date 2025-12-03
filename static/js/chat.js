@@ -35,7 +35,7 @@ async function decryptAndRenderImage({ containerEl, mediaUrl, nonceB64, wrappedK
             console.error('Missing required parameters for decryptAndRenderImage');
             return;
         }
-        
+
         // Show loading state
         containerEl.innerHTML = `
             <div class="flex items-center justify-center p-4">
@@ -43,7 +43,7 @@ async function decryptAndRenderImage({ containerEl, mediaUrl, nonceB64, wrappedK
                 <span class="ml-2 text-gray-600">Decrypting...</span>
             </div>
         `;
-        
+
         // Here you would add the actual decryption logic
         // For now, we'll just set the image source directly
         containerEl.innerHTML = `
@@ -84,7 +84,7 @@ class ChatManager {
             console.log('⚠️ WebSocket already connected or connecting, skipping...');
             return;
         }
-        
+
         // Close existing connection if any
         if (this.socket) {
             console.log('Closing existing WebSocket connection...');
@@ -162,7 +162,7 @@ class ChatManager {
         this.reconnectAttempts++;
 
         console.log(`Will attempt to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-        
+
         this.reconnectTimeout = setTimeout(() => {
             if (!this.connected) {
                 console.log('Attempting to reconnect...');
@@ -191,7 +191,7 @@ class ChatManager {
 
     sendTextMessage(text) {
         console.log('📝 Sending text message:', text);
-        
+
         // Display message locally immediately for sender
         const localMessage = {
             type: 'message.created',
@@ -202,7 +202,7 @@ class ChatManager {
             has_media: false
         };
         this.addMessageToChat(localMessage);
-        
+
         // Send to other participant via WebSocket
         return this.sendMessage({
             type: 'message_new',
@@ -224,10 +224,14 @@ class ChatManager {
         try {
             console.log('📨 Received message:', data);
             const messageType = data.type || 'unknown';
-            
+
             switch (messageType) {
                 case 'message_new':
                     this.handleNewMessage(data);
+                    break;
+                case 'media_ack':
+                    console.log('✅ Media upload acknowledged:', data);
+                    // Media acknowledgment - just log it, the image will appear via message_new
                     break;
                 case 'typing_start':
                     this.handleTypingStart(data);
@@ -250,7 +254,7 @@ class ChatManager {
             console.log('⚠️ Duplicate message detected, skipping:', messageId);
             return;
         }
-        
+
         // Add to seen messages
         if (messageId) {
             this.seenMessageIds.add(messageId);
@@ -260,7 +264,7 @@ class ChatManager {
                 this.seenMessageIds.delete(firstId);
             }
         }
-        
+
         if (data.sender === this.userId) {
             console.log('Skipping own message');
             return;
@@ -276,6 +280,7 @@ class ChatManager {
             media_id: data.media_id || data.media?.id,
             media_mime: data.media_type || data.media?.type,
             media_url: data.media_url || data.media?.url,
+            thumbnail_url: data.thumbnail_url || data.media?.thumbnail_url,
             file_name: data.file_name || data.media?.file_name,
             media_nonce_b64: data.iv || data.media?.iv,
             wrapped_keys: data.wrapped_keys || data.media?.wrapped_keys
@@ -318,12 +323,11 @@ class ChatManager {
         const isCurrentUser = message.sender_id === this.userId;
         const messageEl = document.createElement('div');
         messageEl.className = `flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`;
-        
+
         const messageContent = `
-            <div class="max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg px-4 py-2 ${
-                isCurrentUser 
-                    ? 'bg-gradient-to-r from-[#2D5A27] to-[#4A7C3A] text-white rounded-br-none' 
-                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
+            <div class="max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg px-4 py-2 ${isCurrentUser
+                ? 'bg-gradient-to-r from-[#2D5A27] to-[#4A7C3A] text-white rounded-br-none'
+                : 'bg-gray-200 text-gray-800 rounded-bl-none'
             }">
                 ${message.content ? `<p class="mb-1">${message.content}</p>` : ''}
                 ${this.createMediaContent(message)}
@@ -332,7 +336,7 @@ class ChatManager {
                 </p>
             </div>
         `;
-        
+
         messageEl.innerHTML = messageContent;
         return messageEl;
     }
@@ -343,7 +347,7 @@ class ChatManager {
             media_url: message.media_url,
             media_id: message.media_id
         });
-        
+
         if (!message.has_media || !message.media_url) {
             console.log('⚠️ Skipping media - missing has_media or media_url');
             return '';
@@ -351,12 +355,12 @@ class ChatManager {
 
         console.log('🖼️ Processing media message:', message);
         console.log('  media_mime:', message.media_mime);
-        
+
         const isCurrentUser = message.sender_id === this.userId;
-        
+
         // Show image if media_mime is 'image/*' OR if it's not set but we have a media_url (fallback)
         const isImage = message.media_mime?.startsWith('image/') || !message.media_mime;
-        
+
         if (isImage) {
             if (message.media_nonce_b64 && message.wrapped_keys) {
                 return `
@@ -377,12 +381,28 @@ class ChatManager {
                     </div>
                 `;
             } else {
+                // Use thumbnail if available, otherwise fallback to full image
+                const displayUrl = message.thumbnail_url || message.media_url;
+                const fullUrl = message.media_url;
+
                 return `
                     <div class="my-2 relative group">
-                        <img src="${message.media_url}" 
-                             alt="${message.file_name || 'Image'}" 
-                             class="max-w-full h-auto rounded-lg border border-[#D4E89A] cursor-pointer hover:opacity-90 transition-opacity"
-                             onclick="openImageModal('${message.media_url}', '${message.media_id}')">
+                        <div class="relative inline-block">
+                            <!-- Loading Spinner -->
+                            <div id="loader-${message.media_id}" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg z-10">
+                                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#4A7C3A]"></div>
+                            </div>
+                            
+                            <!-- Image -->
+                            <img src="${displayUrl}" 
+                                 alt="${message.file_name || 'Image'}" 
+                                 class="max-w-full h-auto rounded-lg border border-[#D4E89A] cursor-pointer hover:opacity-90 transition-opacity"
+                                 style="max-height: 300px; min-width: 150px; min-height: 150px; object-fit: cover;"
+                                 onload="document.getElementById('loader-${message.media_id}').style.display='none'"
+                                 onerror="this.src='${fullUrl}'"
+                                 onclick="openImageModal('${fullUrl}', '${message.media_id}')">
+                        </div>
+                        
                         ${isCurrentUser ? `
                             <button onclick="event.stopPropagation(); window.chatManager.deleteImage('${message.media_id || message.timestamp}')" 
                                     class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-bold shadow-lg z-10"
@@ -395,7 +415,7 @@ class ChatManager {
                 `;
             }
         }
-        
+
         return '';
     }
 
@@ -414,19 +434,19 @@ class ChatManager {
 
     showTypingIndicator(userId) {
         if (userId === this.userId) return;
-        
+
         this.typingUsers.add(userId);
         this.updateTypingIndicator();
-        
+
         if (this.typingTimer) {
             clearTimeout(this.typingTimer);
         }
-        
+
         this.typingTimer = setTimeout(() => {
             this.hideTypingIndicator(userId);
         }, 5000);
     }
-    
+
     hideTypingIndicator(userId) {
         if (userId) {
             this.typingUsers.delete(userId);
@@ -435,13 +455,13 @@ class ChatManager {
         }
         this.updateTypingIndicator();
     }
-    
+
     updateTypingIndicator() {
         const typingContainer = document.getElementById('typing-indicator');
         if (!typingContainer) return;
-        
+
         const typingCount = this.typingUsers.size;
-        
+
         if (typingCount > 0) {
             const names = Array.from(this.typingUsers).join(', ');
             typingContainer.textContent = `${names} ${typingCount > 1 ? 'are' : 'is'} typing...`;
@@ -450,15 +470,15 @@ class ChatManager {
             typingContainer.style.display = 'none';
         }
     }
-    
+
     deleteImage(mediaId) {
         // Confirm deletion
         if (!confirm('Are you sure you want to delete this image?')) {
             return;
         }
-        
+
         console.log('Deleting image:', mediaId);
-        
+
         // Send delete message through WebSocket
         this.sendMessage({
             type: 'delete_media',
@@ -466,7 +486,7 @@ class ChatManager {
             thread_id: this.threadId,
             sender: this.userId
         });
-        
+
         // Remove image from UI immediately for better UX
         const imageContainer = document.querySelector(`#media-${mediaId}`);
         if (imageContainer) {
@@ -483,16 +503,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const threadId = document.getElementById('thread-id')?.value;
     const userId = document.getElementById('current-user-id')?.value;
     const token = document.getElementById('jwt-token')?.value;
-    
+
     if (!threadId || !userId || !token) {
         console.error('Missing required elements for chat initialization');
         return;
     }
-    
+
     // Initialize chat manager
     window.chatManager = new ChatManager(threadId, userId);
     window.chatManager.connect(token);
-    
+
     // Set up message form submission
     const messageForm = document.getElementById('message-form');
     if (messageForm) {
@@ -500,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const input = messageForm.querySelector('input[type="text"]');
             const message = input.value.trim();
-            
+
             if (message) {
                 window.chatManager.sendMessage({
                     type: 'message_new',
@@ -508,18 +528,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     thread_id: threadId,
                     sender: userId
                 });
-                
+
                 // Clear input
                 input.value = '';
             }
         });
     }
-    
+
     // Set up typing indicator
     const messageInput = document.querySelector('input[type="text"]');
     if (messageInput) {
         let typingTimeout;
-        
+
         messageInput.addEventListener('input', () => {
             // Send typing start
             window.chatManager.sendMessage({
@@ -527,12 +547,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 thread_id: threadId,
                 user: userId
             });
-            
+
             // Clear previous timeout
             if (typingTimeout) {
                 clearTimeout(typingTimeout);
             }
-            
+
             // Set timeout to send typing stop after 2 seconds of inactivity
             typingTimeout = setTimeout(() => {
                 window.chatManager.sendMessage({
@@ -544,3 +564,77 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Image Modal Functions
+function openImageModal(imageUrl, mediaId) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('image-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'image-modal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 hidden opacity-0 transition-opacity duration-300';
+        modal.innerHTML = `
+            <div class="relative max-w-4xl max-h-screen w-full h-full flex items-center justify-center p-4">
+                <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 z-50 focus:outline-none">&times;</button>
+                <img id="modal-image" src="" alt="Full size" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl transform scale-95 transition-transform duration-300">
+                <div id="modal-loader" class="absolute inset-0 flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-white"></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.closest('.relative') === e.target) {
+                closeImageModal();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeImageModal();
+            }
+        });
+    }
+
+    const modalImg = document.getElementById('modal-image');
+    const modalLoader = document.getElementById('modal-loader');
+
+    // Reset state
+    modalImg.style.display = 'none';
+    modalLoader.style.display = 'flex';
+    modalImg.src = imageUrl;
+
+    // Show modal
+    modal.classList.remove('hidden');
+    // Trigger reflow
+    void modal.offsetWidth;
+    modal.classList.remove('opacity-0');
+
+    // Handle image load
+    modalImg.onload = function () {
+        modalLoader.style.display = 'none';
+        modalImg.style.display = 'block';
+        modalImg.classList.remove('scale-95');
+        modalImg.classList.add('scale-100');
+    };
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('image-modal');
+    if (modal) {
+        modal.classList.add('opacity-0');
+        const modalImg = document.getElementById('modal-image');
+        if (modalImg) {
+            modalImg.classList.remove('scale-100');
+            modalImg.classList.add('scale-95');
+        }
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            if (modalImg) modalImg.src = '';
+        }, 300);
+    }
+}

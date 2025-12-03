@@ -43,6 +43,7 @@ LOGOUT_REDIRECT_URL = '/en/'  # Redirect after logout
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -190,6 +191,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Load API keys from environment variables for security
 import os
 OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
+
+# OpenAI API Key
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
 # Django REST Framework settings
 REST_FRAMEWORK = {
