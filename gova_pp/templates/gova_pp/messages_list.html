@@ -25,6 +25,14 @@
     .message-row:hover {
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         transform: translateY(-1px);
+        border-left-color: #2D5A27;
+    }
+
+    a.message-row {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
     }
     
     .priority-urgent { border-left-color: #dc2626; }
@@ -48,25 +56,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Farmer Messages</h1>
-                    <p class="text-gray-600 mt-1">Manage communication with farmers from Mkulima Smart</p>
-                </div>
-                <div class="flex space-x-4">
-                    <a href="{% url 'gova_pp:dashboard' %}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
-                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="bg-gray-50" style="padding: 1rem;">
         <!-- Filters -->
         <div class="filter-card">
             <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -124,7 +114,7 @@
             
             <div class="p-6">
                 {% for message in page_obj %}
-                <div class="message-row priority-{{ message.priority }}">
+                <a href="{% url 'gova_pp:message_detail' message.id %}" class="message-row priority-{{ message.priority }}">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <div class="flex items-center space-x-3 mb-2">
@@ -134,46 +124,22 @@
                                 {% if message.has_image %}
                                 <i class="fas fa-image text-blue-500" title="Has Image"></i>
                                 {% endif %}
-                                {% if message.image_analysis_requested %}
-                                <i class="fas fa-brain text-purple-500" title="Analysis Requested"></i>
-                                {% endif %}
                             </div>
                             
                             <h4 class="text-lg font-medium text-gray-800 mb-1">{{ message.subject }}</h4>
-                            <p class="text-gray-600 mb-2">{{ message.message|truncatewords:25 }}</p>
+                            <p class="text-gray-600 mb-2">{{ message.message|truncatewords:20 }}</p>
                             
                             <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                <span><i class="fas fa-phone mr-1"></i>{{ message.farmer_phone }}</span>
-                                {% if message.farmer_location %}
-                                <span><i class="fas fa-map-marker-alt mr-1"></i>{{ message.farmer_location }}</span>
-                                {% endif %}
                                 <span><i class="fas fa-clock mr-1"></i>{{ message.created_at|timesince }} ago</span>
-                                {% if message.assigned_to %}
-                                <span><i class="fas fa-user mr-1"></i>Assigned to {{ message.assigned_to.get_full_name|default:message.assigned_to.phone_number }}</span>
-                                {% endif %}
+                                <span>{{ message.replies.count }} reply{{ message.replies.count|pluralize }}</span>
                             </div>
                         </div>
                         
-                        <div class="flex flex-col items-end space-y-2">
-                            <div class="flex space-x-2">
-                                <a href="{% url 'gova_pp:message_detail' message.id %}" 
-                                   class="bg-primary text-white px-3 py-1 rounded text-sm hover:bg-primary-dark transition">
-                                    View Details
-                                </a>
-                                {% if message.has_image and not message.image_analysis_requested %}
-                                <button onclick="analyzeImage({{ message.id }})" 
-                                        class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition">
-                                    Analyze Image
-                                </button>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="text-xs text-gray-500">
-                                {{ message.replies.count }} reply{{ message.replies.count|pluralize }}
-                            </div>
+                        <div class="text-right">
+                            <i class="fas fa-chevron-right text-gray-400"></i>
                         </div>
                     </div>
-                </div>
+                </a>
                 {% empty %}
                 <div class="text-center py-12">
                     <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>

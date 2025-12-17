@@ -5,234 +5,599 @@
 
 {% block extra_css %}
 <style>
-    .stat-card {
-        background: linear-gradient(135deg, #1A3316 0%, #2D5A27 100%);
-        border-radius: 12px;
+    .dashboard-container {
         padding: 1.5rem;
+        background: #f8fafc;
+        min-height: calc(100vh - 60px);
+    }
+
+    /* Welcome Header */
+    .welcome-header {
+        background: linear-gradient(135deg, #1A3316 0%, #2D5A27 100%);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
         color: white;
-        transition: transform 0.3s ease;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
+
+    .welcome-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
     }
-    
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
+
+    .welcome-header p {
+        opacity: 0.9;
+        margin: 0;
+        font-size: 0.9rem;
     }
-    
-    .stat-label {
-        font-size: 0.875rem;
+
+    .welcome-date {
+        text-align: right;
+        font-size: 0.85rem;
         opacity: 0.9;
     }
-    
-    .message-card {
-        background: white;
-        border-radius: 8px;
-        padding: 1rem;
-        border-left: 4px solid #2D5A27;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
-    
-    .priority-urgent { border-left-color: #dc2626; }
-    .priority-high { border-left-color: #ea580c; }
-    .priority-medium { border-left-color: #f59e0b; }
-    .priority-low { border-left-color: #22c55e; }
-    
-    .status-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .stat-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stat-icon.farmers { background: #dcfce7; color: #166534; }
+    .stat-icon.messages { background: #dbeafe; color: #1e40af; }
+    .stat-icon.alerts { background: #fee2e2; color: #dc2626; }
+    .stat-icon.orders { background: #fef3c7; color: #d97706; }
+    .stat-icon.farms { background: #e0e7ff; color: #4338ca; }
+    .stat-icon.resolved { background: #d1fae5; color: #059669; }
+
+    .stat-trend {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
         font-weight: 500;
     }
-    
-    .status-new { background-color: #dbeafe; color: #1e40af; }
-    .status-in_progress { background-color: #fef3c7; color: #92400e; }
-    .status-replied { background-color: #d1fae5; color: #065f46; }
-    .status-resolved { background-color: #e5e7eb; color: #374151; }
-    
-    .analysis-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
+
+    .stat-trend.up { background: #dcfce7; color: #166534; }
+    .stat-trend.down { background: #fee2e2; color: #dc2626; }
+    .stat-trend.neutral { background: #f3f4f6; color: #6b7280; }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+
+    /* Main Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+    }
+
+    /* Cards */
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-header h3 i {
+        color: #2D5A27;
+    }
+
+    .card-body {
+        padding: 1rem 1.25rem;
+    }
+
+    .view-all-link {
+        font-size: 0.8rem;
+        color: #2D5A27;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .view-all-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
         padding: 1rem;
-        margin-bottom: 1rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #374151;
+        transition: all 0.2s;
+    }
+
+    .quick-action-btn:hover {
+        border-color: #2D5A27;
+        background: #f0fdf4;
+        color: #166534;
+    }
+
+    .quick-action-btn i {
+        font-size: 1.25rem;
+        width: 24px;
+        text-align: center;
+    }
+
+    .quick-action-btn span {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    /* Message List */
+    .message-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.875rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .message-item:last-child {
+        border-bottom: none;
+    }
+
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2D5A27 0%, #4A7C3A 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .message-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+
+    .message-name {
+        font-weight: 600;
+        color: #111827;
+        font-size: 0.9rem;
+    }
+
+    .message-time {
+        font-size: 0.7rem;
+        color: #9ca3af;
+    }
+
+    .message-subject {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+    }
+
+    .message-preview {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .message-badges {
+        display: flex;
+        gap: 0.375rem;
+        margin-top: 0.375rem;
+    }
+
+    .badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 500;
+    }
+
+    .badge-new { background: #dbeafe; color: #1e40af; }
+    .badge-in-progress { background: #fef3c7; color: #92400e; }
+    .badge-replied { background: #d1fae5; color: #065f46; }
+    .badge-urgent { background: #fee2e2; color: #dc2626; }
+    .badge-high { background: #ffedd5; color: #c2410c; }
+
+    /* Alert Item */
+    .alert-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #fef2f2;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid #dc2626;
+    }
+
+    .alert-item i {
+        color: #dc2626;
+    }
+
+    .alert-item-content {
+        flex: 1;
+    }
+
+    .alert-item-title {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #991b1b;
+    }
+
+    .alert-item-desc {
+        font-size: 0.75rem;
+        color: #b91c1c;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <img src="{% static 'images/icon.png' %}" alt="Mkulima Smart" style="height: 40px; width: auto;">
-                        <h1 class="h2 mb-0" style="color: #2D5A27;">Mkulima Smart Dashboard</h1>
-                    </div>
-                    <p class="text-muted mb-0">Government Agricultural Support & Communication Platform</p>
-                    <small class="text-muted">Welcome back, {{ user.get_full_name|default:user.phone_number }}! Manage farmer communications and provide agricultural support.</small>
-                </div>
-                <div class="text-end">
-                    <div class="badge bg-success fs-6 p-2">
-                        <i class="fas fa-users me-1"></i>
-                        {{ total_messages }} Total Messages
-                    </div>
-                </div>
-            </div>
+<div class="dashboard-container">
+    <!-- Welcome Header -->
+    <div class="welcome-header">
+        <div>
+            <h1>Welcome back, {{ user.get_full_name|default:user.phone_number }}!</h1>
+            <p>Government Agricultural Support & Communication Platform</p>
         </div>
-    </div>
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="stat-card text-center">
-                <div class="stat-number">{{ total_messages }}</div>
-                <div class="stat-label"><i class="fas fa-envelope me-1"></i>Total Messages</div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="stat-card text-center">
-                <div class="stat-number">{{ new_messages }}</div>
-                <div class="stat-label"><i class="fas fa-bell me-1"></i>New Messages</div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="stat-card text-center">
-                <div class="stat-number">{{ in_progress_messages }}</div>
-                <div class="stat-label"><i class="fas fa-clock me-1"></i>In Progress</div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="stat-card text-center">
-                <div class="stat-number">{{ urgent_messages }}</div>
-                <div class="stat-label"><i class="fas fa-exclamation-triangle me-1"></i>Urgent</div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="stat-card text-center">
-                <div class="stat-number">{{ image_requests }}</div>
-                <div class="stat-label"><i class="fas fa-camera me-1"></i>Image Analysis</div>
-            </div>
+        <div class="welcome-date">
+            <div><i class="fas fa-calendar-alt me-1"></i> {% now "l, F j, Y" %}</div>
+            <div><i class="fas fa-clock me-1"></i> {% now "g:i A" %}</div>
         </div>
     </div>
 
-    <!-- Main Content Sections -->
-    <div class="row">
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <!-- Registered Farmers -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon farmers">
+                    <i class="fas fa-users"></i>
+                </div>
+                <span class="stat-trend up">+{{ new_farmers_this_month }} this month</span>
+            </div>
+            <div class="stat-value">{{ total_farmers }}</div>
+            <div class="stat-label">Registered Farmers</div>
+        </div>
+
+        <!-- Total Farms -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon farms">
+                    <i class="fas fa-tractor"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ total_farms }}</div>
+            <div class="stat-label">Total Farms</div>
+        </div>
+
+        <!-- New Requests/Messages -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon messages">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <span class="stat-trend neutral">{{ messages_this_week }} this week</span>
+            </div>
+            <div class="stat-value">{{ new_messages }}</div>
+            <div class="stat-label">New Requests</div>
+        </div>
+
+        <!-- Pending Alerts -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon alerts">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ pending_alerts }}</div>
+            <div class="stat-label">Urgent Alerts</div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon orders">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ in_progress_messages }}</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+
+        <!-- Resolved -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon resolved">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ resolved_messages }}</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+
+        <!-- Orders -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon orders">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <span class="stat-trend {% if pending_orders > 0 %}up{% else %}neutral{% endif %}">{{ pending_orders }} pending</span>
+            </div>
+            <div class="stat-value">{{ total_orders }}</div>
+            <div class="stat-label">Total Orders</div>
+        </div>
+
+        <!-- Image Analysis -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon messages">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ image_requests }}</div>
+            <div class="stat-label">Image Analysis Requests</div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'gova_pp:messages_list' %}" class="quick-action-btn">
+            <i class="fas fa-comments text-primary"></i>
+            <span>View All Chats</span>
+        </a>
+        <a href="{% url 'gova_pp:messages_list' %}?status=new" class="quick-action-btn">
+            <i class="fas fa-inbox text-info"></i>
+            <span>New Requests ({{ new_messages }})</span>
+        </a>
+        <a href="{% url 'gova_pp:alerts' %}" class="quick-action-btn">
+            <i class="fas fa-bell text-danger"></i>
+            <span>Alerts ({{ pending_alerts }})</span>
+        </a>
+        <a href="{% url 'gova_pp:reports' %}" class="quick-action-btn">
+            <i class="fas fa-chart-bar text-success"></i>
+            <span>View Reports</span>
+        </a>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
         <!-- Recent Messages -->
-        <div class="col-lg-8 mb-4">
-            <div class="card card-gov">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-envelope me-2 text-success"></i>
-                        Recent Messages from Farmers
-                    </h5>
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-envelope"></i> Recent Farmer Requests</h3>
+                <a href="{% url 'gova_pp:messages_list' %}" class="view-all-link">View All →</a>
+            </div>
+            <div class="card-body">
+                {% for message in recent_messages %}
+                <div class="message-item">
+                    <div class="message-avatar">{{ message.farmer_name|slice:":1"|upper }}</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-name">{{ message.farmer_name }}</span>
+                            <span class="message-time">{{ message.created_at|timesince }} ago</span>
+                        </div>
+                        <div class="message-subject">{{ message.subject }}</div>
+                        <div class="message-preview">{{ message.message|truncatewords:12 }}</div>
+                        <div class="message-badges">
+                            <span class="badge badge-{{ message.status|lower }}">{{ message.get_status_display }}</span>
+                            {% if message.priority == 'urgent' or message.priority == 'high' %}
+                            <span class="badge badge-{{ message.priority }}">{{ message.get_priority_display }}</span>
+                            {% endif %}
+                            {% if message.has_image %}
+                            <span class="badge" style="background: #e0e7ff; color: #4338ca;"><i class="fas fa-image"></i></span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No messages yet</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+            <!-- Urgent Alerts -->
+            <div class="card" style="margin-bottom: 1rem;">
+                <div class="card-header">
+                    <h3><i class="fas fa-exclamation-circle"></i> Urgent Alerts</h3>
                 </div>
                 <div class="card-body">
-                        {% for message in recent_messages %}
-                        <div class="message-card priority-{{ message.priority }}">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 class="font-semibold text-gray-900">{{ message.farmer_name }}</h3>
-                                    <p class="text-sm text-gray-600">{{ message.subject }}</p>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    {% if message.has_image %}
-                                    <i class="fas fa-image text-blue-500" title="Has Image"></i>
-                                    {% endif %}
-                                    <span class="status-badge status-{{ message.status }}">{{ message.get_status_display }}</span>
-                                </div>
-                            </div>
-                            <p class="text-sm text-gray-700 mb-2">{{ message.message|truncatewords:20 }}</p>
-                            <div class="flex justify-between items-center text-xs text-gray-500">
-                                <span>{{ message.created_at|timesince }} ago</span>
-                                <a href="{% url 'gova_pp:message_detail' message.id %}" class="text-primary hover:text-primary-dark">
-                                    View Details →
-                                </a>
-                            </div>
+                    {% if pending_alerts > 0 %}
+                    <div class="alert-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="alert-item-content">
+                            <div class="alert-item-title">{{ pending_alerts }} Urgent Request{{ pending_alerts|pluralize }}</div>
+                            <div class="alert-item-desc">Requires immediate attention</div>
                         </div>
-                        {% empty %}
-                        <p class="text-gray-500 text-center py-8">No messages yet</p>
-                        {% endfor %}
                     </div>
+                    {% endif %}
+                    {% if urgent_messages > 0 %}
+                    <div class="alert-item">
+                        <i class="fas fa-bell"></i>
+                        <div class="alert-item-content">
+                            <div class="alert-item-title">{{ urgent_messages }} High Priority</div>
+                            <div class="alert-item-desc">Marked as urgent by farmers</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if pending_alerts == 0 and urgent_messages == 0 %}
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                        <p>No urgent alerts</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="space-y-6">
-                <!-- My Assigned Messages -->
-                <div class="bg-white rounded-lg shadow-sm border">
-                    <div class="px-6 py-4 border-b">
-                        <h3 class="text-lg font-semibold text-gray-900">My Assigned Messages</h3>
-                    </div>
-                    <div class="p-6">
-                        {% for message in my_messages %}
-                        <div class="mb-4 last:mb-0">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ message.farmer_name }}</p>
-                                    <p class="text-sm text-gray-600">{{ message.subject|truncatewords:5 }}</p>
-                                </div>
-                                <span class="status-badge status-{{ message.status }}">{{ message.get_status_display }}</span>
-                            </div>
-                            <div class="mt-2">
-                                <a href="{% url 'gova_pp:message_detail' message.id %}" class="text-sm text-primary hover:text-primary-dark">
-                                    View →
-                                </a>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <p class="text-gray-500 text-center py-4">No assigned messages</p>
-                        {% endfor %}
-                    </div>
+            <!-- My Assigned -->
+            <div class="card" style="margin-bottom: 1rem;">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-check"></i> My Assigned</h3>
                 </div>
-
-                <!-- Recent Image Analyses -->
-                <div class="bg-white rounded-lg shadow-sm border">
-                    <div class="px-6 py-4 border-b">
-                        <h3 class="text-lg font-semibold text-gray-900">Recent Image Analyses</h3>
-                    </div>
-                    <div class="p-6">
-                        {% for analysis in recent_analyses %}
-                        <div class="analysis-card">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ analysis.message.farmer_name }}</p>
-                                    <p class="text-sm text-gray-600">{{ analysis.get_primary_category_display }}</p>
-                                </div>
-                                <span class="text-xs text-gray-500">{{ analysis.analyzed_at|timesince }} ago</span>
-                            </div>
-                            <p class="text-sm text-gray-700 mb-2">{{ analysis.analysis_text|truncatewords:15 }}</p>
-                            <a href="{% url 'gova_pp:message_detail' analysis.message.id %}" class="text-sm text-primary hover:text-primary-dark">
-                                View Analysis →
-                            </a>
+                <div class="card-body">
+                    {% for message in my_messages %}
+                    <div class="message-item" style="padding: 0.5rem 0;">
+                        <div class="message-avatar" style="width: 32px; height: 32px; font-size: 0.75rem;">{{ message.farmer_name|slice:":1"|upper }}</div>
+                        <div class="message-content">
+                            <div class="message-name" style="font-size: 0.85rem;">{{ message.farmer_name }}</div>
+                            <div class="message-preview">{{ message.subject|truncatewords:5 }}</div>
                         </div>
-                        {% empty %}
-                        <p class="text-gray-500 text-center py-4">No analyses yet</p>
-                        {% endfor %}
                     </div>
+                    {% empty %}
+                    <div class="empty-state" style="padding: 1rem;">
+                        <p style="font-size: 0.85rem;">No assigned messages</p>
+                    </div>
+                    {% endfor %}
                 </div>
+            </div>
 
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-lg shadow-sm border">
-                    <div class="px-6 py-4 border-b">
-                        <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+            <!-- Recent Analyses -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-camera"></i> Recent Analyses</h3>
+                </div>
+                <div class="card-body">
+                    {% for analysis in recent_analyses %}
+                    <div class="message-item" style="padding: 0.5rem 0;">
+                        <div class="message-content">
+                            <div class="message-name" style="font-size: 0.85rem;">{{ analysis.message.farmer_name }}</div>
+                            <div class="message-preview">{{ analysis.analysis_text|truncatewords:8 }}</div>
+                            <div class="message-time">{{ analysis.analyzed_at|timesince }} ago</div>
+                        </div>
                     </div>
-                    <div class="p-6 space-y-3">
-                        <a href="{% url 'gova_pp:messages_list' %}?status=new" class="block w-full bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 transition">
-                            <i class="fas fa-inbox mr-2"></i>View New Messages
-                        </a>
-                        <a href="{% url 'gova_pp:messages_list' %}?priority=urgent" class="block w-full bg-red-50 text-red-700 px-4 py-2 rounded-lg hover:bg-red-100 transition">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Urgent Messages
-                        </a>
-                        <a href="{% url 'gova_pp:messages_list' %}?message_type=image_analysis" class="block w-full bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition">
-                            <i class="fas fa-camera mr-2"></i>Image Analysis Requests
-                        </a>
+                    {% empty %}
+                    <div class="empty-state" style="padding: 1rem;">
+                        <p style="font-size: 0.85rem;">No analyses yet</p>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -242,23 +607,15 @@
 
 {% block extra_js %}
 <script>
-// Auto-refresh dashboard every 30 seconds
+// Auto-refresh dashboard every 60 seconds
 setInterval(function() {
-    // Only refresh if user is active (not typing or interacting)
     if (document.hasFocus()) {
         location.reload();
     }
-}, 30000);
+}, 60000);
 
-// Add notification sound for new urgent messages
-function checkForUrgentMessages() {
-    // This could be enhanced with WebSocket for real-time updates
-    console.log('Checking for urgent messages...');
-}
-
-// Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('GOV APP Dashboard loaded');
+    console.log('Dashboard loaded');
 });
 </script>
 {% endblock %}

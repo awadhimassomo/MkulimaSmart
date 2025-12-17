@@ -282,6 +282,7 @@ class GovernmentReply(models.Model):
         ('advice', 'Agricultural Advice'),
         ('referral', 'Referral'),
         ('follow_up', 'Follow-up Question'),
+        ('farmer_reply', 'Farmer Reply'),
     ], default='answer')
     created_at = models.DateTimeField(default=timezone.now)
     sent_via_sms = models.BooleanField(default=False)

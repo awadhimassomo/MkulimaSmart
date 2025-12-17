@@ -42,6 +42,7 @@ urlpatterns = [
     path('api/ai/chat/', ai_views.ai_chat, name='ai_chat'),
     path('api/ai/suggest/<int:thread_id>/', ai_views.suggest_response, name='suggest_response'),
     path('api/ai/analyze/<int:thread_id>/', ai_views.analyze_conversation, name='analyze_conversation'),
+    path('api/ai/analyze-image/', ai_views.analyze_image, name='analyze_image_api'),
     
     # API endpoints
     path('api/receive-message/', views.receive_farmer_message, name='receive_farmer_message'),

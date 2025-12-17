@@ -338,11 +338,12 @@ def register_farmer(request):
                     location=data.get('location', '')
                 )
             
-            # Create JWT token for immediate login
+            # Create JWT token for immediate login (7 days expiration)
+            expiration_days = 7
             payload = {
                 'uid': user.id,
                 'phone_number': user.phone_number,
-                'exp': datetime.utcnow() + timedelta(hours=24),
+                'exp': datetime.utcnow() + timedelta(days=expiration_days),
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
             
@@ -350,7 +351,7 @@ def register_farmer(request):
                 'message': 'Farmer registered successfully',
                 'user_id': user.id,
                 'token': token,
-                'expires_at': (datetime.utcnow() + timedelta(hours=24)).isoformat()
+                'expires_at': (datetime.utcnow() + timedelta(days=expiration_days)).isoformat()
             }, status=status.HTTP_201_CREATED)
             
     except Exception as e:

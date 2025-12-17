@@ -62,8 +62,9 @@ def obtain_token(request):
         )
     
     # Create the JWT payload with extended expiration for WebSocket
-    # Using 24 hours for WebSocket connections to prevent frequent disconnections
-    expiration_hours = 24
+    # Using 7 days for WebSocket connections to prevent frequent disconnections
+    expiration_days = 7
+    expiration_hours = expiration_days * 24
     payload = {
         'uid': user.id,
         'phone_number': user.phone_number,

@@ -366,9 +366,9 @@
                 <span class="badge bg-danger ms-auto">{{ pending_alerts }}</span>
                 {% endif %}
             </a>
-            <a href="#" class="sidebar-nav-item">
-                <i class="fas fa-camera sidebar-nav-icon"></i>
-                Image Analysis
+            <a href="{% url 'gova_pp:messages_list' %}?status=new" class="sidebar-nav-item">
+                <i class="fas fa-inbox sidebar-nav-icon"></i>
+                Requests
             </a>
             <a href="{% url 'gova_pp:reports' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
                 <i class="fas fa-chart-bar sidebar-nav-icon"></i>

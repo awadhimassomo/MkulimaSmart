@@ -62,7 +62,7 @@ async function decryptAndRenderImage({ containerEl, mediaUrl, nonceB64, wrappedK
 class ChatManager {
     constructor(threadId, userId) {
         this.threadId = threadId;
-        this.userId = userId;
+        this.userId = String(userId);  // Ensure userId is always a string for comparison
         this.socket = null;
         this.connected = false;
         this.messageQueue = [];
@@ -265,10 +265,14 @@ class ChatManager {
             }
         }
 
-        if (data.sender === this.userId) {
-            console.log('Skipping own message');
+        // Convert sender to string for comparison (backend sends integer, userId is string)
+        const senderId = String(data.sender || data.sender_id);
+        if (senderId === this.userId) {
+            console.log('Skipping own message from sender:', senderId);
             return;
         }
+        
+        console.log('📥 Processing incoming message from sender:', senderId, 'has_media:', data.has_media, 'media_url:', data.media_url);
 
         const message = {
             type: 'message.created',
@@ -320,20 +324,27 @@ class ChatManager {
     }
 
     createMessageElement(message) {
-        const isCurrentUser = message.sender_id === this.userId;
+        const isCurrentUser = String(message.sender_id) === this.userId;
         const messageEl = document.createElement('div');
-        messageEl.className = `flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`;
+        messageEl.className = `message-row ${isCurrentUser ? 'sent' : 'received'}`;
+        
+        // Get initials for avatar
+        const senderName = message.sender_name || (isCurrentUser ? 'You' : 'User');
+        const initials = senderName.charAt(0).toUpperCase();
+        
+        // Format time
+        const time = new Date(message.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
 
         const messageContent = `
-            <div class="max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg px-4 py-2 ${isCurrentUser
-                ? 'bg-gradient-to-r from-[#2D5A27] to-[#4A7C3A] text-white rounded-br-none'
-                : 'bg-gray-200 text-gray-800 rounded-bl-none'
-            }">
-                ${message.content ? `<p class="mb-1">${message.content}</p>` : ''}
-                ${this.createMediaContent(message)}
-                <p class="text-xs opacity-75 text-right mt-1">
-                    ${new Date(message.timestamp).toLocaleTimeString()}
-                </p>
+            <div class="message-avatar">${initials}</div>
+            <div class="message-group">
+                <div class="message-sender">${isCurrentUser ? 'You' : senderName}, ${time}</div>
+                <div class="message-bubble">
+                    <div class="message-content">
+                        ${message.content ? `<p>${message.content}</p>` : ''}
+                        ${this.createMediaContent(message)}
+                    </div>
+                </div>
             </div>
         `;
 
@@ -356,22 +367,34 @@ class ChatManager {
         console.log('🖼️ Processing media message:', message);
         console.log('  media_mime:', message.media_mime);
 
-        const isCurrentUser = message.sender_id === this.userId;
+        const isCurrentUser = String(message.sender_id) === this.userId;
 
-        // Show image if media_mime is 'image/*' OR if it's not set but we have a media_url (fallback)
-        const isImage = message.media_mime?.startsWith('image/') || !message.media_mime;
+        // Show image if media_mime starts with 'image' (handles both 'image/jpeg' and 'image')
+        // OR if it's not set but we have a media_url (fallback)
+        const isImage = message.media_mime?.startsWith('image') || !message.media_mime;
 
+        console.log('🖼️ isImage check result:', isImage);
+        
         if (isImage) {
+            // Generate a unique ID for this image element
+            const uniqueId = message.media_id || `img-${Date.now()}`;
+            const displayUrl = message.thumbnail_url || message.media_url;
+            const fullUrl = message.media_url;
+            
+            console.log('🖼️ Rendering image with URL:', displayUrl);
+            console.log('🖼️ Full URL:', fullUrl);
+            
             if (message.media_nonce_b64 && message.wrapped_keys) {
+                // Encrypted image - needs decryption
                 return `
                     <div class="media-container my-2 relative group">
-                        <div class="media-placeholder" id="media-${message.media_id}">
+                        <div class="media-placeholder" id="media-${uniqueId}">
                             <div class="animate-pulse flex items-center justify-center bg-gray-200 rounded-lg w-full h-32">
                                 <span class="text-gray-500">Decrypting image...</span>
                             </div>
                         </div>
                         ${isCurrentUser ? `
-                            <button onclick="window.chatManager.deleteImage('${message.media_id}')" 
+                            <button onclick="window.chatManager.deleteImage('${uniqueId}')" 
                                     class="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-bold text-sm shadow-lg"
                                     title="Delete image">
                                 ×
@@ -381,33 +404,28 @@ class ChatManager {
                     </div>
                 `;
             } else {
-                // Use thumbnail if available, otherwise fallback to full image
-                const displayUrl = message.thumbnail_url || message.media_url;
-                const fullUrl = message.media_url;
-
+                // Unencrypted image - display directly with analyze button
                 return `
-                    <div class="my-2 relative group">
-                        <div class="relative inline-block">
-                            <!-- Loading Spinner -->
-                            <div id="loader-${message.media_id}" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg z-10">
-                                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#4A7C3A]"></div>
-                            </div>
-                            
-                            <!-- Image -->
-                            <img src="${displayUrl}" 
-                                 alt="${message.file_name || 'Image'}" 
-                                 class="max-w-full h-auto rounded-lg border border-[#D4E89A] cursor-pointer hover:opacity-90 transition-opacity"
-                                 style="max-height: 300px; min-width: 150px; min-height: 150px; object-fit: cover;"
-                                 onload="document.getElementById('loader-${message.media_id}').style.display='none'"
-                                 onerror="this.src='${fullUrl}'"
-                                 onclick="openImageModal('${fullUrl}', '${message.media_id}')">
-                        </div>
+                    <div class="my-2" style="position: relative;">
+                        <img src="${displayUrl}" 
+                             alt="${message.file_name || 'Image'}" 
+                             class="max-w-full h-auto rounded-lg border border-[#D4E89A] cursor-pointer hover:opacity-90 transition-opacity"
+                             style="max-height: 300px; min-width: 150px; min-height: 150px; object-fit: cover; display: block;"
+                             onerror="this.onerror=null; this.src='${fullUrl}'; console.log('Image load error, trying full URL:', '${fullUrl}');"
+                             onclick="openImageModal('${fullUrl}', '${uniqueId}')">
+                        
+                        <!-- Analyze button below image -->
+                        <button onclick="event.stopPropagation(); analyzeImageWithAI('${fullUrl}', '${uniqueId}')" 
+                                class="mt-2 w-full bg-gradient-to-r from-[#C5D86D] to-[#B5C95A] hover:from-[#B5C95A] hover:to-[#A5B94A] text-[#1A3316] px-3 py-1.5 rounded-lg text-sm font-semibold shadow flex items-center justify-center gap-1"
+                                title="Analyze image with AI">
+                            <i class="fas fa-robot"></i> Analyze with AI
+                        </button>
                         
                         ${isCurrentUser ? `
-                            <button onclick="event.stopPropagation(); window.chatManager.deleteImage('${message.media_id || message.timestamp}')" 
-                                    class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-bold shadow-lg z-10"
-                                    title="Delete image"
-                                    style="backdrop-filter: blur(2px);">
+                            <button onclick="event.stopPropagation(); window.chatManager.deleteImage('${uniqueId}')" 
+                                    class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg"
+                                    style="position: absolute; top: 8px; right: 8px;"
+                                    title="Delete image">
                                 ×
                             </button>
                         ` : ''}
@@ -637,4 +655,128 @@ function closeImageModal() {
             if (modalImg) modalImg.src = '';
         }, 300);
     }
+}
+
+// Analyze image with AI
+function analyzeImageWithAI(imageUrl, mediaId) {
+    console.log('🤖 Analyzing image with AI:', imageUrl);
+    
+    // Switch to AI panel on mobile
+    if (window.innerWidth <= 1024) {
+        const aiTab = document.querySelectorAll('.mobile-tab')[1];
+        if (aiTab) aiTab.click();
+    }
+    
+    // Show loading message in AI panel
+    const aiMessages = document.getElementById('ai-messages');
+    if (!aiMessages) {
+        console.error('AI messages container not found');
+        return;
+    }
+    
+    // Add user message showing the image being analyzed
+    const userMsgDiv = document.createElement('div');
+    userMsgDiv.className = 'message-bubble sent';
+    userMsgDiv.innerHTML = `
+        <div class="message-content" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <p class="mb-2">Please analyze this image:</p>
+            <img src="${imageUrl}" alt="Image to analyze" class="max-w-full h-auto rounded-lg" style="max-height: 150px;">
+        </div>
+        <div class="message-meta" style="justify-content: flex-end;">
+            <span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+    `;
+    aiMessages.appendChild(userMsgDiv);
+    
+    // Add loading indicator
+    const loadingId = 'ai-loading-' + Date.now();
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = loadingId;
+    loadingDiv.className = 'ai-message';
+    loadingDiv.innerHTML = `
+        <div class="ai-message-header">
+            <i class="fas fa-robot"></i>
+            AI Assistant
+        </div>
+        <div class="ai-message-text">
+            <div class="flex items-center gap-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#2D5A27]"></div>
+                <span>Analyzing image...</span>
+            </div>
+        </div>
+    `;
+    aiMessages.appendChild(loadingDiv);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    
+    // Get the full image URL
+    const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : window.location.origin + imageUrl;
+    
+    // Call AI analysis endpoint
+    const token = document.getElementById('jwt-token')?.value;
+    const threadId = document.getElementById('thread-id')?.value;
+    
+    // Get CSRF token from cookie
+    const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+    
+    fetch('/api/ai/analyze-image/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            image_url: fullImageUrl,
+            thread_id: threadId,
+            media_id: mediaId
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Remove loading indicator
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        
+        // Add AI response
+        const responseDiv = document.createElement('div');
+        responseDiv.className = 'ai-message';
+        responseDiv.innerHTML = `
+            <div class="ai-message-header">
+                <i class="fas fa-robot"></i>
+                AI Assistant
+            </div>
+            <div class="ai-message-text">
+                ${data.analysis || data.message || 'Analysis complete.'}
+            </div>
+        `;
+        aiMessages.appendChild(responseDiv);
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+    })
+    .catch(error => {
+        console.error('Error analyzing image:', error);
+        
+        // Remove loading indicator
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        
+        // Show error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'ai-message';
+        errorDiv.innerHTML = `
+            <div class="ai-message-header">
+                <i class="fas fa-robot"></i>
+                AI Assistant
+            </div>
+            <div class="ai-message-text text-red-600">
+                Sorry, I couldn't analyze this image. Error: ${error.message}
+            </div>
+        `;
+        aiMessages.appendChild(errorDiv);
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+    });
 }

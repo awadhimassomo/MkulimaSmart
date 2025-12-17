@@ -13,6 +13,7 @@ from django.views.generic import RedirectView
 from django.conf.urls.i18n import i18n_patterns
 from gova_pp import chat_api
 from gova_pp import webhook_views
+from gova_pp import ai_views
 from chat.views import ThreadMessageCreateView
 
 # Non-prefixed URLs (don't get language prefix)
@@ -45,6 +46,9 @@ urlpatterns = [
     path('api/chat/webhook/', webhook_views.chat_webhook, name='chat_webhook'),
     path('api/chat/webhook/reply/', webhook_views.chat_webhook_reply, name='chat_webhook_reply'),
     path('api/chat/webhook/test/', webhook_views.webhook_test, name='webhook_test'),
+    
+    # AI endpoints (no language prefix for AJAX calls)
+    path('api/ai/analyze-image/', ai_views.analyze_image, name='ai_analyze_image'),
     
     # Chat test page (no language prefix for WebSocket testing)
     path('chat/', include('chat.urls', namespace='chat')),

@@ -302,3 +302,151 @@ def generate_recommended_actions(thread):
     actions.append('Set follow-up reminder')
     
     return actions
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def analyze_image(request):
+    """
+    Analyze an image using OpenAI's vision capabilities
+    Returns agricultural insights about the image
+    """
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        image_url = data.get('image_url', '').strip()
+        thread_id = data.get('thread_id')
+        media_id = data.get('media_id')
+        
+        if not image_url:
+            return JsonResponse({'error': 'Image URL is required'}, status=400)
+        
+        # Get conversation context if thread_id provided
+        context = {}
+        if thread_id:
+            context = get_conversation_context(thread_id)
+        
+        # Analyze the image using OpenAI Vision
+        analysis = analyze_image_with_ai(image_url, context)
+        
+        return JsonResponse({
+            'success': True,
+            'analysis': analysis,
+            'media_id': media_id,
+            'timestamp': 'now'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in image analysis: {str(e)}", exc_info=True)
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def analyze_image_with_ai(image_url, context=None):
+    """
+    Analyze an image using OpenAI's GPT-4 Vision
+    """
+    import base64
+    import requests
+    from urllib.parse import urlparse
+    
+    api_key = getattr(settings, 'OPENAI_API_KEY', None)
+    
+    if not api_key:
+        return "I'm sorry, but the OpenAI API key is not configured. Please contact the administrator to enable image analysis."
+
+    try:
+        client = OpenAI(api_key=api_key)
+        
+        # Convert image to base64 if it's a local URL
+        image_data = None
+        parsed_url = urlparse(image_url)
+        
+        # Check if it's a local/private URL that OpenAI can't access
+        is_local = any(x in parsed_url.netloc for x in ['localhost', '127.0.0.1', '192.168.', '10.', '172.'])
+        
+        if is_local or image_url.startswith('/media/'):
+            # Try to read the file directly from disk
+            if '/media/' in image_url:
+                # Extract the path after /media/
+                media_path = image_url.split('/media/')[-1]
+                file_path = os.path.join(settings.MEDIA_ROOT, media_path)
+                
+                if os.path.exists(file_path):
+                    with open(file_path, 'rb') as f:
+                        image_bytes = f.read()
+                    
+                    # Determine mime type
+                    import mimetypes
+                    mime_type, _ = mimetypes.guess_type(file_path)
+                    if not mime_type:
+                        mime_type = 'image/jpeg'
+                    
+                    image_data = f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+                    logger.info(f"Loaded image from disk: {file_path}")
+                else:
+                    logger.error(f"Image file not found: {file_path}")
+                    return f"Image file not found on server."
+        
+        # Build context string
+        context_info = ""
+        if context:
+            context_info = f"""
+            Context about the farmer:
+            - Farmer Name: {context.get('farmer_name', 'Unknown')}
+            - Location: {context.get('farmer_location', 'Unknown')}
+            - Subject: {context.get('subject', 'General Inquiry')}
+            """
+        
+        system_prompt = f"""You are an expert agricultural analyst for the Tanzanian government's Mkulima Smart platform.
+        Analyze the provided image and give detailed, actionable insights.
+        
+        {context_info}
+        
+        Focus on:
+        1. **Identification**: What is shown in the image (crop type, pest, disease, soil condition, etc.)
+        2. **Assessment**: Current health/condition assessment
+        3. **Diagnosis**: If there are problems, identify them specifically
+        4. **Recommendations**: Provide practical, actionable advice for the farmer
+        5. **Urgency**: Rate the urgency (Low/Medium/High) if action is needed
+        
+        Format your response with clear sections using markdown.
+        Be specific and practical - remember this is for Tanzanian farmers.
+        """
+
+        # Use base64 data if available, otherwise use URL
+        image_content = {"url": image_data if image_data else image_url}
+        if image_data:
+            image_content["detail"] = "high"
+        
+        response = client.chat.completions.create(
+            model="gpt-4o",  # GPT-4 with vision capabilities
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Please analyze this image from a farmer and provide agricultural insights:"
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": image_content
+                        }
+                    ]
+                }
+            ],
+            max_tokens=1000
+        )
+        
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        logger.error(f"OpenAI Vision API Error: {str(e)}")
+        return f"I apologize, but I couldn't analyze this image. Error: {str(e)}"

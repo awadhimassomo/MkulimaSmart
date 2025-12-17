@@ -80,28 +80,68 @@ def government_logout(request):
 @government_login_required
 def dashboard(request):
     """Main GOV APP dashboard"""
-    # Get statistics
+    from website.models import User, Farm, Order
+    from datetime import timedelta
+    
+    # === FARMER STATISTICS ===
+    total_farmers = User.objects.filter(is_farmer=True).count()
+    new_farmers_this_month = User.objects.filter(
+        is_farmer=True,
+        date_joined__gte=timezone.now() - timedelta(days=30)
+    ).count()
+    total_farms = Farm.objects.count()
+    
+    # === MESSAGE STATISTICS ===
     total_messages = FarmerMessage.objects.count()
     new_messages = FarmerMessage.objects.filter(status='new').count()
     in_progress_messages = FarmerMessage.objects.filter(status='in_progress').count()
+    resolved_messages = FarmerMessage.objects.filter(status='resolved').count()
     urgent_messages = FarmerMessage.objects.filter(priority='urgent').count()
     image_requests = FarmerMessage.objects.filter(image_analysis_requested=True).count()
     
-    # Get recent messages
-    recent_messages = FarmerMessage.objects.select_related('assigned_to').prefetch_related('replies')[:10]
+    # Messages this week
+    messages_this_week = FarmerMessage.objects.filter(
+        created_at__gte=timezone.now() - timedelta(days=7)
+    ).count()
+    
+    # === ORDER/REQUEST STATISTICS ===
+    total_orders = Order.objects.count()
+    pending_orders = Order.objects.filter(status='pending').count()
+    
+    # === ALERTS ===
+    pending_alerts = FarmerMessage.objects.filter(
+        status='new', 
+        priority__in=['urgent', 'high']
+    ).count()
+    
+    # Get recent messages (limit to 5 for dashboard)
+    recent_messages = FarmerMessage.objects.select_related('assigned_to').prefetch_related('replies').order_by('-created_at')[:5]
     
     # Get messages assigned to current user
     my_messages = FarmerMessage.objects.filter(assigned_to=request.user, status__in=['new', 'in_progress'])[:5]
     
     # Get recent image analyses
-    recent_analyses = ImageAnalysis.objects.select_related('message').order_by('-analyzed_at')[:5]
+    recent_analyses = ImageAnalysis.objects.select_related('message').order_by('-analyzed_at')[:3]
     
     context = {
+        # Farmer stats
+        'total_farmers': total_farmers,
+        'new_farmers_this_month': new_farmers_this_month,
+        'total_farms': total_farms,
+        # Message stats
         'total_messages': total_messages,
         'new_messages': new_messages,
         'in_progress_messages': in_progress_messages,
+        'resolved_messages': resolved_messages,
         'urgent_messages': urgent_messages,
         'image_requests': image_requests,
+        'messages_this_week': messages_this_week,
+        # Order stats
+        'total_orders': total_orders,
+        'pending_orders': pending_orders,
+        # Alerts
+        'pending_alerts': pending_alerts,
+        # Lists
         'recent_messages': recent_messages,
         'my_messages': my_messages,
         'recent_analyses': recent_analyses,
@@ -111,45 +151,15 @@ def dashboard(request):
 
 @government_login_required
 def messages_list(request):
-    """List all farmer messages with filtering"""
-    messages_queryset = FarmerMessage.objects.select_related('assigned_to').prefetch_related('replies')
+    """Redirect to the first/latest message chat - no separate list page needed"""
+    # Get the latest message to redirect to
+    latest_message = FarmerMessage.objects.order_by('-created_at').first()
     
-    # Apply filters
-    status_filter = request.GET.get('status')
-    message_type_filter = request.GET.get('message_type')
-    priority_filter = request.GET.get('priority')
-    search_query = request.GET.get('search')
-    
-    if status_filter:
-        messages_queryset = messages_queryset.filter(status=status_filter)
-    if message_type_filter:
-        messages_queryset = messages_queryset.filter(message_type=message_type_filter)
-    if priority_filter:
-        messages_queryset = messages_queryset.filter(priority=priority_filter)
-    if search_query:
-        messages_queryset = messages_queryset.filter(
-            Q(farmer_name__icontains=search_query) |
-            Q(subject__icontains=search_query) |
-            Q(message__icontains=search_query)
-        )
-    
-    # Pagination
-    paginator = Paginator(messages_queryset, 20)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    context = {
-        'page_obj': page_obj,
-        'status_filter': status_filter,
-        'message_type_filter': message_type_filter,
-        'priority_filter': priority_filter,
-        'search_query': search_query,
-        'message_types': FarmerMessage.MESSAGE_TYPES,
-        'status_choices': FarmerMessage.STATUS_CHOICES,
-        'priority_choices': [('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('urgent', 'Urgent')],
-    }
-    
-    return render(request, 'gova_pp/messages_list.html', context)
+    if latest_message:
+        return redirect('gova_pp:message_detail', message_id=latest_message.id)
+    else:
+        # If no messages exist, show a simple page
+        return render(request, 'gova_pp/no_messages.html')
 
 @government_login_required
 def message_detail(request, message_id):
@@ -221,14 +231,17 @@ def message_detail(request, message_id):
             messages.success(request, 'Message assigned to you!')
             return redirect('gova_pp:message_detail', message_id=message.id)
     
-    # Generate JWT token for WebSocket authentication
+    # Generate JWT token for WebSocket authentication (7 days expiration)
     payload = {
         'uid': request.user.id,  # Using 'uid' to match the middleware's expected key
         'phone_number': request.user.phone_number,
-        'exp': datetime.utcnow() + timedelta(hours=24),
+        'exp': datetime.utcnow() + timedelta(days=7),
         'thread_id': str(message_id)
     }
     jwt_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+    
+    # Get other messages for the sidebar chat list (excluding current)
+    other_messages = FarmerMessage.objects.exclude(id=message_id).order_by('-created_at')[:10]
     
     context = {
         'message': message,
@@ -237,6 +250,7 @@ def message_detail(request, message_id):
         'reply_types': [('answer', 'Answer'), ('advice', 'Agricultural Advice'), ('referral', 'Referral'), ('follow_up', 'Follow-up Question')],
         'status_choices': FarmerMessage.STATUS_CHOICES,
         'jwt_token': jwt_token,
+        'other_messages': other_messages,
     }
     
     return render(request, 'gova_pp/message_detail.html', context)
