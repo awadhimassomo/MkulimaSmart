@@ -79,154 +79,292 @@ class CategoryListAPIView(generics.ListAPIView):
 
 
 def get_farmer_advice(weather_data):
-    """Generate farming advice based on weather conditions"""
+    """Generate farming advice based on weather conditions."""
     advice = []
-    
-    # Check for rain conditions
-    if 'rain' in weather_data and weather_data['rain'].get('1h', 0) > 5:  # More than 5mm rain in 1 hour
-        advice.append({
-            'priority': 'high',
-            'message': 'Heavy rain expected - ensure proper drainage in your fields to prevent waterlogging.',
-            'icon': 'rain'
-        })
-    elif 'rain' in weather_data and weather_data['rain'].get('1h', 0) > 0:
-        advice.append({
-            'priority': 'medium',
-            'message': 'Light rain expected - good time for planting or irrigating.',
-            'icon': 'rain'
-        })
-    
-    # Check temperature conditions
-    temp = weather_data['main']['temp']
-    if temp > 35:  # Very hot
-        advice.append({
-            'priority': 'high',
-            'message': 'Extreme heat expected - water crops in the early morning or late evening to reduce evaporation.',
-            'icon': 'hot'
-        })
-    elif temp > 30:  # Hot
-        advice.append({
-            'priority': 'medium',
-            'message': 'Hot weather expected - ensure adequate irrigation for your crops.',
-            'icon': 'hot'
-        })
-    elif temp < 10:  # Cold
-        advice.append({
-            'priority': 'high',
-            'message': 'Cold weather expected - protect sensitive crops from frost.',
-            'icon': 'cold'
-        })
-    
-    # Check wind conditions
-    if 'wind' in weather_data and weather_data['wind'].get('speed', 0) > 10:  # Strong wind
-        advice.append({
-            'priority': 'medium',
-            'message': 'Strong winds expected - secure any temporary structures and protect young plants.',
-            'icon': 'wind'
-        })
-    
-    # If no specific advice, provide general advice
+
+    temp = weather_data.get('temp') or weather_data.get('main', {}).get('temp', 25)
+    rain = weather_data.get('rain', 0)
+    wind_speed = weather_data.get('wind_speed') or weather_data.get('wind', {}).get('speed', 0)
+
+    # Rain advice
+    if rain > 5:
+        advice.append({'priority': 'high', 'message': 'Heavy rain expected - ensure proper drainage.', 'icon': 'rain'})
+    elif rain > 0:
+        advice.append({'priority': 'medium', 'message': 'Light rain expected - good time for planting or irrigating.', 'icon': 'rain'})
+
+    # Temperature advice
+    if temp > 35:
+        advice.append({'priority': 'high', 'message': 'Extreme heat expected - water crops early or late.', 'icon': 'hot'})
+    elif temp > 30:
+        advice.append({'priority': 'medium', 'message': 'Hot weather expected - ensure adequate irrigation.', 'icon': 'hot'})
+    elif temp < 10:
+        advice.append({'priority': 'high', 'message': 'Cold weather expected - protect sensitive crops.', 'icon': 'cold'})
+
+    # Wind advice
+    if wind_speed > 10:
+        advice.append({'priority': 'medium', 'message': 'Strong winds expected - secure temporary structures.', 'icon': 'wind'})
+
     if not advice:
-        advice.append({
-            'priority': 'low',
-            'message': 'Weather conditions are favorable for most farming activities.',
-            'icon': 'good'
-        })
-    
+        advice.append({'priority': 'low', 'message': 'Weather conditions are favorable.', 'icon': 'good'})
+
     return advice
 
-# Weather API Views
+
+def format_weather_forecast_message(forecast_data):
+    """Format weather forecast data into a user-friendly text message."""
+    formatted_lines = []
+    
+    # Add each daily forecast
+    for day in forecast_data:
+        formatted_lines.append(f"=== Forecast for {day['date']} ===")
+        formatted_lines.append(
+            f"Temp: {day['temp']['day']:.2f}°C, "
+            f"Rain: {day['rain']}mm, "
+            f"Wind: {day['wind_speed']} m/s"
+        )
+        formatted_lines.append("Advice:")
+        for advice in day['advice']:
+            formatted_lines.append(f"- [{advice['priority']}] {advice['message']}")
+        formatted_lines.append("=== End ===\n")
+    
+    return "\n".join(formatted_lines)
+
+
+def generate_farming_timetable(forecast_data):
+    """Generate a 5-day farming timetable based on weather forecast."""
+    timetable = []
+    
+    for i, day in enumerate(forecast_data[:5], 1):  # Only use first 5 days
+        date = day['date']
+        temp = day['temp']['day']
+        rain = day['rain']
+        wind_speed = day['wind_speed']
+        
+        # Initialize daily plan
+        daily_plan = {
+            'day': i,
+            'date': date,
+            'weather_summary': f"Temp: {temp:.1f}°C, Rain: {rain}mm, Wind: {wind_speed} m/s",
+            'morning_tasks': [],
+            'afternoon_tasks': [],
+            'evening_tasks': [],
+            'priority': 'normal'
+        }
+        
+        # Determine tasks based on weather
+        if rain > 5:
+            daily_plan['priority'] = 'high'
+            daily_plan['morning_tasks'].append('Check drainage systems')
+            daily_plan['morning_tasks'].append('Move potted plants to shelter')
+            daily_plan['afternoon_tasks'].append('Inspect crops for waterlogging')
+            daily_plan['evening_tasks'].append('Clear water from low areas')
+        elif rain > 0:
+            daily_plan['morning_tasks'].append('Prepare planting areas')
+            daily_plan['afternoon_tasks'].append('Plant seeds/seedlings (good moisture)')
+            daily_plan['evening_tasks'].append('Light weeding if soil is soft')
+        else:
+            daily_plan['morning_tasks'].append('Water crops (early morning)')
+            daily_plan['afternoon_tasks'].append('Avoid watering during peak heat')
+            daily_plan['evening_tasks'].append('Evening irrigation if needed')
+        
+        # Temperature-based tasks
+        if temp > 35:
+            daily_plan['priority'] = 'high'
+            daily_plan['morning_tasks'].insert(0, 'Water crops before 7 AM')
+            daily_plan['afternoon_tasks'].insert(0, 'Check for heat stress on plants')
+            daily_plan['evening_tasks'].insert(0, 'Water again after 6 PM')
+        elif temp > 30:
+            daily_plan['morning_tasks'].append('Ensure adequate irrigation')
+            daily_plan['afternoon_tasks'].append('Monitor soil moisture')
+        elif temp < 15:
+            daily_plan['morning_tasks'].append('Protect sensitive crops from cold')
+        
+        # Wind-based tasks
+        if wind_speed > 10:
+            daily_plan['morning_tasks'].insert(0, 'Secure structures and supports')
+            daily_plan['afternoon_tasks'].append('Check stake supports for tall plants')
+        
+        # General farming tasks (not weather-dependent)
+        if i == 1:  # First day
+            daily_plan['morning_tasks'].append('Inspect all crops for pests/diseases')
+        if i % 2 == 0:  # Every other day
+            daily_plan['afternoon_tasks'].append('Weeding session')
+        if i == 5:  # Last day
+            daily_plan['evening_tasks'].append('Plan for next week')
+        
+        timetable.append(daily_plan)
+    
+    return timetable
+
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def weather_forecast(request):
+    lat = request.query_params.get('lat')
+    lon = request.query_params.get('lon')
+    days_requested = int(request.query_params.get('days', 5))
+
+    if not lat or not lon:
+        return Response({'error': 'Latitude and longitude required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    api_key = getattr(settings, 'OPENWEATHER_API_KEY', '')
+    if not api_key:
+        return Response({'error': 'Weather service unavailable'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    try:
+        base_url = "https://api.openweathermap.org/data/3.0/onecall"
+        params = {
+            'lat': lat,
+            'lon': lon,
+            'exclude': 'minutely,hourly,alerts',
+            'appid': api_key,
+            'units': 'metric'
+        }
+        response = requests.get(base_url, params=params, timeout=10)
+        response.raise_for_status()
+        weather_data = response.json()
+
+        data = {
+            'location': 'Unknown',
+            'coordinates': {'latitude': float(lat), 'longitude': float(lon)},
+            'current_weather': {},
+            'daily_forecast': [],
+            'timestamp': datetime.utcnow().isoformat(),
+            'unit': {'temperature': '°C', 'wind_speed': 'm/s', 'humidity': '%', 'rain': 'mm'}
+        }
+
+        # Current weather
+        current = weather_data['current']
+        data['current_weather'] = {
+            'temperature': current['temp'],
+            'feels_like': current['feels_like'],
+            'humidity': current['humidity'],
+            'wind_speed': current['wind_speed'],
+            'condition': current['weather'][0]['description'],
+            'icon': f"http://openweathermap.org/img/wn/{current['weather'][0]['icon']}@2x.png",
+            'rain_1h': current.get('rain', {}).get('1h', 0)
+        }
+        data['current_weather']['advice'] = get_farmer_advice(current)
+
+        # Daily forecast (skip current day)
+        max_days = min(days_requested, len(weather_data['daily']) - 1)  # avoid index error
+        for day in weather_data['daily'][1:max_days+1]:
+            forecast = {
+                'date': datetime.fromtimestamp(day['dt']).strftime('%Y-%m-%d'),
+                'temp': {'min': day['temp']['min'], 'max': day['temp']['max'], 'day': day['temp']['day']},
+                'humidity': day['humidity'],
+                'wind_speed': day.get('wind_speed', 0),
+                'condition': day['weather'][0]['description'],
+                'icon': f"http://openweathermap.org/img/wn/{day['weather'][0]['icon']}@2x.png",
+                'rain': day.get('rain', 0),
+                'pop': day.get('pop', 0) * 100,
+            }
+            forecast['advice'] = get_farmer_advice({
+                'temp': day['temp']['day'],
+                'rain': day.get('rain', 0),
+                'wind_speed': day.get('wind_speed', 0)
+            })
+
+            # Print daily forecast + advice to terminal
+            print(f"\n=== Forecast for {forecast['date']} ===")
+            print(f"Temp: {forecast['temp']['day']}°C, Rain: {forecast['rain']}mm, Wind: {forecast['wind_speed']} m/s")
+            print("Advice:")
+            for a in forecast['advice']:
+                print(f"- [{a['priority']}] {a['message']}")
+            print("=== End ===\n")
+
+            data['daily_forecast'].append(forecast)
+
+        # Add formatted message for easy display
+        data['formatted_message'] = format_weather_forecast_message(data['daily_forecast'])
+
+        return Response(data)
+
+    except requests.exceptions.RequestException as e:
+        return Response({'error': f'Error fetching weather data: {str(e)}'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def plan_farming_timetable(request):
     """
-    API view to retrieve weather forecast data from OpenWeather API
+    Generate a 5-day farming timetable based on weather forecast.
     
-    Query Parameters:
-    - lat: Latitude (required)
-    - lon: Longitude (required)
+    Query parameters:
+    - lat: Latitude
+    - lon: Longitude
+    
+    Returns:
+    - 5-day timetable with morning, afternoon, and evening tasks
+    - Tasks are based on weather conditions
     """
-    # Get location parameters
     lat = request.query_params.get('lat')
     lon = request.query_params.get('lon')
     
     if not lat or not lon:
         return Response(
-            {'error': 'Latitude and longitude are required parameters'},
+            {'error': 'Latitude and longitude required'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Get OpenWeather API key from settings
-    api_key = getattr(settings, 'OPENWEATHER_API_KEY', '')
-    if not api_key:
-        return Response(
-            {'error': 'Weather service is currently unavailable'},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE
-        )
+    # Get 5-day weather forecast
+    # Create a modified request for the weather_forecast function
+    modified_request = request
+    modified_request.query_params = modified_request.query_params.copy()
+    modified_request.query_params['days'] = '5'
     
     try:
-        # Make API call to OpenWeather
-        base_url = "https://api.openweathermap.org/data/2.5/weather"
-        params = {
-            'lat': lat,
-            'lon': lon,
-            'appid': api_key,
-            'units': 'metric',  # Get temperature in Celsius
-        }
+        # Get weather forecast
+        forecast_response = weather_forecast(modified_request)
         
-        response = requests.get(base_url, params=params, timeout=10)
-        response.raise_for_status()
-        weather_data = response.json()
+        if forecast_response.status_code != 200:
+            return forecast_response
         
-        # Debug: Print the raw API response
-        print("\n=== RAW OPENWEATHER API RESPONSE ===")
-        print(json.dumps(weather_data, indent=2))
-        print("=== END OF RAW RESPONSE ===\n")
+        forecast_data = forecast_response.data['daily_forecast']
         
-        # Extract relevant weather information
-        location_name = weather_data.get('name', 'Unknown Location')
+        # Generate timetable
+        timetable = generate_farming_timetable(forecast_data)
         
-        # Generate farmer advice based on weather conditions
-        advice = get_farmer_advice(weather_data)
+        # Format as a readable message
+        formatted_message = "=== 5-Day Farming Timetable ===\n\n"
         
-        # Prepare response data
-        data = {
-            'location': location_name,
-            'coordinates': {
-                'latitude': float(lat),
-                'longitude': float(lon)
-            },
-            'current_weather': {
-                'temperature': weather_data['main']['temp'],
-                'feels_like': weather_data['main']['feels_like'],
-                'humidity': weather_data['main']['humidity'],
-                'wind_speed': weather_data['wind']['speed'],
-                'condition': weather_data['weather'][0]['description'],
-                'icon': f"http://openweathermap.org/img/wn/{weather_data['weather'][0]['icon']}@2x.png"
-            },
-            'advice': advice,
-            'unit': {
-                'temperature': '°C',
-                'wind_speed': 'm/s',
-                'humidity': '%',
-                'coordinates': 'decimal degrees'
-            },
+        for day_plan in timetable:
+            formatted_message += f"📅 Day {day_plan['day']} - {day_plan['date']}\n"
+            formatted_message += f"🌤️ Weather: {day_plan['weather_summary']}\n"
+            if day_plan['priority'] == 'high':
+                formatted_message += "⚠️ Priority: HIGH\n"
+            formatted_message += "\n"
+            
+            if day_plan['morning_tasks']:
+                formatted_message += "🌅 Morning Tasks:\n"
+                for task in day_plan['morning_tasks']:
+                    formatted_message += f"  • {task}\n"
+            
+            if day_plan['afternoon_tasks']:
+                formatted_message += "☀️ Afternoon Tasks:\n"
+                for task in day_plan['afternoon_tasks']:
+                    formatted_message += f"  • {task}\n"
+            
+            if day_plan['evening_tasks']:
+                formatted_message += "🌙 Evening Tasks:\n"
+                for task in day_plan['evening_tasks']:
+                    formatted_message += f"  • {task}\n"
+            
+            formatted_message += "\n" + "="*40 + "\n\n"
+        
+        formatted_message += "💡 Note: Adjust tasks based on your specific crops and farm conditions.\n"
+        
+        return Response({
+            'status': 'success',
+            'timetable': timetable,
+            'formatted_message': formatted_message,
             'timestamp': datetime.utcnow().isoformat()
-        }
+        })
         
-        # Add rain data if available
-        if 'rain' in weather_data:
-            data['current_weather']['rain_1h'] = weather_data['rain'].get('1h', 0)
-            data['unit']['rain'] = 'mm'
-        
-        return Response(data)
-        
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         return Response(
-            {'error': f'Error fetching weather data: {str(e)}'},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE
+            {'error': f'Error generating timetable: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    return Response(data)
 
 
 @api_view(['GET'])

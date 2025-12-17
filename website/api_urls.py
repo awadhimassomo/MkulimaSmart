@@ -32,6 +32,7 @@ urlpatterns = [
     # Weather forecast API endpoints (both /weather/ and /forecast/ for backward compatibility)
     path('weather/', api_views.weather_forecast, name='weather_forecast'),
     path('forecast/', api_views.weather_forecast, name='forecast_alias'),  # Alias for backward compatibility
+    path('plan-timetable/', api_views.plan_farming_timetable, name='plan_timetable'),
     path('crop-prices/', api_views.crop_prices, name='crop_prices'),
     
     # Farm API endpoints
