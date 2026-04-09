@@ -1,159 +1,597 @@
 {% extends "marketplace/supplier_base.html" %}
 
-{% block supplier_title %}Run Your Supplier Storefront{% endblock %}
-{% block supplier_subtitle %}Manage marketplace listings, seedling batches, stock visibility, and QR-powered traceability from one supplier dashboard.{% endblock %}
+{% block supplier_title %}Supplier Dashboard{% endblock %}
+{% block supplier_subtitle %}Track performance from one place with shared business KPIs first, then stock, orders, and supplier-specific tools that adapt to what you actually sell.{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+  .ops-dashboard {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.75rem;
+  }
+
+  .ops-top-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(320px, 0.95fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .ops-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .ops-metric {
+    position: relative;
+    padding: 1.15rem;
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(226, 232, 224, 0.95);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  .ops-metric-primary {
+    background: linear-gradient(135deg, #1e5b34, #153f24);
+    color: white;
+  }
+
+  .ops-metric-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6a776e;
+  }
+
+  .ops-metric-primary .ops-metric-label {
+    color: rgba(255, 255, 255, 0.76);
+  }
+
+  .ops-metric-value {
+    margin-top: 0.55rem;
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #153116;
+  }
+
+  .ops-metric-primary .ops-metric-value {
+    color: white;
+  }
+
+  .ops-metric-note {
+    margin-top: 0.55rem;
+    font-size: 0.88rem;
+    color: #68806f;
+  }
+
+  .ops-metric-primary .ops-metric-note {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .ops-panel {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(226, 232, 224, 0.95);
+    border-radius: 1.5rem;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+  }
+
+  .ops-panel-body {
+    padding: 1.35rem;
+  }
+
+  .ops-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .ops-panel-title {
+    margin: 0;
+    color: #173019;
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  .ops-panel-copy {
+    margin: 0.35rem 0 0;
+    color: #617065;
+    font-size: 0.95rem;
+  }
+
+  .ops-soft-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    background: #edf5e8;
+    color: #1f5d33;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .ops-insight-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 1rem;
+  }
+
+  .ops-bar-row {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .ops-bar-track {
+    height: 12px;
+    border-radius: 999px;
+    background: #e9efe7;
+    overflow: hidden;
+  }
+
+  .ops-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2f6b3c, #8dc572);
+  }
+
+  .ops-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .ops-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    background: #f2f6ef;
+    color: #1a3d20;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .ops-widget-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .ops-widget {
+    padding: 1rem;
+    border-radius: 1.2rem;
+    background: linear-gradient(180deg, #ffffff, #f6faf4);
+    border: 1px solid #e8eee5;
+  }
+
+  .ops-widget-value {
+    margin-top: 0.55rem;
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #173019;
+  }
+
+  .ops-status-list {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .ops-status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    background: #f6faf4;
+    border: 1px solid #e8eee5;
+  }
+
+  .ops-status-meta {
+    color: #607064;
+    font-size: 0.88rem;
+  }
+
+  .ops-status-value {
+    font-weight: 800;
+    color: #173019;
+  }
+
+  .ops-order-empty {
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #fbfcf8, #f3f7ef);
+    border: 1px dashed #d9e3d4;
+    color: #617065;
+  }
+
+  .ops-split-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1rem;
+  }
+
+  .ops-mini-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .ops-mini-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    background: #f8faf6;
+    border: 1px solid #e8eee5;
+  }
+
+  .ops-mini-item strong {
+    color: #173019;
+  }
+
+  .ops-mini-item span {
+    color: #607064;
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 1200px) {
+    .ops-metric-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ops-top-grid,
+    .ops-insight-grid,
+    .ops-split-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .ops-metric-grid,
+    .ops-widget-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ops-bar-row {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block supplier_content %}
-<div class="supplier-grid">
-  <section class="supplier-stats">
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Total Listings</div>
-      <div class="supplier-stat-value">{{ product_count }}</div>
-    </article>
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Live Products</div>
-      <div class="supplier-stat-value">{{ active_count }}</div>
-    </article>
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Inventory Units</div>
-      <div class="supplier-stat-value">{{ inventory_units }}</div>
-    </article>
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Low Stock</div>
-      <div class="supplier-stat-value">{{ low_stock_count }}</div>
-    </article>
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Seedling Batches</div>
-      <div class="supplier-stat-value">{{ seedling_batch_count }}</div>
-    </article>
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Batch Units</div>
-      <div class="supplier-stat-value">{{ seedling_units_total }}</div>
-    </article>
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Low Batch Stock</div>
-      <div class="supplier-stat-value">{{ seedling_low_stock_count }}</div>
-    </article>
-    <article class="supplier-stat">
-      <div class="supplier-stat-label">Tracked Plantings</div>
-      <div class="supplier-stat-value">{{ seedling_trace_count }}</div>
-    </article>
-  </section>
+<div class="ops-dashboard">
+  <div class="ops-top-grid">
+    <section class="ops-panel">
+      <div class="ops-panel-body">
+        <div class="ops-panel-head">
+          <div>
+            <h2 class="ops-panel-title">Performance Overview</h2>
+            <p class="ops-panel-copy">Shared core metrics stay visible for every supplier, no matter what category you operate in.</p>
+          </div>
+          <span class="ops-soft-badge">{{ seller_profile.business_name|default:seller_profile.seller_name }}</span>
+        </div>
 
-  <section class="supplier-card">
-    <div class="supplier-card-body">
-      <h2 class="supplier-section-title">Seedling Seller Tools</h2>
-      <p class="supplier-section-copy">Your supplier account is also your seedling seller account. Create batches here, generate QR codes, and track how many batches have been linked to planting records.</p>
-      <div class="supplier-actions" style="margin-top:1rem;">
-        <a href="{% url 'marketplace:supplier_seedling_batch_create' %}" class="supplier-btn-primary">Create Seedling Batch</a>
-        <a href="{% url 'marketplace:supplier_product_create' %}" class="supplier-btn-secondary">Post Product to Marketplace</a>
+        <div class="ops-metric-grid">
+          <article class="ops-metric ops-metric-primary">
+            <div class="ops-metric-label">Revenue</div>
+            <div class="ops-metric-value">TZS 0</div>
+            <div class="ops-metric-note">
+              {% if revenue_available %}
+                Supplier revenue is linked to your orders.
+              {% else %}
+                Revenue tracking will activate once supplier order lines are captured.
+              {% endif %}
+            </div>
+          </article>
+          <article class="ops-metric">
+            <div class="ops-metric-label">Live Products</div>
+            <div class="ops-metric-value">{{ active_count }}</div>
+            <div class="ops-metric-note">{{ live_ratio }}% of your listings are currently active.</div>
+          </article>
+          <article class="ops-metric">
+            <div class="ops-metric-label">Inventory Units</div>
+            <div class="ops-metric-value">{{ inventory_units }}</div>
+            <div class="ops-metric-note">All stock units currently visible in your marketplace catalog.</div>
+          </article>
+          <article class="ops-metric">
+            <div class="ops-metric-label">Inventory Value</div>
+            <div class="ops-metric-value">TZS {{ inventory_value|floatformat:0 }}</div>
+            <div class="ops-metric-note">Estimated stock value based on your current listing price and quantity.</div>
+          </article>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="supplier-card">
-    <div class="supplier-card-body">
-      <h2 class="supplier-section-title">Seedling Batches</h2>
-      <p class="supplier-section-copy">Each batch gets its own QR code for planting intake and traceability.</p>
-    </div>
+    <aside class="ops-panel">
+      <div class="ops-panel-body">
+        <div class="ops-panel-head">
+          <div>
+            <h2 class="ops-panel-title">Profile & Focus</h2>
+            <p class="ops-panel-copy">Your supplier profile determines which tools and widgets are most relevant.</p>
+          </div>
+          <span class="ops-soft-badge">{% if has_certificates %}Certificates Added{% else %}Certificates Pending{% endif %}</span>
+        </div>
 
-    {% if seedling_batches %}
-      <div style="overflow-x:auto;">
-        <table class="supplier-table">
-          <thead>
-            <tr>
-              <th>Batch</th>
-              <th>Seedling</th>
-              <th>Available</th>
-              <th>Planting Window</th>
-              <th>Trace Records</th>
-              <th>QR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for batch in seedling_batches %}
-              <tr>
-                <td>{{ batch.seedling_batch_id }}</td>
-                <td>{{ batch.seedling_type }}{% if batch.variety %} - {{ batch.variety }}{% endif %}</td>
-                <td>{{ batch.quantity_available }} {{ batch.unit }}</td>
-                <td>{{ batch.recommended_planting_until|default:"-" }}</td>
-                <td>{{ batch.planting_records.count }}</td>
-                <td>
-                  <div class="supplier-actions">
-                    <a href="{% url 'marketplace:batch_qr_print' batch.pk %}" class="supplier-btn-secondary">Print QR</a>
-                    <a href="{% url 'marketplace:batch_qr_image' batch.pk %}" class="supplier-btn-secondary">Open QR</a>
+        <div class="ops-status-list">
+          <div class="ops-status-item">
+            <div>
+              <strong>Supplier Type</strong>
+              <div class="ops-status-meta">{{ seller_profile.get_seller_type_display }}</div>
+            </div>
+            <div class="ops-status-value">{{ seller_profile.get_seller_type_display }}</div>
+          </div>
+          <div class="ops-status-item">
+            <div>
+              <strong>Average Listing Price</strong>
+              <div class="ops-status-meta">Useful for pricing consistency across your catalog.</div>
+            </div>
+            <div class="ops-status-value">TZS {{ average_price|floatformat:0 }}</div>
+          </div>
+          <div class="ops-status-item">
+            <div>
+              <strong>QR Access</strong>
+              <div class="ops-status-meta">Shown only for seedling and nursery-related suppliers.</div>
+            </div>
+            <div class="ops-status-value">{% if can_manage_qr %}Enabled{% else %}Hidden{% endif %}</div>
+          </div>
+        </div>
+
+        {% if seller_product_labels %}
+          <div style="margin-top:1rem;">
+            <div class="ops-metric-label" style="margin-bottom:0.5rem;">Product Categories</div>
+            <div class="ops-pill-row">
+              {% for label in seller_product_labels %}
+                <span class="ops-pill">{{ label }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+
+  <div class="ops-insight-grid">
+    <section class="ops-panel">
+      <div class="ops-panel-body">
+        <div class="ops-panel-head">
+          <div>
+            <h2 class="ops-panel-title">Catalog Analytics</h2>
+            <p class="ops-panel-copy">Track where your listings are concentrated so stock planning stays organized by category.</p>
+          </div>
+        </div>
+
+        {% if product_categories %}
+          {% for row in product_categories %}
+            <div class="ops-bar-row">
+              <strong>{{ row.category__name|default:"Uncategorized" }}</strong>
+              <div class="ops-bar-track">
+                <div class="ops-bar-fill" style="width:{% widthratio row.total product_count 100 %}%"></div>
+              </div>
+              <span>{{ row.total }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="ops-order-empty">Once you publish products, category analytics will appear here.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="ops-panel">
+      <div class="ops-panel-body">
+        <div class="ops-panel-head">
+          <div>
+            <h2 class="ops-panel-title">Order Management</h2>
+            <p class="ops-panel-copy">This section is ready for pending orders, deliveries, and returns once supplier order routing is in place.</p>
+          </div>
+        </div>
+
+        <div class="ops-status-list">
+          <div class="ops-status-item">
+            <div>
+              <strong>Pending Orders</strong>
+              <div class="ops-status-meta">Waiting for supplier-linked order data.</div>
+            </div>
+            <div class="ops-status-value">0</div>
+          </div>
+          <div class="ops-status-item">
+            <div>
+              <strong>Deliveries</strong>
+              <div class="ops-status-meta">Will show active dispatches and fulfillment flow.</div>
+            </div>
+            <div class="ops-status-value">0</div>
+          </div>
+          <div class="ops-status-item">
+            <div>
+              <strong>Returns</strong>
+              <div class="ops-status-meta">Reserved for post-delivery issues and reversals.</div>
+            </div>
+            <div class="ops-status-value">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="ops-split-grid">
+    <section class="ops-panel">
+      <div class="ops-panel-body">
+        <div class="ops-panel-head">
+          <div>
+            <h2 class="ops-panel-title">Stock Management</h2>
+            <p class="ops-panel-copy">Central stock visibility with room for category-specific monitoring and action.</p>
+          </div>
+          <a href="{% url 'marketplace:supplier_product_create' %}" class="supplier-btn-primary">New Listing</a>
+        </div>
+
+        {% if product_table_rows %}
+          <div style="overflow-x:auto;">
+            <table class="supplier-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for product in product_table_rows %}
+                  <tr>
+                    <td><a href="{% url 'marketplace:supplier_product_detail' product.pk %}" class="supplier-product-link">{{ product.name }}</a></td>
+                    <td>{{ product.category.name }}</td>
+                    <td>TZS {{ product.price|floatformat:0 }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>
+                      {% if product.is_active %}
+                        <span class="supplier-pill supplier-pill-live">Live</span>
+                      {% else %}
+                        <span class="supplier-pill supplier-pill-draft">Hidden</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ product.updated_at|date:"M j, Y" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="ops-order-empty">You do not have any listings yet. Create products first to unlock stock tracking.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="ops-panel">
+      <div class="ops-panel-body">
+        <div class="ops-panel-head">
+          <div>
+            <h2 class="ops-panel-title">Custom Widgets</h2>
+            <p class="ops-panel-copy">These change depending on the categories in your supplier profile.</p>
+          </div>
+        </div>
+
+        <div class="ops-widget-grid">
+          {% for widget in custom_widgets %}
+            <article class="ops-widget">
+              <div class="ops-metric-label">{{ widget.title }}</div>
+              <div class="ops-widget-value">{{ widget.value }}</div>
+              <div class="ops-panel-copy">{{ widget.description }}</div>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% if can_manage_qr %}
+    <div class="ops-split-grid">
+      <section class="ops-panel">
+        <div class="ops-panel-body">
+          <div class="ops-panel-head">
+            <div>
+              <h2 class="ops-panel-title">Seedling & QR Tools</h2>
+              <p class="ops-panel-copy">Available only because your supplier profile includes seedling or nursery-related selling.</p>
+            </div>
+            <a href="{% url 'marketplace:supplier_seedling_batch_create' %}" class="supplier-btn-primary">Create Seedling Batch</a>
+          </div>
+
+          {% if seedling_batches %}
+            <div style="overflow-x:auto;">
+              <table class="supplier-table">
+                <thead>
+                  <tr>
+                    <th>Batch</th>
+                    <th>Seedling</th>
+                    <th>Available</th>
+                    <th>Planting Window</th>
+                    <th>Trace Records</th>
+                    <th>QR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for batch in seedling_batches %}
+                    <tr>
+                      <td>{{ batch.seedling_batch_id }}</td>
+                      <td>{{ batch.seedling_type }}{% if batch.variety %} - {{ batch.variety }}{% endif %}</td>
+                      <td>{{ batch.quantity_available }} {{ batch.unit }}</td>
+                      <td>{{ batch.recommended_planting_until|default:"-" }}</td>
+                      <td>{{ batch.planting_records.count }}</td>
+                      <td>
+                        <div class="supplier-actions">
+                          <a href="{% url 'marketplace:batch_qr_print' batch.pk %}" class="supplier-btn-secondary">Print QR</a>
+                          <a href="{% url 'marketplace:batch_qr_image' batch.pk %}" class="supplier-btn-secondary">Open QR</a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="ops-order-empty">No seedling batches yet. Create a batch to start traceability and QR generation.</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="ops-panel">
+        <div class="ops-panel-body">
+          <div class="ops-panel-head">
+            <div>
+              <h2 class="ops-panel-title">Batch Watchlist</h2>
+              <p class="ops-panel-copy">Useful for monitoring planting windows and follow-up traceability.</p>
+            </div>
+          </div>
+
+          {% if soon_expiring_batches %}
+            <div class="ops-mini-list">
+              {% for batch in soon_expiring_batches %}
+                <div class="ops-mini-item">
+                  <div>
+                    <strong>{{ batch.seedling_batch_id }}</strong>
+                    <span>{{ batch.seedling_type }}</span>
                   </div>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="supplier-empty">
-        <h3 style="margin:0 0 0.5rem;color:#173019;">No seedling batches yet</h3>
-        <p style="margin:0 0 1rem;">Create your first batch here and the system will prepare the QR code automatically.</p>
-        <a href="{% url 'marketplace:supplier_seedling_batch_create' %}" class="supplier-btn-primary" style="text-decoration:none;">Create Seedling Batch</a>
-      </div>
-    {% endif %}
-  </section>
-
-  <section class="supplier-card">
-    <div class="supplier-card-body">
-      <h2 class="supplier-section-title">Your Listings</h2>
-      <p class="supplier-section-copy">These are the products currently attached to your supplier account.</p>
+                  <div style="text-align:right;">
+                    <strong>{{ batch.recommended_planting_until }}</strong>
+                    <span>Recommended planting until</span>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="ops-order-empty">Add recommended planting windows to your seedling batches and they will appear here.</div>
+          {% endif %}
+        </div>
+      </section>
     </div>
-
-    {% if products %}
-      <div style="overflow-x:auto;">
-        <table class="supplier-table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Status</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for product in products %}
-              <tr>
-                <td>
-                  <a href="{% url 'marketplace:supplier_product_detail' product.pk %}" class="supplier-product-link">{{ product.name }}</a>
-                </td>
-                <td>{{ product.category.name }}</td>
-                <td>TZS {{ product.price|floatformat:0 }}</td>
-                <td>{{ product.stock }}</td>
-                <td>
-                  {% if product.is_active %}
-                    <span class="supplier-pill supplier-pill-live">Live</span>
-                  {% else %}
-                    <span class="supplier-pill supplier-pill-draft">Hidden</span>
-                  {% endif %}
-                </td>
-                <td>{{ product.updated_at|date:"M j, Y" }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="supplier-empty">
-        <h3 style="margin:0 0 0.5rem;color:#173019;">No products yet</h3>
-        <p style="margin:0 0 1rem;">Create your first listing and start showing buyers what you offer.</p>
-        <a href="{% url 'marketplace:supplier_product_create' %}" class="supplier-btn-primary" style="text-decoration:none;">Create Your First Listing</a>
-      </div>
-    {% endif %}
-  </section>
+  {% endif %}
 
   {% if low_stock_products %}
-    <section class="supplier-card">
-      <div class="supplier-card-body">
-        <h2 class="supplier-section-title">Low Stock Watch</h2>
-        <p class="supplier-section-copy">These items are close to selling out and may need an update soon.</p>
-        <div class="supplier-actions" style="margin-top:1rem;">
+    <section class="ops-panel">
+      <div class="ops-panel-body">
+        <div class="ops-panel-head">
+          <div>
+            <h2 class="ops-panel-title">Low Stock Watch</h2>
+            <p class="ops-panel-copy">Quick actions for products that may need restocking, repricing, or a status update.</p>
+          </div>
+        </div>
+
+        <div class="supplier-actions">
           {% for product in low_stock_products %}
             <a href="{% url 'marketplace:supplier_product_edit' product.pk %}" class="supplier-btn-secondary">
               {{ product.name }}: {{ product.stock }} left

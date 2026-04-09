@@ -5,14 +5,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum
-from django.views.decorators.http import require_POST
+from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, Q, Sum
 
 from operations.forms import PlantingRecordForm
 from operations.models import InputSeller, PlantingRecord, SeedlingBatch, build_qr_image
 from website.models import Category, Product
 
-from .forms import SupplierProductForm, SupplierSeedlingBatchForm
+from .forms import SupplierOnboardingForm, SupplierProductForm, SupplierSeedlingBatchForm
 
 
 def supplier_required(view_func):
@@ -26,6 +25,13 @@ def supplier_required(view_func):
         return redirect("website:dashboard")
 
     return wrapped
+
+
+def supplier_can_manage_qr(seller_profile):
+    seedling_ready_sellers = {"seedling_seller", "nursery_operator"}
+    seedling_product_tags = {"seedlings"}
+    supplier_products = set(seller_profile.products_offered or [])
+    return seller_profile.seller_type in seedling_ready_sellers or bool(supplier_products & seedling_product_tags)
 
 
 def home(request):
@@ -102,16 +108,33 @@ def seller_start(request):
 
 
 @login_required
-@require_POST
 def become_supplier(request):
-    if request.user.is_supplier:
-        messages.info(request, "Your account already has supplier access.")
+    return redirect("marketplace:supplier_onboarding")
+
+
+@login_required
+def supplier_onboarding(request):
+    seller_profile = InputSeller.get_or_create_for_user(request.user)
+
+    if request.method == "POST":
+        form = SupplierOnboardingForm(request.POST, request.FILES, instance=seller_profile)
+        if form.is_valid():
+            seller_profile = form.save(commit=False)
+            seller_profile.user = request.user
+            seller_profile.seller_name = request.user.get_full_name() or request.user.phone_number
+            seller_profile.phone_number = request.user.phone_number
+            seller_profile.onboarding_completed = True
+            seller_profile.is_active = True
+            seller_profile.save()
+            if not request.user.is_supplier:
+                request.user.is_supplier = True
+                request.user.save(update_fields=["is_supplier"])
+            messages.success(request, "Seller profile saved. You can now manage your shop, products, and seedling batches.")
+            return redirect("marketplace:supplier_dashboard")
     else:
-        request.user.is_supplier = True
-        request.user.save(update_fields=["is_supplier"])
-        messages.success(request, "Supplier access enabled. You can now manage marketplace products and seedling batches.")
-    InputSeller.get_or_create_for_user(request.user)
-    return redirect("marketplace:supplier_dashboard")
+        form = SupplierOnboardingForm(instance=seller_profile, initial={"products_offered": seller_profile.products_offered})
+
+    return render(request, "marketplace/supplier_onboarding.html", {"form": form})
 
 
 @supplier_required
@@ -119,16 +142,82 @@ def supplier_dashboard(request):
     products = Product.objects.filter(supplier=request.user).select_related("category").prefetch_related("images").order_by("-created_at")
     low_stock_products = products.filter(stock__lte=5)
     seller_profile = InputSeller.get_or_create_for_user(request.user)
+    if not seller_profile.onboarding_completed and not request.user.is_staff:
+        messages.info(request, "Complete your seller profile so we know what you sell and any certificates you hold.")
+        return redirect("marketplace:supplier_onboarding")
     seedling_batches = (
         SeedlingBatch.objects.filter(seller=seller_profile)
         .prefetch_related("planting_records")
         .order_by("-created_at")
     )
     linked_plantings = PlantingRecord.objects.filter(seedling_batch__seller=seller_profile)
+    product_categories = list(products.values("category__name").annotate(total=Count("id")).order_by("-total")[:5])
+    inventory_value = products.aggregate(
+        total=Sum(ExpressionWrapper(F("price") * F("stock"), output_field=DecimalField(max_digits=14, decimal_places=2)))
+    ).get("total") or 0
+    average_price = products.aggregate(avg=Avg("price")).get("avg") or 0
+    live_ratio = round((products.filter(is_active=True).count() / products.count()) * 100) if products.count() else 0
+    supplier_products = set(seller_profile.products_offered or [])
+    can_manage_qr = supplier_can_manage_qr(seller_profile)
+    seedling_trace_count = linked_plantings.count()
+    soon_expiring_batch_qs = seedling_batches.filter(recommended_planting_until__isnull=False).order_by("recommended_planting_until")
+    soon_expiring_batches = soon_expiring_batch_qs[:5]
+    soon_expiring_count = soon_expiring_batch_qs.count()
+
+    custom_widgets = []
+    if can_manage_qr:
+        custom_widgets.append({
+            "title": "Seedling Batch Performance",
+            "value": seedling_trace_count,
+            "description": "Tracked planting records linked back to your batches.",
+            "accent": "green",
+        })
+        custom_widgets.append({
+            "title": "Upcoming Planting Window",
+            "value": soon_expiring_count,
+            "description": "Batches with a recommended planting deadline already set.",
+            "accent": "olive",
+        })
+    if "fertilizer" in supplier_products or "compost" in supplier_products:
+        nutrient_products = products.filter(category__name__icontains="fert")
+        compost_products = products.filter(category__name__icontains="compost")
+        custom_widgets.append({
+            "title": "Soil Input Listings",
+            "value": nutrient_products.count() + compost_products.count(),
+            "description": "Marketplace products positioned for soil nutrition and amendment.",
+            "accent": "amber",
+        })
+        custom_widgets.append({
+            "title": "Quote-Based Inputs",
+            "value": products.filter(requires_quote=True).count(),
+            "description": "Products that may need consultation before checkout.",
+            "accent": "stone",
+        })
+    if "seeds" in supplier_products:
+        custom_widgets.append({
+            "title": "Seed Portfolio",
+            "value": products.filter(category__name__icontains="seed").count(),
+            "description": "Seed-focused listings currently visible in your catalog.",
+            "accent": "green",
+        })
+    if not custom_widgets:
+        custom_widgets.append({
+            "title": "Profile Coverage",
+            "value": len(supplier_products) or 1,
+            "description": "Product groups selected in your supplier profile.",
+            "accent": "green",
+        })
+        custom_widgets.append({
+            "title": "Certification Status",
+            "value": "Ready" if seller_profile.certificate_file or seller_profile.certification_details else "Pending",
+            "description": "Add certificate details to improve buyer confidence.",
+            "accent": "stone",
+        })
 
     context = {
         "seller_profile": seller_profile,
         "products": products[:6],
+        "product_table_rows": products[:8],
         "product_count": products.count(),
         "active_count": products.filter(is_active=True).count(),
         "low_stock_count": low_stock_products.count(),
@@ -139,6 +228,17 @@ def supplier_dashboard(request):
         "seedling_units_total": seedling_batches.aggregate(total=Sum("quantity_available")).get("total") or 0,
         "seedling_low_stock_count": seedling_batches.filter(quantity_available__lte=5).count(),
         "seedling_trace_count": linked_plantings.count(),
+        "inventory_value": inventory_value,
+        "average_price": average_price,
+        "live_ratio": live_ratio,
+        "product_categories": product_categories,
+        "custom_widgets": custom_widgets[:4],
+        "can_manage_qr": can_manage_qr,
+        "soon_expiring_batches": soon_expiring_batches,
+        "soon_expiring_count": soon_expiring_count,
+        "seller_product_labels": [label for value, label in InputSeller.PRODUCT_CATEGORY_CHOICES if value in supplier_products],
+        "has_certificates": bool(seller_profile.certificate_file or seller_profile.certification_details),
+        "revenue_available": False,
     }
     return render(request, "marketplace/supplier_dashboard.html", context)
 
@@ -146,6 +246,9 @@ def supplier_dashboard(request):
 @supplier_required
 def supplier_seedling_batch_create(request):
     seller_profile = InputSeller.get_or_create_for_user(request.user)
+    if not supplier_can_manage_qr(seller_profile):
+        messages.error(request, "Seedling batch QR tools are only available for seedling and nursery suppliers.")
+        return redirect("marketplace:supplier_dashboard")
 
     if request.method == "POST":
         form = SupplierSeedlingBatchForm(request.POST)
@@ -170,6 +273,9 @@ def supplier_seedling_batch_create(request):
 @supplier_required
 def supplier_batch_qr_print(request, pk):
     seller_profile = InputSeller.get_or_create_for_user(request.user)
+    if not supplier_can_manage_qr(seller_profile):
+        messages.error(request, "QR tools are only available for seedling and nursery suppliers.")
+        return redirect("marketplace:supplier_dashboard")
     batch = get_object_or_404(SeedlingBatch.objects.select_related("seller"), pk=pk, seller=seller_profile)
     if not batch.qr_code:
         batch.ensure_qr_code()

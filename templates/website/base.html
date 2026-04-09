@@ -537,9 +537,6 @@
           <a href="{% url 'website:marketplace' %}" class="nav-link {% if url_name == 'marketplace' %}active{% endif %}">
             Marketplace
           </a>
-          <a href="{% url 'marketplace:seller_start' %}" class="nav-link {% if url_name == 'seller_start' or url_name == 'supplier_dashboard' or url_name == 'supplier_product_create' %}active{% endif %}">
-            Sell
-          </a>
           <a href="{% url 'website:booking_home' %}" class="nav-link {% if url_name == 'booking_home' %}active{% endif %}">
             Services
           </a>
@@ -630,10 +627,6 @@
           <a href="{% url 'website:about' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'about' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
             <i class="fas fa-info-circle w-6 text-center mr-3" aria-hidden="true"></i>
             About
-          </a>
-          <a href="{% url 'marketplace:seller_start' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'seller_start' or url_name == 'supplier_dashboard' or url_name == 'supplier_product_create' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
-            <i class="fas fa-store w-6 text-center mr-3" aria-hidden="true"></i>
-            Sell on Mkulima
           </a>
           {% endwith %}
           

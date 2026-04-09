@@ -42,6 +42,16 @@ class InputSeller(models.Model):
         ("nursery_operator", "Nursery Operator"),
         ("agro_input_dealer", "Agro-Input Dealer"),
     ]
+    PRODUCT_CATEGORY_CHOICES = [
+        ("seedlings", "Seedlings"),
+        ("fertilizer", "Fertilizer"),
+        ("compost", "Compost"),
+        ("seeds", "Seeds"),
+        ("pesticides", "Pesticides"),
+        ("tools", "Tools & Equipment"),
+        ("feed", "Animal Feed"),
+        ("other", "Other Inputs"),
+    ]
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -54,6 +64,10 @@ class InputSeller(models.Model):
     business_name = models.CharField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=30)
     seller_type = models.CharField(max_length=30, choices=SELLER_TYPE_CHOICES)
+    products_offered = models.JSONField(blank=True, default=list)
+    certification_details = models.TextField(blank=True)
+    certificate_file = models.FileField(upload_to="operations/seller_certificates/", blank=True, null=True)
+    onboarding_completed = models.BooleanField(default=False)
     location = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -78,6 +92,7 @@ class InputSeller(models.Model):
                 "seller_name": display_name,
                 "business_name": display_name,
                 "seller_type": "seedling_seller",
+                "products_offered": [],
                 "location": user.address or "Tanzania",
                 "is_active": True,
             },

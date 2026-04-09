@@ -1,0 +1,48 @@
+{% extends "marketplace/supplier_base.html" %}
+
+{% block supplier_title %}Complete Seller Profile{% endblock %}
+{% block supplier_subtitle %}Tell us what you sell, where you operate, and any certificates or permits you hold before opening the seller dashboard.{% endblock %}
+
+{% block supplier_content %}
+<section class="supplier-card" style="margin-top:1.75rem;">
+  <div class="supplier-card-body">
+    <h2 class="supplier-section-title">Seller Information</h2>
+    <p class="supplier-section-copy">This profile helps Mkulima Smart understand whether you sell seedlings, fertilizer, compost, or other inputs, and lets you attach certificate details.</p>
+
+    <form method="post" enctype="multipart/form-data" class="supplier-form-grid" style="margin-top:1.5rem;">
+      {% csrf_token %}
+
+      <div class="supplier-form-grid-2">
+        {% for field in form %}
+          <div class="supplier-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {% if field.name == 'products_offered' %}
+              <div class="crop-grid">
+                {% for checkbox in field %}
+                  <div class="crop-pill">
+                    {{ checkbox.tag }}
+                    <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text }}</span>
+            {% endif %}
+            {% if field.errors %}
+              <div class="supplier-errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="supplier-actions" style="margin-top:0.5rem;">
+        <button type="submit" class="supplier-btn-primary">Save Seller Profile</button>
+        <a href="{% url 'marketplace:seller_start' %}" class="supplier-btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

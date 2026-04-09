@@ -5,8 +5,8 @@ from .models import FarmActivity, FarmInputUsage, InputSeller, InspectionLog, Pl
 
 @admin.register(InputSeller)
 class InputSellerAdmin(admin.ModelAdmin):
-    list_display = ("seller_name", "business_name", "user", "seller_type", "phone_number", "location", "is_active")
-    list_filter = ("seller_type", "is_active")
+    list_display = ("seller_name", "business_name", "user", "seller_type", "onboarding_completed", "phone_number", "location", "is_active")
+    list_filter = ("seller_type", "onboarding_completed", "is_active")
     search_fields = ("seller_name", "business_name", "phone_number", "location")
 
 

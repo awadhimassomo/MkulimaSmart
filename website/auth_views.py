@@ -13,6 +13,7 @@ from django.contrib.auth.views import (
 import logging
 import json
 
+from operations.models import InputSeller
 from .forms import FarmerRegistrationForm, FarmerLoginForm
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ class FarmerRegistrationView(CreateView):
         user_type = form.cleaned_data.get('user_type')
         farm_data = None
         crops = []
+        supplier_profile_data = None
 
         if user_type == 'farmer':
             farm_data = {
@@ -71,6 +73,15 @@ class FarmerRegistrationView(CreateView):
                     crops.extend(json.loads(other_crops_data))
                 except Exception:
                     pass
+        elif user_type == 'supplier':
+            supplier_profile_data = {
+                'business_name': form.cleaned_data.get('supplier_business_name', '').strip(),
+                'location': form.cleaned_data.get('supplier_location', '').strip(),
+                'seller_type': form.cleaned_data.get('supplier_seller_type'),
+                'products_offered': form.cleaned_data.get('supplier_products_offered') or [],
+                'certification_details': form.cleaned_data.get('supplier_certification_details', '').strip(),
+                'certificate_file': self.request.FILES.get('supplier_certificate_file'),
+            }
 
         user = form.save(
             commit=True,
@@ -78,6 +89,20 @@ class FarmerRegistrationView(CreateView):
             crops_data=crops,
         )
         self.object = user
+
+        if user.is_supplier and supplier_profile_data:
+            seller_profile = InputSeller.get_or_create_for_user(user)
+            seller_profile.seller_name = user.get_full_name() or user.phone_number
+            seller_profile.business_name = supplier_profile_data['business_name'] or seller_profile.business_name
+            seller_profile.phone_number = user.phone_number
+            seller_profile.location = supplier_profile_data['location'] or seller_profile.location
+            seller_profile.seller_type = supplier_profile_data['seller_type'] or seller_profile.seller_type
+            seller_profile.products_offered = supplier_profile_data['products_offered']
+            seller_profile.certification_details = supplier_profile_data['certification_details']
+            if supplier_profile_data['certificate_file']:
+                seller_profile.certificate_file = supplier_profile_data['certificate_file']
+            seller_profile.onboarding_completed = True
+            seller_profile.save()
 
         login(self.request, user)
 

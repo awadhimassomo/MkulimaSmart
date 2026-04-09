@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.text import slugify
 
-from operations.models import SeedlingBatch
+from operations.models import InputSeller, SeedlingBatch
 from website.models import Category, Product, ProductImage
 
 
@@ -130,5 +130,48 @@ class SupplierSeedlingBatchForm(forms.ModelForm):
                 widget.attrs["class"] = f"form-input min-h-32 {existing}".strip()
             elif isinstance(widget, forms.Select):
                 widget.attrs["class"] = f"form-select {existing}".strip()
+            else:
+                widget.attrs["class"] = f"form-input {existing}".strip()
+
+
+class SupplierOnboardingForm(forms.ModelForm):
+    products_offered = forms.MultipleChoiceField(
+        choices=InputSeller.PRODUCT_CATEGORY_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+    )
+
+    class Meta:
+        model = InputSeller
+        fields = [
+            "business_name",
+            "location",
+            "seller_type",
+            "products_offered",
+            "certification_details",
+            "certificate_file",
+        ]
+        widgets = {
+            "certification_details": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for _, field in self.fields.items():
+            widget = field.widget
+            existing = widget.attrs.get("class", "")
+            if isinstance(widget, forms.CheckboxSelectMultiple):
+                continue
+            if isinstance(widget, forms.Textarea):
+                widget.attrs["class"] = f"form-input min-h-32 {existing}".strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = f"form-select {existing}".strip()
+            elif isinstance(widget, forms.ClearableFileInput):
+                widget.attrs["class"] = (
+                    "block w-full text-sm text-gray-600 "
+                    "file:mr-4 file:rounded-xl file:border-0 "
+                    "file:bg-[var(--brand-primary)] file:px-4 file:py-2 file:text-white "
+                    f"{existing}"
+                ).strip()
             else:
                 widget.attrs["class"] = f"form-input {existing}".strip()

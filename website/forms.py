@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.utils.translation import gettext_lazy as _
+from operations.models import InputSeller
 from .models import User, Farm, Crop
 import json
 
@@ -35,6 +36,26 @@ class FarmerRegistrationForm(UserCreationForm):
         label=_("Email"),
         required=False,
         help_text=_("Optional. Used for password resets and notifications.")
+    )
+    supplier_business_name = forms.CharField(label=_("Business Name"), max_length=255, required=False)
+    supplier_location = forms.CharField(label=_("Business Location"), max_length=255, required=False)
+    supplier_seller_type = forms.ChoiceField(label=_("Seller Type"), choices=InputSeller.SELLER_TYPE_CHOICES, required=False)
+    supplier_products_offered = forms.MultipleChoiceField(
+        label=_("Products You Sell"),
+        choices=InputSeller.PRODUCT_CATEGORY_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    supplier_certification_details = forms.CharField(
+        label=_("Certificates or Compliance Details"),
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4}),
+        help_text=_("Optional. Add certificate names, permit numbers, or compliance notes."),
+    )
+    supplier_certificate_file = forms.FileField(
+        label=_("Certificate File"),
+        required=False,
+        help_text=_("Optional. Upload a certificate, permit, or compliance document."),
     )
     password1 = forms.CharField(
         label=_("Password"),
@@ -79,6 +100,16 @@ class FarmerRegistrationForm(UserCreationForm):
                 self.add_error('first_name', _("This field is required for this account type."))
             if not cleaned_data.get('last_name'):
                 self.add_error('last_name', _("This field is required for this account type."))
+
+        if user_type == 'supplier':
+            if not cleaned_data.get('supplier_business_name'):
+                self.add_error('supplier_business_name', _("Business name is required for supplier accounts."))
+            if not cleaned_data.get('supplier_location'):
+                self.add_error('supplier_location', _("Business location is required for supplier accounts."))
+            if not cleaned_data.get('supplier_seller_type'):
+                self.add_error('supplier_seller_type', _("Seller type is required for supplier accounts."))
+            if not cleaned_data.get('supplier_products_offered'):
+                self.add_error('supplier_products_offered', _("Choose at least one product category you sell."))
 
         return cleaned_data
 

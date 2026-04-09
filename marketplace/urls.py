@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('seller/', views.seller_start, name='seller_start'),
     path('seller/activate/', views.become_supplier, name='become_supplier'),
+    path('seller/profile/', views.supplier_onboarding, name='supplier_onboarding'),
     path('supplier/', views.supplier_dashboard, name='supplier_dashboard'),
     path('supplier/seedling-batches/new/', views.supplier_seedling_batch_create, name='supplier_seedling_batch_create'),
     path('supplier/seedling-batches/<int:pk>/qr/', views.supplier_batch_qr_print, name='batch_qr_print'),

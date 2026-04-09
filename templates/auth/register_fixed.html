@@ -645,7 +645,7 @@
             </div>
           {% endif %}
 
-          <form method="post" novalidate>
+          <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
             <div class="register-stepper" id="registerStepper">
@@ -661,8 +661,8 @@
               </div>
               <div class="register-step" data-step-marker="2">
                 <div class="register-step-index">3</div>
-                <strong>Farm</strong>
-                <span>Shown only for farmer accounts.</span>
+                <strong>Business / Farm</strong>
+                <span>Changes based on the selected account type.</span>
               </div>
               <div class="register-step" data-step-marker="3">
                 <div class="register-step-index">4</div>
@@ -816,6 +816,76 @@
                 </div>
               </section>
 
+              <section class="register-section" data-section="supplier" hidden>
+                <h3><i class="fas fa-store"></i> Seller Profile</h3>
+                <p>Tell us what you sell and share any certificates or compliance details for your supplier account.</p>
+
+                <div class="field-grid">
+                  <div class="form-field">
+                    <label for="{{ form.supplier_business_name.id_for_label }}">Business Name</label>
+                    {{ form.supplier_business_name }}
+                    {% if form.supplier_business_name.errors %}
+                      <div class="error-text">{{ form.supplier_business_name.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field">
+                    <label for="{{ form.supplier_location.id_for_label }}">Business Location</label>
+                    {{ form.supplier_location }}
+                    {% if form.supplier_location.errors %}
+                      <div class="error-text">{{ form.supplier_location.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field field-span">
+                    <label for="{{ form.supplier_seller_type.id_for_label }}">Seller Type</label>
+                    {{ form.supplier_seller_type }}
+                    {% if form.supplier_seller_type.errors %}
+                      <div class="error-text">{{ form.supplier_seller_type.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label>Products You Sell</label>
+                  <div class="crop-grid">
+                    {% for checkbox in form.supplier_products_offered %}
+                      <div class="crop-pill">
+                        {{ checkbox.tag }}
+                        <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  {% if form.supplier_products_offered.errors %}
+                    <div class="error-text">{{ form.supplier_products_offered.errors|join:", " }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="field-grid">
+                  <div class="form-field field-span">
+                    <label for="{{ form.supplier_certification_details.id_for_label }}">Certificates or Compliance Details</label>
+                    {{ form.supplier_certification_details }}
+                    {% if form.supplier_certification_details.help_text %}
+                      <div class="field-help">{{ form.supplier_certification_details.help_text }}</div>
+                    {% endif %}
+                    {% if form.supplier_certification_details.errors %}
+                      <div class="error-text">{{ form.supplier_certification_details.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field field-span">
+                    <label for="{{ form.supplier_certificate_file.id_for_label }}">Certificate File</label>
+                    {{ form.supplier_certificate_file }}
+                    {% if form.supplier_certificate_file.help_text %}
+                      <div class="field-help">{{ form.supplier_certificate_file.help_text }}</div>
+                    {% endif %}
+                    {% if form.supplier_certificate_file.errors %}
+                      <div class="error-text">{{ form.supplier_certificate_file.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </section>
+
             </div>
 
             <div class="step-panel" data-step-panel="3">
@@ -863,6 +933,7 @@
     const formSelect = document.getElementById('{{ form.user_type.id_for_label }}');
     const accountCards = document.querySelectorAll('[data-account-value]');
     const farmSection = document.querySelector('[data-section="farm"]');
+    const supplierSection = document.querySelector('[data-section="supplier"]');
     const selectionTitle = document.getElementById('selectionTitle');
     const selectionText = document.getElementById('selectionText');
     const stepMarkers = Array.from(document.querySelectorAll('[data-step-marker]'));
@@ -880,6 +951,10 @@
 
       if ({% if form.first_name.errors or form.last_name.errors or form.phone_number.errors or form.email.errors %}true{% else %}false{% endif %}) {
         return 1;
+      }
+
+      if ({% if form.supplier_business_name.errors or form.supplier_location.errors or form.supplier_seller_type.errors or form.supplier_products_offered.errors or form.supplier_certification_details.errors or form.supplier_certificate_file.errors %}true{% else %}false{% endif %}) {
+        return 2;
       }
 
       if ({% if form.password1.errors or form.password2.errors %}true{% else %}false{% endif %}) {
@@ -908,19 +983,25 @@
         if (farmSection) {
           farmSection.hidden = true;
         }
+        if (supplierSection) {
+          supplierSection.hidden = false;
+        }
         const farmStep = document.querySelector('[data-step-marker="2"]');
         if (farmStep) {
-          farmStep.hidden = true;
+          farmStep.hidden = false;
         }
         if (selectionTitle) {
           selectionTitle.textContent = 'Supplier account selected';
         }
         if (selectionText) {
-          selectionText.textContent = 'Only supplier-relevant signup fields are shown.';
+          selectionText.textContent = 'Seller profile fields are visible so you can choose what you sell and add certificates.';
         }
       } else {
         if (farmSection) {
           farmSection.hidden = false;
+        }
+        if (supplierSection) {
+          supplierSection.hidden = true;
         }
         const farmStep = document.querySelector('[data-step-marker="2"]');
         if (farmStep) {
@@ -934,13 +1015,10 @@
         }
       }
 
-      if (currentStep === 2 && value === 'supplier') {
-        goToStep(3);
-      }
     }
 
     function getVisibleSteps() {
-      return formSelect && formSelect.value === 'supplier' ? [0, 1, 3] : [0, 1, 2, 3];
+      return [0, 1, 2, 3];
     }
 
     function updateStepper() {
@@ -990,6 +1068,29 @@
             field.focus();
             return false;
           }
+        }
+      }
+
+      if (step === 2 && formSelect && formSelect.value === 'supplier') {
+        const requiredIds = [
+          '{{ form.supplier_business_name.id_for_label }}',
+          '{{ form.supplier_location.id_for_label }}',
+          '{{ form.supplier_seller_type.id_for_label }}'
+        ];
+        for (const id of requiredIds) {
+          const field = document.getElementById(id);
+          if (field && !field.value.trim()) {
+            field.focus();
+            return false;
+          }
+        }
+        const checkedProducts = document.querySelectorAll('input[name="supplier_products_offered"]:checked');
+        if (!checkedProducts.length) {
+          const firstProduct = document.querySelector('input[name="supplier_products_offered"]');
+          if (firstProduct) {
+            firstProduct.focus();
+          }
+          return false;
         }
       }
 
