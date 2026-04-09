@@ -28,7 +28,7 @@ def _clamp(value, minimum, maximum):
     return max(minimum, min(maximum, value))
 
 =======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
 class BasePredictionModel:
     """Base class for all prediction models"""
     
@@ -79,7 +79,7 @@ class RainfallPredictionModel(BasePredictionModel):
         df = pd.DataFrame(list(weather_data.values('date', 'rainfall')))
 =======
         df = pd.DataFrame(list(weather_data.values('date', 'rainfall_mm')))
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
         df.columns = ['ds', 'y']  # Prophet expects these column names
         
         # Handle zeros and missing values
@@ -124,7 +124,7 @@ class RainfallPredictionModel(BasePredictionModel):
 
 =======
             
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
             # Save predictions to database
             for _, row in forecast.tail(days_to_predict).iterrows():
                 date = row['ds'].to_pydatetime().date()
@@ -144,7 +144,7 @@ class RainfallPredictionModel(BasePredictionModel):
 =======
                 confidence = min(1.0, max(0.1, 1.0 - (row['yhat_upper'] - row['yhat_lower']) / max(1.0, row['yhat'])))
                 
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
                 # Update or create forecast in RainForecast model
                 RainForecast.objects.update_or_create(
                     farm=farm,
@@ -158,7 +158,7 @@ class RainfallPredictionModel(BasePredictionModel):
 =======
                         'predicted_rain_mm': rain_mm,
                         'confidence': confidence
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
                     }
                 )
             
@@ -169,7 +169,7 @@ class RainfallPredictionModel(BasePredictionModel):
                 'expected_rainfall_mm': [max(0, row['yhat']) for _, row in forecast.tail(days_to_predict).iterrows()],
 =======
                 'predicted_rain_mm': [max(0, row['yhat']) for _, row in forecast.tail(days_to_predict).iterrows()],
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
                 'lower_bounds': [max(0, row['yhat_lower']) for _, row in forecast.tail(days_to_predict).iterrows()],
                 'upper_bounds': [max(0, row['yhat_upper']) for _, row in forecast.tail(days_to_predict).iterrows()],
                 'updated_at': timezone.now().isoformat()

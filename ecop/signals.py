@@ -7,7 +7,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.utils import timezone
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
 from .models import EcopGroup, EcopGroupMember, EcopJoinRequest
 from .notifications import NotificationService
 
@@ -47,7 +47,7 @@ def notify_join_request_created(sender, instance, created, **kwargs):
             
         # Send notification
         NotificationService.send_join_request_notification(instance, request)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
 
 @receiver(post_save, sender=EcopJoinRequest)
 def handle_join_request_response(sender, instance, **kwargs):
@@ -77,7 +77,7 @@ def handle_join_request_response(sender, instance, **kwargs):
         instance._notified = True
         # Save without triggering the signal again
         EcopJoinRequest.objects.filter(pk=instance.pk).update(_notified=True)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
 
 @receiver(post_save, sender=EcopGroupMember)
 def notify_group_member_added(sender, instance, created, **kwargs):

@@ -29,11 +29,8 @@ urlpatterns = [
     
     # API URLs (no language prefix)
     path('api/', include('website.api_urls')),
-<<<<<<< HEAD
     path('api/operations/', include('operations.api_urls')),
     path('api/traceability/', include('traceability.urls')),
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     # Ecop (E-Cooperative) API endpoints
     path('api/ecop/', include('ecop.urls')),
@@ -72,11 +69,8 @@ urlpatterns += i18n_patterns(
     
     # Include website URLs
     path('', include('website.urls', namespace='website')),
-<<<<<<< HEAD
 
     path('operations/', include('operations.urls', namespace='operations')),
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     # Gov app App
     path('gova-pp/', include('gova_pp.urls', namespace='gova_pp')),
@@ -119,7 +113,3 @@ logger.info(f"Static root: {settings.STATIC_ROOT}")
 # Ensure media directories exist
 os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
 os.makedirs(os.path.join(settings.MEDIA_ROOT, 'chat_media'), exist_ok=True)
-<<<<<<< HEAD
-
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d

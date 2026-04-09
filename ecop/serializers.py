@@ -58,19 +58,11 @@ class EcopJoinRequestSerializer(serializers.ModelSerializer):
         model = EcopJoinRequest
         fields = [
             'id', 'group', 'group_name', 'farmer', 'farmer_name', 'farmer_phone',
-<<<<<<< HEAD
             'status', 'message', 'created_at', 'requested_at', 'responded_at', 'response_note'
         ]
         read_only_fields = [
             'id', 'farmer', 'farmer_name', 'farmer_phone', 'group_name',
             'created_at', 'requested_at', 'responded_at'
-=======
-            'status', 'created_at', 'responded_at', 'response_note'
-        ]
-        read_only_fields = [
-            'id', 'farmer', 'farmer_name', 'farmer_phone', 'group_name',
-            'created_at', 'responded_at'
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         ]
     
     def get_farmer_name(self, obj):
@@ -92,15 +84,10 @@ class EcopCommitmentSerializer(serializers.ModelSerializer):
         model = EcopCommitment
         fields = [
             'id', 'group', 'group_name', 'crop', 'total_volume', 'status',
-<<<<<<< HEAD
             'target_price',
             'created_at', 'locked_at', 'matched_at', 'buyer', 'buyer_name',
             'agreed_price', 'paid_at', 'cancelled_at', 'cancellation_reason',
             'farmer_count'
-=======
-            'created_at', 'locked_at', 'matched_at', 'buyer', 'buyer_name',
-            'agreed_price', 'farmer_count'
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         ]
         read_only_fields = [
             'id', 'group_name', 'created_at', 'locked_at', 'matched_at',
@@ -127,7 +114,6 @@ class EcopFarmerCommitmentSerializer(serializers.ModelSerializer):
         model = EcopFarmerCommitment
         fields = [
             'id', 'commitment', 'farmer', 'farmer_name', 'phone_number',
-<<<<<<< HEAD
             'volume', 'status', 'payment_amount', 'payment_reference',
             'committed_at', 'confirmed_at', 'is_paid', 'paid_at', 'cancelled_at'
         ]
@@ -135,11 +121,7 @@ class EcopFarmerCommitmentSerializer(serializers.ModelSerializer):
             'id', 'farmer_name', 'phone_number', 'committed_at',
             'confirmed_at', 'paid_at', 'cancelled_at'
         ]
-=======
-            'volume', 'is_paid', 'paid_at'
-        ]
-        read_only_fields = ['id', 'farmer_name', 'phone_number', 'paid_at']
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+    
     
     def get_farmer_name(self, obj):
         return obj.farmer_name
@@ -157,10 +139,7 @@ class CreateGroupSerializer(serializers.ModelSerializer):
 class JoinGroupRequestSerializer(serializers.Serializer):
     """Serializer for join group request."""
     group_id = serializers.IntegerField()
-<<<<<<< HEAD
     message = serializers.CharField(required=False, allow_blank=True, max_length=1000)
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     def validate_group_id(self, value):
         if not EcopGroup.objects.filter(id=value, is_active=True).exists():
@@ -170,13 +149,8 @@ class JoinGroupRequestSerializer(serializers.Serializer):
 class RespondJoinRequestSerializer(serializers.Serializer):
     """Serializer for responding to join requests."""
     request_id = serializers.IntegerField()
-<<<<<<< HEAD
     status = serializers.ChoiceField(choices=['approved', 'rejected'])
     response_note = serializers.CharField(required=False, allow_blank=True, max_length=1000)
-=======
-    approve = serializers.BooleanField()
-    note = serializers.CharField(required=False, allow_blank=True)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     def validate_request_id(self, value):
         try:
@@ -186,14 +160,9 @@ class RespondJoinRequestSerializer(serializers.Serializer):
 
 class LockCommitmentSerializer(serializers.Serializer):
     """Serializer for locking a commitment."""
-<<<<<<< HEAD
     group_id = serializers.IntegerField(required=False)
     crop = serializers.CharField(max_length=100)
     target_price = serializers.DecimalField(max_digits=10, decimal_places=2)
-=======
-    crop = serializers.CharField(max_length=100)
-    total_volume = serializers.DecimalField(max_digits=10, decimal_places=2)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     farmer_commitments = serializers.ListField(
         child=serializers.DictField(
             child=serializers.CharField(),

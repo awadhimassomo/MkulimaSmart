@@ -33,7 +33,7 @@ from django.db.models import Q
 from website.models import Product, Category
 
 # Create your views here.
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
 def home(request):
     """
     Main marketplace page with categories and featured products
@@ -51,7 +51,7 @@ def home(request):
     qs = Product.objects.select_related("category", "supplier").prefetch_related("images")
 =======
     qs = Product.objects.select_related("category").prefetch_related("images")
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
 
     # search
     if q:
@@ -73,7 +73,7 @@ def home(request):
         qs = qs.filter(supplier__address__icontains=region)
 =======
         qs = qs.filter(location__icontains=region)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
     if in_stock:
         qs = qs.filter(stock__gt=0)
 
@@ -196,4 +196,4 @@ def supplier_product_detail(request, pk):
     )
     return render(request, "marketplace/supplier_product_detail.html", {"product": product})
 =======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 

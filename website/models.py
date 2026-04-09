@@ -3,17 +3,12 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, FileExtensionValidator
-<<<<<<< HEAD
 from django.core.exceptions import ValidationError
+from datetime import datetime
 from decimal import Decimal
 from django.urls import reverse
 from django.utils import timezone
 import math
-=======
-from decimal import Decimal
-from django.urls import reverse
-from django.utils import timezone
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 
 class CustomUserManager(BaseUserManager):
@@ -55,10 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(_("First Name"), max_length=30, blank=True)
     last_name = models.CharField(_("Last Name"), max_length=150, blank=True)
     is_farmer = models.BooleanField(_("Is Farmer"), default=False)
-<<<<<<< HEAD
     is_lead_farmer = models.BooleanField(_("Is Lead Farmer"), default=False)
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     is_supplier = models.BooleanField(_("Is Supplier"), default=False)
     is_trainer = models.BooleanField(_("Is Trainer"), default=False)
     address = models.CharField(_("Address"), max_length=255, blank=True, null=True)
@@ -91,7 +83,6 @@ class Farm(models.Model):
     """
     Farm model representing agricultural land owned/managed by a user
     """
-<<<<<<< HEAD
     VERIFICATION_STATUS_CHOICES = [
         ('pending', _('Pending')),
         ('verified', _('Verified')),
@@ -110,9 +101,6 @@ class Farm(models.Model):
         ('in_progress', _('In Progress')),
         ('completed', _('Completed')),
     ]
-
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     name = models.CharField(_("Farm Name"), max_length=100)
     location = models.CharField(_("Location"), max_length=200)
     size = models.DecimalField(_("Size (hectares)"), max_digits=10, decimal_places=2)
@@ -120,7 +108,6 @@ class Farm(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="farms")
     description = models.TextField(_("Description"), blank=True, null=True)
     is_hydroponic = models.BooleanField(_("Is Hydroponic"), default=False)
-<<<<<<< HEAD
     gps_latitude = models.DecimalField(_("GPS Latitude"), max_digits=10, decimal_places=7, blank=True, null=True)
     gps_longitude = models.DecimalField(_("GPS Longitude"), max_digits=10, decimal_places=7, blank=True, null=True)
     gps_accuracy_meters = models.DecimalField(_("GPS Accuracy (m)"), max_digits=8, decimal_places=2, blank=True, null=True)
@@ -163,8 +150,6 @@ class Farm(models.Model):
     )
     boundary_point_count = models.PositiveIntegerField(_("Boundary Point Count"), default=0)
     last_mapped_at = models.DateTimeField(_("Last Mapped At"), blank=True, null=True)
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -175,7 +160,6 @@ class Farm(models.Model):
     def __str__(self):
         return self.name
 
-<<<<<<< HEAD
     def clean(self):
         super().clean()
         if self.boundary_points and len(self.boundary_points) < 3:
@@ -407,9 +391,6 @@ class Farm(models.Model):
                 if cls._segments_intersect(first[0], first[1], segments[j][0], segments[j][1]):
                     return True
         return False
-
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 class Crop(models.Model):
     """

@@ -15,5 +15,5 @@ urlpatterns = [
     path('supplier/products/<int:pk>/edit/', views.supplier_product_edit, name='supplier_product_edit'),
 =======
     # Add other marketplace URLs here as needed
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+>>>>>>> 
 ]

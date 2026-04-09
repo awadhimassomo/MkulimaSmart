@@ -1,9 +1,5 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
 {% load static tailwind_tags product_filters %}
-=======
-{% load static tailwind_tags %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 <html lang="en" class="h-full scroll-smooth">
 <head>
   <meta charset="UTF-8" />
@@ -22,7 +18,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
-<<<<<<< HEAD
   <!-- Temporary global Tailwind fallback while local compiled theme CSS is missing -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -42,8 +37,6 @@
     }
   </script>
 
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
   {% tailwind_css %}
   {% block extra_css %}{% endblock %}
 
@@ -76,7 +69,6 @@
       background-image: 
         radial-gradient(circle at 15% 50%, rgba(45, 90, 39, 0.03) 0%, transparent 50%),
         radial-gradient(circle at 85% 30%, rgba(139, 69, 19, 0.03) 0%, transparent 50%);
-<<<<<<< HEAD
       color: #1f2937;
       line-height: 1.625;
       -webkit-font-smoothing: antialiased;
@@ -104,9 +96,6 @@
         padding-left: 1.5rem;
         padding-right: 1.5rem;
       }
-=======
-      @apply antialiased text-gray-800 leading-relaxed;
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Glass effect utilities */
@@ -133,7 +122,6 @@
     }
 
     /* Improved focus styles for accessibility */
-<<<<<<< HEAD
     .focus-ring:focus {
       outline: none;
       box-shadow: 0 0 0 2px rgba(197, 216, 109, 0.55);
@@ -148,19 +136,10 @@
     .focus-ring-inset:focus-visible {
       outline: none;
       box-shadow: inset 0 0 0 2px rgba(197, 216, 109, 0.7);
-=======
-    .focus-ring {
-      @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--brand-accent)];
-    }
-
-    .focus-ring-inset {
-      @apply focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--brand-accent)];
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Enhanced button styles with icons */
     .btn {
-<<<<<<< HEAD
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -225,34 +204,10 @@
 
     .btn-ghost:hover {
       background: rgba(26, 51, 22, 0.08);
-=======
-      @apply inline-flex items-center justify-center px-6 py-3 text-base font-semibold rounded-xl transition-all duration-300 focus-ring;
-    }
-
-    .btn-primary {
-      @apply bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-primary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
-    }
-
-    .btn-secondary {
-      @apply bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-secondary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
-    }
-
-    .btn-accent {
-      @apply bg-gradient-to-r from-[var(--brand-accent)] to-[var(--brand-accent-dark)] text-[var(--brand-ink)] shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
-    }
-
-    .btn-outline {
-      @apply border-2 border-[var(--brand-primary)] text-[var(--brand-primary)] bg-transparent hover:bg-[var(--brand-primary)] hover:text-white active:scale-95;
-    }
-
-    .btn-ghost {
-      @apply text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10 active:scale-95;
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Enhanced card styles with glass effect */
     .card {
-<<<<<<< HEAD
       background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -273,18 +228,10 @@
     .card-hover:hover {
       transform: translateY(-0.25rem);
       box-shadow: 0 20px 34px rgba(15, 23, 42, 0.14);
-=======
-      @apply glass rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300;
-    }
-
-    .card-hover {
-      @apply hover:-translate-y-1 hover:shadow-xl;
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Improved form styles */
     .form-input {
-<<<<<<< HEAD
       width: 100%;
       padding: 0.75rem 1rem;
       border-radius: 0.75rem;
@@ -316,21 +263,10 @@
       appearance: none;
       color: #1f2937;
       box-sizing: border-box;
-=======
-      @apply w-full px-4 py-3 rounded-xl border border-gray-300 glass transition-all duration-200 focus-ring focus:border-[var(--brand-primary)];
-    }
-
-    .form-select {
-      @apply form-input pr-10 bg-right bg-no-repeat;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232D5A27' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 0.75rem center;
-      background-size: 1.5em 1.5em;
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Enhanced navigation */
     .nav-link {
-<<<<<<< HEAD
       display: inline-flex;
       align-items: center;
       padding: 0.5rem 1rem;
@@ -351,13 +287,6 @@
       background: rgba(255, 255, 255, 0.35);
       color: var(--brand-primary);
       font-weight: 600;
-=======
-      @apply inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 focus-ring hover:glass hover:text-[var(--brand-primary)];
-    }
-
-    .nav-link.active {
-      @apply glass text-[var(--brand-primary)] font-semibold;
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Utility classes */
@@ -409,7 +338,6 @@
 
     /* Loading states */
     .loading {
-<<<<<<< HEAD
       opacity: 0.7;
       pointer-events: none;
     }
@@ -426,13 +354,6 @@
 
     @keyframes spin {
       to { transform: rotate(360deg); }
-=======
-      @apply opacity-70 pointer-events-none;
-    }
-
-    .loading-spinner {
-      @apply inline-block animate-spin rounded-full border-2 border-solid border-current border-r-transparent;
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Custom scrollbar */
@@ -441,7 +362,6 @@
     }
 
     ::-webkit-scrollbar-track {
-<<<<<<< HEAD
       background: #f3f4f6;
     }
 
@@ -452,17 +372,6 @@
 
     ::-webkit-scrollbar-thumb:hover {
       background: var(--brand-primary-dark);
-=======
-      @apply bg-gray-100;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      @apply bg-[var(--brand-primary)] rounded-full;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      @apply bg-[var(--brand-primary-dark)];
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
 
     /* Print styles */
@@ -628,12 +537,9 @@
           <a href="{% url 'website:marketplace' %}" class="nav-link {% if url_name == 'marketplace' %}active{% endif %}">
             Marketplace
           </a>
-<<<<<<< HEAD
           <a href="{% url 'marketplace:seller_start' %}" class="nav-link {% if url_name == 'seller_start' or url_name == 'supplier_dashboard' or url_name == 'supplier_product_create' %}active{% endif %}">
             Sell
           </a>
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
           <a href="{% url 'website:booking_home' %}" class="nav-link {% if url_name == 'booking_home' %}active{% endif %}">
             Services
           </a>
@@ -654,18 +560,12 @@
           </button>
           
           <!-- Cart -->
-<<<<<<< HEAD
           {% cart_count as header_cart_count %}
           <a href="{% url 'website:cart' %}" class="hidden md:flex p-2 text-gray-600 hover:text-[var(--brand-primary)] rounded-xl hover:glass transition-all relative focus-ring" aria-label="Shopping cart">
             <i class="fas fa-shopping-basket text-lg" aria-hidden="true"></i>
             <span class="absolute -top-1 -right-1 bg-[var(--brand-accent)] text-[var(--brand-ink)] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
               {{ header_cart_count }}
             </span>
-=======
-          <a href="#" class="hidden md:flex p-2 text-gray-600 hover:text-[var(--brand-primary)] rounded-xl hover:glass transition-all relative focus-ring" aria-label="Shopping cart with 3 items">
-            <i class="fas fa-shopping-basket text-lg" aria-hidden="true"></i>
-            <span class="absolute -top-1 -right-1 bg-[var(--brand-accent)] text-[var(--brand-ink)] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm">3</span>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
           </a>
           
           <!-- Auth Buttons -->
@@ -673,11 +573,7 @@
           {% if url_name != 'login' and url_name != 'register' %}
           <div class="hidden md:flex items-center gap-2">
             {% if user.is_authenticated %}
-<<<<<<< HEAD
               <a href="{% if user.is_supplier %}{% url 'marketplace:supplier_dashboard' %}{% else %}{% url 'website:dashboard' %}{% endif %}" class="btn btn-ghost text-sm">
-=======
-              <a href="{% url 'website:dashboard' %}" class="btn btn-ghost text-sm">
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 <i class="fas fa-user-circle mr-2" aria-hidden="true"></i>
                 Dashboard
               </a>
@@ -735,13 +631,10 @@
             <i class="fas fa-info-circle w-6 text-center mr-3" aria-hidden="true"></i>
             About
           </a>
-<<<<<<< HEAD
           <a href="{% url 'marketplace:seller_start' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'seller_start' or url_name == 'supplier_dashboard' or url_name == 'supplier_product_create' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
             <i class="fas fa-store w-6 text-center mr-3" aria-hidden="true"></i>
             Sell on Mkulima
           </a>
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
           {% endwith %}
           
           <div class="border-t border-gray-200/50 pt-4 mt-2">
@@ -759,11 +652,7 @@
             {% if url_name != 'login' and url_name != 'register' %}
             <div class="flex gap-2 px-1 mt-2">
               {% if user.is_authenticated %}
-<<<<<<< HEAD
                 <a href="{% if user.is_supplier %}{% url 'marketplace:supplier_dashboard' %}{% else %}{% url 'website:dashboard' %}{% endif %}" class="flex-1 btn btn-outline justify-center py-2.5 text-sm">
-=======
-                <a href="{% url 'website:dashboard' %}" class="flex-1 btn btn-outline justify-center py-2.5 text-sm">
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                   <i class="fas fa-tachometer-alt mr-1" aria-hidden="true"></i>
                   Dashboard
                 </a>
@@ -1274,8 +1163,4 @@
   
   {% block extra_js %}{% endblock %}
 </body>
-<<<<<<< HEAD
 </html>
-=======
-</html>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d

@@ -14,15 +14,10 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-<<<<<<< HEAD
 # Load environment variables from the standard .env file first, then fall back
 # to env.txt for local setups that store secrets there.
 load_dotenv()
-load_dotenv(Path(__file__).resolve().parent.parent / 'env.txt')
-=======
-# Load environment variables from .env file
-load_dotenv()
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,12 +32,12 @@ SECRET_KEY = 'django-insecure-!%u-pkmyt&9%(=(vfy%c2=3z2j327#pv$365=rn2kcqdt%c1mn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-<<<<<<< HEAD
+
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.197', 'mkulimasmart.co.tz', 'www.mkulimasmart.co.tz', '192.168.100.130', '192.168.199.98','192.168.100.118','192.168.100.114','192.168.1.104']
 SITE_BASE_URL = os.environ.get('SITE_BASE_URL', 'https://www.mkulimasmart.co.tz')
-=======
+
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.197', 'mkulimasmart.co.tz', 'www.mkulimasmart.co.tz']
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+
 
 
 # Custom user model
@@ -62,15 +57,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
-    'django.contrib.humanize',
+   'django.contrib.humanize',
     'rest_framework',
     'website',
     'operations',
-=======
-    'rest_framework',
-    'website',
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     'authentication',  # Kikapu-Led Registration sync and analytics
     'gova_pp',
     'predictions',
@@ -81,10 +71,8 @@ INSTALLED_APPS = [
     'channels',
     'chat',  # Add the chat app so Django can find its templates
     'ecop',  # E-Cooperative module for farmer groups and commitments
-<<<<<<< HEAD
     'traceability',
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+
 ]
 
 NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"

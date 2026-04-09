@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 @require_http_methods(["POST"])
-<<<<<<< HEAD
 def mobile_farmer_register(request):
     """
     Mobile-friendly farmer registration endpoint.
@@ -99,8 +98,6 @@ def mobile_farmer_register(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 def sync_register_from_kikapu(request):
     """
     API endpoint for Kikapu to register farmers on Mkulima Smart
@@ -207,7 +204,7 @@ def profile_completion_page(request):
             'email': user.email,
             'location': farm.location if farm else '',
             'farm_size': float(farm.size) if farm and farm.size else 1.0,
-            'crops': list(farm.crops.values_list('name', flat=True)) if farm else [],
+            'crops': list(farm.website_crops.values_list('name', flat=True)) if farm else [],
             'soil_type': farm.soil_type if farm else '',
         }
         

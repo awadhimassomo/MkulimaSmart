@@ -1,10 +1,7 @@
 from django import template
 from django.db.models.query import QuerySet
-<<<<<<< HEAD
 from django.db.models import Sum
-from website.models import Cart, CartItem
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+from website.models import CartItem
 
 register = template.Library()
 
@@ -24,7 +21,6 @@ def primary_image(images):
     
     # If no primary image is found, return the first image
     return images.first()
-<<<<<<< HEAD
 
 
 @register.simple_tag(takes_context=True)
@@ -42,5 +38,3 @@ def cart_count(context):
         .get("total")
     )
     return qty or 0
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d

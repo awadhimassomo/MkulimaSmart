@@ -6,14 +6,10 @@ class IsLeadFarmer(permissions.BasePermission):
     A user is considered a lead farmer if they have the is_lead_farmer flag set to True.
     """
     def has_permission(self, request, view):
-<<<<<<< HEAD
         user = request.user
         if not user.is_authenticated:
             return False
         return getattr(user, 'is_lead_farmer', False) or user.founded_groups.filter(is_active=True).exists()
-=======
-        return request.user.is_authenticated and request.user.is_lead_farmer
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 class IsGroupFounder(permissions.BasePermission):
     """

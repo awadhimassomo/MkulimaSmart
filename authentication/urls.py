@@ -9,13 +9,9 @@ from . import oauth_client
 # No app_name needed since we're not using namespace
 
 urlpatterns = [
-<<<<<<< HEAD
     # Mobile-friendly farmer registration endpoint
     path('api/auth/farmer/register/', views.mobile_farmer_register, name='mobile_farmer_register'),
     path('api/auth/farmer/register', views.mobile_farmer_register, name='mobile_farmer_register_no_slash'),
-
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     # API Endpoints for Kikapu Sync - use specific patterns to override website api_urls
     path('api/auth/farmer/sync-register/', views.sync_register_from_kikapu, name='kikapu_sync_register'),
     path('api/auth/farmer/sync-register', views.sync_register_from_kikapu, name='kikapu_sync_register_no_slash'),

@@ -10,10 +10,7 @@ from website.models import Farm, Crop
 from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.utils import timezone
-<<<<<<< HEAD
 from datetime import timedelta
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 User = get_user_model()
 
@@ -62,7 +59,6 @@ class MkulimaSyncService:
         'Morogoro': ['rice', 'maize', 'vegetables'],
         'default': ['maize', 'beans']  # Most common in Tanzania
     }
-<<<<<<< HEAD
 
     @classmethod
     def _default_crop_dates(cls):
@@ -70,8 +66,6 @@ class MkulimaSyncService:
         planting_date = timezone.now().date()
         expected_harvest_date = planting_date + timedelta(days=120)
         return planting_date, expected_harvest_date
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     @classmethod
     def infer_location_from_phone(cls, phone_number: str) -> str:
@@ -246,21 +240,14 @@ class MkulimaSyncService:
         )
         
         # Create predicted crops
-<<<<<<< HEAD
         planting_date, expected_harvest_date = cls._default_crop_dates()
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         for crop_name in predicted_crops:
             Crop.objects.create(
                 name=crop_name.capitalize(),
                 farm=farm,
-<<<<<<< HEAD
                 description=f"Predicted crop based on location and farm name",
                 planting_date=planting_date,
                 expected_harvest_date=expected_harvest_date,
-=======
-                description=f"Predicted crop based on location and farm name"
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             )
         
         # Generate completion token
@@ -277,11 +264,7 @@ class MkulimaSyncService:
             'email': user.email,
             'location': farm.location,
             'farm_size': float(farm.size) if farm.size else None,
-<<<<<<< HEAD
             'crops': list(farm.website_crops.values_list('name', flat=True)),
-=======
-            'crops': list(farm.crops.values_list('name', flat=True)),
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             'farm_type': '',
             'soil_type': farm.soil_type,
             'services_needed': [],
@@ -339,11 +322,7 @@ class MkulimaSyncService:
             'email': user.email,
             'location': farm.location,
             'farm_size': float(farm.size) if farm.size else None,
-<<<<<<< HEAD
             'crops': list(farm.website_crops.values_list('name', flat=True)),
-=======
-            'crops': list(farm.crops.values_list('name', flat=True)),
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             'farm_type': '',
             'soil_type': farm.soil_type,
             'services_needed': [],
@@ -396,29 +375,19 @@ class MkulimaSyncService:
             # Update crops if provided
             if completion_data.get('crops'):
                 # Remove predicted crops
-<<<<<<< HEAD
                 farm.website_crops.filter(description__contains='Predicted crop').delete()
                 
                 # Add confirmed crops
                 planting_date, expected_harvest_date = cls._default_crop_dates()
-=======
-                farm.crops.filter(description__contains='Predicted crop').delete()
-                
-                # Add confirmed crops
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 for crop_name in completion_data['crops']:
                     Crop.objects.get_or_create(
                         name=crop_name,
                         farm=farm,
-<<<<<<< HEAD
                         defaults={
                             'description': 'User confirmed crop',
                             'planting_date': planting_date,
                             'expected_harvest_date': expected_harvest_date,
                         }
-=======
-                        defaults={'description': 'User confirmed crop'}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                     )
             
             # Calculate new completion percentage
@@ -429,11 +398,7 @@ class MkulimaSyncService:
                 'email': user.email,
                 'location': farm.location,
                 'farm_size': float(farm.size) if farm.size else None,
-<<<<<<< HEAD
                 'crops': list(farm.website_crops.values_list('name', flat=True)),
-=======
-                'crops': list(farm.crops.values_list('name', flat=True)),
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 'farm_type': '',
                 'soil_type': farm.soil_type,
                 'services_needed': completion_data.get('services', []),
@@ -449,11 +414,7 @@ class MkulimaSyncService:
                 'email': '' if not completion_data.get('email') else user.email,
                 'location': farm.location if not completion_data.get('location') else '',
                 'farm_size': float(farm.size) if farm.size and not completion_data.get('farm_size') else None,
-<<<<<<< HEAD
                 'crops': [] if completion_data.get('crops') else list(farm.website_crops.values_list('name', flat=True)),
-=======
-                'crops': [] if completion_data.get('crops') else list(farm.crops.values_list('name', flat=True)),
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 'farm_type': '',
                 'soil_type': farm.soil_type if not completion_data.get('soil_type') else '',
                 'services_needed': [],

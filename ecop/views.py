@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from decimal import Decimal
 
 from django.utils import timezone
@@ -9,17 +8,6 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-=======
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db import transaction
-from django.utils import timezone
-from django.shortcuts import get_object_or_404
-from django.db.models import Q, Sum, Count
-from django.utils import timezone
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 from .notifications import NotificationService
 from .models import (
@@ -110,14 +98,8 @@ class NearbyGroupsView(APIView):
         groups = groups.order_by('-created_at')
         
         serializer = EcopGroupSerializer(groups, many=True)
-<<<<<<< HEAD
         return Response(serializer.data)
-=======
-        return Response({
-            'status': 'success',
-            'groups': serializer.data
-        })
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+        return Response(serializer.data)
 
 class JoinGroupRequestView(APIView):
     """
@@ -159,12 +141,8 @@ class JoinGroupRequestView(APIView):
             join_request = EcopJoinRequest.objects.create(
                 group=group,
                 farmer=request.user,
-<<<<<<< HEAD
                 status='pending',
                 message=serializer.validated_data.get('message', '').strip()
-=======
-                status='pending'
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             )
             
             # Send notification to the group founder about the join request
@@ -215,13 +193,8 @@ class RespondJoinRequestView(APIView):
         serializer = RespondJoinRequestSerializer(data=request.data)
         if serializer.is_valid():
             join_request = serializer.validated_data['request_id']
-<<<<<<< HEAD
             new_status = serializer.validated_data['status']
             response_note = serializer.validated_data.get('response_note', '')
-=======
-            approve = serializer.validated_data['approve']
-            note = serializer.validated_data.get('note', '')
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             
             # Verify the request belongs to a group where user is the founder
             if join_request.group.founder != request.user:
@@ -232,31 +205,17 @@ class RespondJoinRequestView(APIView):
             
             # Update the join request in a transaction
             with transaction.atomic():
-<<<<<<< HEAD
                 join_request.status = new_status
                 join_request.response_note = response_note
-=======
-                join_request.status = 'approved' if approve else 'rejected'
-                join_request.response_note = note
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 join_request.responded_at = timezone.now()
                 join_request.save()
                 
                 # If approved, add the user to the group
-<<<<<<< HEAD
                 if join_request.status == 'approved':
                     EcopGroupMember.objects.get_or_create(
                         group=join_request.group,
                         user=join_request.farmer,
                         defaults={'is_active': True}
-=======
-                if join_request.status == EcopJoinRequest.APPROVED:
-                    EcopGroupMember.objects.create(
-                        group=join_request.group,
-                        user=join_request.farmer,
-                        is_active=True,
-                        joined_at=timezone.now()
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                     )
                 
                 # Send notification to the farmer about the response
@@ -265,11 +224,8 @@ class RespondJoinRequestView(APIView):
             return Response({
                 'success': True,
                 'message': f'Join request {join_request.get_status_display().lower()}' + 
-<<<<<<< HEAD
                           (' and member added to group' if new_status == 'approved' else '')
-=======
-                          (' and member added to group' if approve else '')
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+                          (' and member added to group' if new_status == 'approved' else '')
             })
             
         return Response({
@@ -325,20 +281,11 @@ class LockCommitmentView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         with transaction.atomic():
-<<<<<<< HEAD
             group_id = serializer.validated_data.get('group_id')
             groups = EcopGroup.objects.filter(founder=request.user, is_active=True)
             if group_id:
                 groups = groups.filter(id=group_id)
             group = get_object_or_404(groups)
-=======
-            # Get the group (must be founded by the current user)
-            group = get_object_or_404(
-                EcopGroup, 
-                founder=request.user, 
-                is_active=True
-            )
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             
             # Create the commitment
             commitment = EcopCommitment.objects.create(
@@ -346,7 +293,6 @@ class LockCommitmentView(APIView):
                 crop=serializer.validated_data['crop'],
                 total_volume=0,  # Will be updated when farmers commit
                 target_price=serializer.validated_data['target_price'],
-<<<<<<< HEAD
                 status='active',
                 created_by=request.user,
             )
@@ -374,31 +320,12 @@ class LockCommitmentView(APIView):
                         'status': 'error',
                         'message': 'Committed volume must be greater than zero.'
                     }, status=status.HTTP_400_BAD_REQUEST)
-=======
-                status=EcopCommitment.ACTIVE,
-                created_by=request.user,
-                created_at=timezone.now()
-            )
-            
-            # Create farmer commitments
-            total_volume = 0
-            farmer_commitments = []
-            
-            for farmer_data in serializer.validated_data['farmer_commitments']:
-                farmer = farmer_data['farmer']
-                volume = farmer_data['volume']
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 
                 farmer_commitment = EcopFarmerCommitment(
                     commitment=commitment,
                     farmer=farmer,
                     volume=volume,
-<<<<<<< HEAD
                     status='pending'
-=======
-                    status=EcopFarmerCommitment.PENDING,
-                    committed_at=timezone.now()
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 )
                 farmer_commitments.append(farmer_commitment)
                 total_volume += volume
@@ -408,11 +335,7 @@ class LockCommitmentView(APIView):
             
             # Update total volume
             commitment.total_volume = total_volume
-<<<<<<< HEAD
             commitment.save(update_fields=['total_volume'])
-=======
-            commitment.save()
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             
             # Send SMS notifications to farmers
             for farmer_commitment in farmer_commitments:
@@ -437,10 +360,7 @@ class CommitmentsView(APIView):
     
     def get(self, request):
         status_filter = request.query_params.get('status')
-<<<<<<< HEAD
         group_id = request.query_params.get('group_id')
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         
         # Get groups where user is the founder
         groups = EcopGroup.objects.filter(founder=request.user, is_active=True)
@@ -449,12 +369,9 @@ class CommitmentsView(APIView):
         commitments = EcopCommitment.objects.filter(
             group__in=groups
         ).select_related('group', 'buyer').prefetch_related('farmer_commitments__farmer')
-<<<<<<< HEAD
 
         if group_id:
             commitments = commitments.filter(group_id=group_id)
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         
         # Apply status filter if provided
         if status_filter and status_filter in dict(EcopCommitment.STATUS_CHOICES):
@@ -464,14 +381,8 @@ class CommitmentsView(APIView):
         commitments = commitments.order_by('-created_at')
         
         serializer = EcopCommitmentSerializer(commitments, many=True)
-<<<<<<< HEAD
         return Response(serializer.data)
-=======
-        return Response({
-            'status': 'success',
-            'commitments': serializer.data
-        })
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+        return Response(serializer.data)
 
 class AggregationDataView(APIView):
     """
@@ -482,7 +393,6 @@ class AggregationDataView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-<<<<<<< HEAD
         platform_stats = {
             'total_groups': EcopGroup.objects.filter(is_active=True).count(),
             'total_farmers': EcopGroupMember.objects.filter(is_active=True).values('user_id').distinct().count(),
@@ -526,82 +436,3 @@ class AggregationDataView(APIView):
             return 0.0
         successful = group.commitments.filter(status='paid').count()
         return round((successful / total) * 100, 2)
-=======
-        response_data = {
-            'status': 'success',
-            'platform_success_rate': self._calculate_platform_success_rate(),
-            'total_volume_sold': self._calculate_total_volume_sold(),
-            'total_farmers_paid': self._calculate_total_farmers_paid(),
-            'avg_payment': self._calculate_avg_payment(),
-        }
-        
-        # Add group-specific stats if user is a lead farmer
-        if hasattr(request.user, 'is_lead_farmer') and request.user.is_lead_farmer:
-            response_data.update({
-                'group_success_rate': self._calculate_group_success_rate(request.user),
-                'group_total_volume': self._calculate_group_total_volume(request.user),
-                'group_commitments_count': self._calculate_group_commitments_count(request.user),
-            })
-        
-        return Response(response_data)
-    
-    def _calculate_platform_success_rate(self):
-        # Calculate success rate as percentage of fulfilled commitments
-        total = EcopCommitment.objects.count()
-        if total == 0:
-            return 0.0
-        fulfilled = EcopCommitment.objects.filter(status='fulfilled').count()
-        return round((fulfilled / total) * 100, 2)
-    
-    def _calculate_total_volume_sold(self):
-        # Calculate total volume of fulfilled commitments
-        result = EcopCommitment.objects.filter(
-            status='fulfilled'
-        ).aggregate(total=Sum('total_volume'))
-        return float(result['total'] or 0)
-    
-    def _calculate_total_farmers_paid(self):
-        # Count unique farmers with at least one paid commitment
-        return EcopFarmerCommitment.objects.filter(
-            is_paid=True
-        ).values('farmer').distinct().count()
-    
-    def _calculate_avg_payment(self):
-        # Calculate average payment per farmer (simplified)
-        paid_commitments = EcopFarmerCommitment.objects.filter(is_paid=True)
-        if not paid_commitments.exists():
-            return 0
-        
-        total_payment = sum(
-            commitment.volume * commitment.commitment.agreed_price
-            for commitment in paid_commitments.select_related('commitment')
-            if commitment.commitment.agreed_price is not None
-        )
-        
-        return round(total_payment / paid_commitments.count(), 2)
-    
-    def _calculate_group_success_rate(self, user):
-        # Calculate success rate for groups where user is founder
-        groups = EcopGroup.objects.filter(founder=user, is_active=True)
-        total = EcopCommitment.objects.filter(group__in=groups).count()
-        if total == 0:
-            return 0.0
-        fulfilled = EcopCommitment.objects.filter(
-            group__in=groups,
-            status='fulfilled'
-        ).count()
-        return round((fulfilled / total) * 100, 2)
-    
-    def _calculate_group_total_volume(self, user):
-        # Calculate total volume for groups where user is founder
-        groups = EcopGroup.objects.filter(founder=user, is_active=True)
-        result = EcopCommitment.objects.filter(
-            group__in=groups
-        ).aggregate(total=Sum('total_volume'))
-        return float(result['total'] or 0)
-    
-    def _calculate_group_commitments_count(self, user):
-        # Count commitments for groups where user is founder
-        groups = EcopGroup.objects.filter(founder=user, is_active=True)
-        return EcopCommitment.objects.filter(group__in=groups).count()
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
