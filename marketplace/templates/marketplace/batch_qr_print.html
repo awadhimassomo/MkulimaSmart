@@ -15,11 +15,7 @@
     </div>
 
     <div style="display:flex;justify-content:center;padding:2rem 0;">
-      {% if batch.qr_code %}
-        <img src="{{ batch.qr_code.url }}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
-      {% else %}
-        <img src="{% url 'marketplace:batch_qr_image' batch.pk %}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
-      {% endif %}
+      <img src="{% url 'marketplace:batch_qr_image' batch.pk %}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;background:#fff;border-radius:1rem;padding:0.5rem;">
     </div>
 
     <div class="supplier-form-grid-2">

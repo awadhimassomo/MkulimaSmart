@@ -277,16 +277,16 @@ def supplier_batch_qr_print(request, pk):
         messages.error(request, "QR tools are only available for seedling and nursery suppliers.")
         return redirect("marketplace:supplier_dashboard")
     batch = get_object_or_404(SeedlingBatch.objects.select_related("seller"), pk=pk, seller=seller_profile)
-    if not batch.qr_code:
-        batch.ensure_qr_code()
+    if batch.qr_code_needs_refresh():
+        batch.ensure_qr_code(force=True)
         batch.save(update_fields=["qr_code"])
     return render(request, "marketplace/batch_qr_print.html", {"batch": batch})
 
 
 def supplier_batch_qr_image(request, pk):
     batch = get_object_or_404(SeedlingBatch, pk=pk)
-    if not batch.qr_code:
-        batch.ensure_qr_code()
+    if batch.qr_code_needs_refresh():
+        batch.ensure_qr_code(force=True)
         batch.save(update_fields=["qr_code"])
 
     if batch.qr_code:

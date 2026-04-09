@@ -1,4 +1,6 @@
 import io
+import logging
+import os
 import uuid
 from decimal import Decimal
 
@@ -12,26 +14,30 @@ from django.utils import timezone
 
 from website.models import Farm
 
+logger = logging.getLogger(__name__)
+
 
 def build_qr_image(payload: str) -> ContentFile:
     """
-    Create a QR image when the qrcode package is available.
-    Fall back to a tiny valid PNG in thin environments.
+    Create a QR image and fail loudly in logs if generation breaks.
     """
     buffer = io.BytesIO()
 
     try:
         import qrcode  # type: ignore
-
-        image = qrcode.make(payload)
-        image.save(buffer, format="PNG")
-    except Exception:
-        buffer.write(
-            bytes.fromhex(
-                "89504E470D0A1A0A0000000D49484452000000010000000108060000001F15C489"
-                "0000000D49444154789C6360000002000154A24F5D0000000049454E44AE426082"
-            )
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=4,
         )
+        qr.add_data(payload)
+        qr.make(fit=True)
+        image = qr.make_image(fill_color="black", back_color="white")
+        image.save(buffer, format="PNG")
+    except Exception as exc:
+        logger.exception("QR code generation failed for payload: %s", payload)
+        raise RuntimeError("QR code generation failed.") from exc
 
     return ContentFile(buffer.getvalue())
 
@@ -154,11 +160,36 @@ class SeedlingBatch(models.Model):
         base_url = getattr(settings, "SITE_BASE_URL", "").rstrip("/")
         return f"{base_url}{self.get_scan_url()}"
 
-    def ensure_qr_code(self):
+    def ensure_qr_code(self, force=False):
+        if self.qr_code and not force:
+            return
+
+        payload = self.get_absolute_scan_url()
+        file_name = f"{self.seedling_batch_id}.png"
+
+        if self.qr_code and force:
+            storage = self.qr_code.storage
+            current_name = self.qr_code.name
+            if current_name and storage.exists(current_name):
+                storage.delete(current_name)
+            self.qr_code.delete(save=False)
+
+        self.qr_code.save(file_name, build_qr_image(payload), save=False)
+
+    def qr_code_needs_refresh(self):
         if not self.qr_code:
-            payload = self.get_absolute_scan_url()
-            file_name = f"{self.seedling_batch_id}.png"
-            self.qr_code.save(file_name, build_qr_image(payload), save=False)
+            return True
+
+        try:
+            qr_path = self.qr_code.path
+        except Exception:
+            return True
+
+        if not qr_path or not os.path.exists(qr_path):
+            return True
+
+        # Older fallback images were tiny white placeholder PNGs.
+        return os.path.getsize(qr_path) < 500
 
     def save(self, *args, **kwargs):
         if not self.seedling_batch_id:
@@ -166,8 +197,8 @@ class SeedlingBatch(models.Model):
 
         super().save(*args, **kwargs)
 
-        if not self.qr_code:
-            self.ensure_qr_code()
+        if not self.qr_code or self.qr_code_needs_refresh():
+            self.ensure_qr_code(force=bool(self.qr_code))
             super().save(update_fields=["qr_code"])
 
 
