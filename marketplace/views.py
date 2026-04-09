@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from functools import wraps
 
 from django.contrib import messages
@@ -26,14 +25,6 @@ def supplier_required(view_func):
     return wrapped
 
 
-=======
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from django.db.models import Q
-from website.models import Product, Category
-
-# Create your views here.
->>>>>>> 
 def home(request):
     """
     Main marketplace page with categories and featured products
@@ -47,11 +38,7 @@ def home(request):
     page_num   = request.GET.get("page", 1)
     order      = request.GET.get("order") or "-created_at"  # e.g. -created_at, price, -price
 
-<<<<<<< HEAD
     qs = Product.objects.select_related("category", "supplier").prefetch_related("images")
-=======
-    qs = Product.objects.select_related("category").prefetch_related("images")
->>>>>>> 
 
     # search
     if q:
@@ -69,11 +56,7 @@ def home(request):
     if max_price:
         qs = qs.filter(price__lte=max_price)
     if region:
-<<<<<<< HEAD
         qs = qs.filter(supplier__address__icontains=region)
-=======
-        qs = qs.filter(location__icontains=region)
->>>>>>> 
     if in_stock:
         qs = qs.filter(stock__gt=0)
 
@@ -103,7 +86,6 @@ def home(request):
         "query": q,
     }
     return render(request, 'marketplace/home.html', context)
-<<<<<<< HEAD
 
 
 def seller_start(request):
@@ -195,5 +177,3 @@ def supplier_product_detail(request, pk):
         supplier=request.user,
     )
     return render(request, "marketplace/supplier_product_detail.html", {"product": product})
-=======
->>>>>>> 
