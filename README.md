@@ -1,0 +1,49 @@
+# Mkulima Smart
+
+A comprehensive agricultural platform connecting farmers with government agricultural officers and agronomists for expert advice, market information, and real-time support.
+
+## 🚀 Quick Start
+
+For detailed setup and configuration instructions, please refer to our [comprehensive documentation](./docs/).
+
+## 📚 Documentation
+
+All project documentation is now organized in the [`docs/`](./docs/) directory:
+
+- **[Setup Guides](./docs/guides/)** - Installation and configuration guides
+- **[Integrations](./docs/integrations/)** - Mobile app and external system integrations
+- **[Troubleshooting](./docs/troubleshooting/)** - Common issues and fixes
+- **[Operations](./docs/operations/)** - Deployment and maintenance procedures
+- **[Design](./docs/design/)** - Brand guidelines and design documentation
+
+For a complete documentation index, see [docs/README.md](./docs/README.md).
+
+## 🌟 Key Features
+
+- Real-time chat between farmers and agricultural experts
+- End-to-end encrypted messaging
+- Mobile app integration (Flutter)
+- AI-powered image analysis for crop diseases
+- Government alerts and notifications
+- Market price information
+- Multi-channel support (Web, Mobile, SMS)
+
+## 🛠 Technology Stack
+
+- **Backend**: Django, Django Channels (WebSocket)
+- **Frontend**: HTML, CSS (Tailwind), JavaScript
+- **Mobile**: Flutter
+- **Database**: PostgreSQL
+- **Real-time**: Redis (Channel Layer)
+- **AI**: OpenAI GPT-4
+
+## 📞 Support
+
+For issues, troubleshooting, or questions:
+1. Check the [Troubleshooting](./docs/troubleshooting/) documentation
+2. Review the relevant [Setup Guides](./docs/guides/)
+3. Contact the development team
+
+---
+
+*Mkulima Smart - Empowering Farmers Through Technology*

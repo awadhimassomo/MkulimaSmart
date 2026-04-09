@@ -1,0 +1,29 @@
+{% extends 'operations/base.html' %}
+
+{% block title %}Seedling Batches - Mkulima Smart{% endblock %}
+
+{% block content %}
+<div class="ops-page">
+  <div class="ops-hero">
+    <div>
+      <h1 class="ops-title">Seedling Batches</h1>
+      <p class="ops-subtitle">The first true traceability checkpoint for crop origin and farm operations.</p>
+    </div>
+    <div class="ops-actions">
+      <a href="{% url 'operations:batch_create' %}" class="ops-btn ops-btn-primary">Create Batch</a>
+    </div>
+  </div>
+
+  <div class="ops-grid">
+    {% for batch in batches %}
+      <a href="{% url 'operations:batch_detail' batch.pk %}" class="ops-card ops-section ops-list-item">
+        <div class="ops-kicker">{{ batch.seedling_batch_id }}</div>
+        <div class="ops-item-title">{{ batch.seedling_type }}</div>
+        <div class="ops-item-meta">{{ batch.seller }} | {{ batch.quantity_available }} {{ batch.unit }}</div>
+      </a>
+    {% empty %}
+      <div class="ops-card ops-section ops-empty">No seedling batches created yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

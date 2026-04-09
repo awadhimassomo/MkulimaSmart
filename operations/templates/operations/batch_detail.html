@@ -1,0 +1,47 @@
+{% extends 'operations/base.html' %}
+
+{% block title %}{{ batch.seedling_batch_id }} - Mkulima Smart{% endblock %}
+
+{% block content %}
+<div class="ops-page">
+  <div class="ops-card soft ops-section">
+    <div class="ops-hero">
+      <div>
+        <div class="ops-kicker">{{ batch.seedling_batch_id }}</div>
+        <h1 class="ops-title">{{ batch.seedling_type }}</h1>
+        <p class="ops-subtitle">Seller: {{ batch.seller }}</p>
+
+        <div class="ops-detail-grid">
+          <div class="ops-detail"><strong>Variety</strong>{{ batch.variety|default:"-" }}</div>
+          <div class="ops-detail"><strong>Source</strong>{{ batch.source_name|default:"-" }}</div>
+          <div class="ops-detail"><strong>Quantity</strong>{{ batch.quantity_available }} {{ batch.unit }}</div>
+          <div class="ops-detail"><strong>Batch Date</strong>{{ batch.batch_date }}</div>
+          <div class="ops-detail"><strong>Planting Window</strong>{{ batch.recommended_planting_until|default:"-" }}</div>
+        </div>
+
+        {% if batch.notes %}
+          <div class="ops-detail" style="margin-top:1rem;">
+            <strong>Notes</strong>
+            {{ batch.notes }}
+          </div>
+        {% endif %}
+
+        <div class="ops-actions" style="margin-top:1.5rem;">
+          <a class="ops-btn ops-btn-primary" href="{% url 'operations:planting_create_from_batch' batch.seedling_batch_id %}">Create Planting Record</a>
+          <a class="ops-btn ops-btn-secondary" href="{% url 'operations:batch_qr_print' batch.pk %}">Print QR</a>
+          <a class="ops-btn ops-btn-outline" href="{{ batch.get_absolute_scan_url }}">Scan URL</a>
+        </div>
+
+        <div class="ops-detail" style="margin-top:1rem;">
+          <strong>QR Destination</strong>
+          <span style="word-break:break-all;">{{ batch.get_absolute_scan_url }}</span>
+        </div>
+      </div>
+
+      <div class="ops-qr">
+        <img src="{% url 'operations:batch_qr_image' batch.pk %}" alt="QR code for {{ batch.seedling_batch_id }}" style="width:288px;height:288px;object-fit:contain;display:block;">
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

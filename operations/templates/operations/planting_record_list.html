@@ -1,0 +1,30 @@
+{% extends 'operations/base.html' %}
+
+{% block title %}Planting Records - Mkulima Smart{% endblock %}
+
+{% block content %}
+<div class="ops-page">
+  <div class="ops-hero">
+    <div>
+      <h1 class="ops-title">Planting Records</h1>
+      <p class="ops-subtitle">Operational crop journeys linked to farms, farmers, and seedling batches.</p>
+    </div>
+    <div class="ops-actions">
+      <a href="{% url 'operations:planting_create' %}" class="ops-btn ops-btn-primary">New Planting Record</a>
+    </div>
+  </div>
+
+  <div class="ops-stack">
+    {% for record in records %}
+      <a href="{% url 'operations:planting_record_detail' record.pk %}" class="ops-card ops-section ops-list-item">
+        <div class="ops-kicker">{{ record.planting_cycle_id }}</div>
+        <div class="ops-item-title">{{ record.crop_type }}</div>
+        <div class="ops-item-meta">{{ record.farm.name }} | {{ record.planting_date }}</div>
+        <div class="ops-item-meta">Farmer: {{ record.farmer.get_full_name|default:record.farmer.phone_number }} | Batch: {{ record.seedling_batch.seedling_batch_id|default:"Not linked" }} | Status: {{ record.get_verification_status_display }}</div>
+      </a>
+    {% empty %}
+      <div class="ops-card ops-section ops-empty">No planting records created yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

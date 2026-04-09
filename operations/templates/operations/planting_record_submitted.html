@@ -1,0 +1,26 @@
+{% extends 'operations/base.html' %}
+
+{% block title %}Planting Intake Submitted - Mkulima Smart{% endblock %}
+
+{% block content %}
+<div class="ops-page narrow">
+  <div class="ops-card soft ops-section">
+    <div class="ops-hero">
+      <div>
+        <div class="ops-kicker">Traceability captured</div>
+        <h1 class="ops-title">Planting Intake Submitted</h1>
+        <p class="ops-subtitle">We have recorded where this batch was planted and linked it to the planting cycle for future traceability.</p>
+      </div>
+    </div>
+
+    <div class="ops-detail-grid">
+      <div class="ops-detail"><strong>Planting Cycle</strong>{{ record.planting_cycle_id }}</div>
+      <div class="ops-detail"><strong>Seedling Batch</strong>{{ batch.seedling_batch_id }}</div>
+      <div class="ops-detail"><strong>Farmer</strong>{{ record.farmer_name|default:record.farmer }}</div>
+      <div class="ops-detail"><strong>Farm</strong>{{ record.farm_name|default:record.farm }}</div>
+      <div class="ops-detail"><strong>Crop Type</strong>{{ record.crop_type }}</div>
+      <div class="ops-detail"><strong>Planting Date</strong>{{ record.planting_date }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "website/base.html" %}
+
+{% block title %}Sell on Mkulima Smart{% endblock %}
+
+{% block content %}
+<section class="container py-10 md:py-14">
+  <div class="max-w-6xl mx-auto">
+    <div class="rounded-[2rem] overflow-hidden bg-[linear-gradient(135deg,#17351a_0%,#2f5e2a_48%,#d2dd8a_100%)] text-white shadow-2xl">
+      <div class="grid lg:grid-cols-[1.15fr_0.85fr] gap-0">
+        <div class="p-8 md:p-12">
+          <div class="uppercase tracking-[0.22em] text-xs font-semibold text-white/70">Seller Hub</div>
+          <h1 class="text-4xl md:text-5xl font-black leading-tight mt-4">Start selling in the marketplace.</h1>
+          <p class="mt-4 text-white/85 text-lg max-w-2xl">
+            Create a supplier account, sign in to your seller dashboard, and publish products buyers can find right away.
+          </p>
+
+          <div class="flex flex-wrap gap-3 mt-8">
+            {% if user.is_authenticated %}
+              {% if user.is_supplier or user.is_staff %}
+                <a href="{% url 'marketplace:supplier_dashboard' %}" class="btn btn-accent">Open Seller Dashboard</a>
+              {% else %}
+                <form method="post" action="{% url 'marketplace:become_supplier' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-accent">Enable Seller Access</button>
+                </form>
+              {% endif %}
+            {% else %}
+              <a href="{% url 'website:register' %}?user_type=supplier" class="btn btn-accent">Register as Seller</a>
+              <a href="{% url 'website:login' %}?user_type=supplier" class="btn btn-outline border-white text-white hover:bg-white hover:text-[var(--brand-primary)]">Seller Login</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="p-8 md:p-12 bg-white/10 backdrop-blur-sm">
+          <div class="rounded-3xl bg-white text-slate-900 p-6 shadow-xl">
+            <h2 class="text-2xl font-bold text-[var(--brand-primary)]">How it works</h2>
+            <div class="mt-6 space-y-4">
+              <div class="p-4 rounded-2xl bg-[var(--brand-surface)] border border-[var(--brand-border)]">
+                <div class="font-semibold">1. Register or enable supplier access</div>
+                <p class="text-sm text-slate-600 mt-1">Choose the supplier account type during registration, or upgrade your existing account here.</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-[var(--brand-surface)] border border-[var(--brand-border)]">
+                <div class="font-semibold">2. Sign in to the seller dashboard</div>
+                <p class="text-sm text-slate-600 mt-1">Suppliers are redirected straight to the seller dashboard after login.</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-[var(--brand-surface)] border border-[var(--brand-border)]">
+                <div class="font-semibold">3. Add a product listing</div>
+                <p class="text-sm text-slate-600 mt-1">Use the New Listing button to enter category, name, price, stock, image, and publish status.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 mt-8">
+      <article class="card p-6">
+        <h3 class="text-lg font-semibold text-[var(--brand-primary)]">Seller Login</h3>
+        <p class="mt-2 text-sm text-slate-600">Existing supplier accounts can sign in and go directly to the supplier dashboard.</p>
+        <a href="{% url 'website:login' %}?user_type=supplier" class="btn btn-ghost mt-4">Go to Seller Login</a>
+      </article>
+      <article class="card p-6">
+        <h3 class="text-lg font-semibold text-[var(--brand-primary)]">Seller Registration</h3>
+        <p class="mt-2 text-sm text-slate-600">New sellers can create an account with the supplier role already selected.</p>
+        <a href="{% url 'website:register' %}?user_type=supplier" class="btn btn-ghost mt-4">Create Seller Account</a>
+      </article>
+      <article class="card p-6">
+        <h3 class="text-lg font-semibold text-[var(--brand-primary)]">Add Product</h3>
+        <p class="mt-2 text-sm text-slate-600">Once supplier access is active, open the dashboard and use New Listing to publish products.</p>
+        <a href="{% url 'marketplace:supplier_product_create' %}" class="btn btn-ghost mt-4">New Listing Page</a>
+      </article>
+    </div>
+  </div>
+</section>
+{% endblock %}

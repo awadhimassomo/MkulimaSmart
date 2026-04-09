@@ -1,0 +1,304 @@
+{% extends 'website/base.html' %}
+
+{% block extra_css %}
+<style>
+  .ops-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+  }
+
+  .ops-page.narrow {
+    max-width: 880px;
+  }
+
+  .ops-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .ops-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.05;
+    font-weight: 800;
+    color: var(--brand-primary);
+    margin: 0;
+  }
+
+  .ops-subtitle {
+    color: #52606d;
+    margin-top: 0.5rem;
+    max-width: 720px;
+    line-height: 1.7;
+  }
+
+  .ops-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .ops-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.3rem;
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 700;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    cursor: pointer;
+  }
+
+  .ops-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(26, 51, 22, 0.12);
+  }
+
+  .ops-btn-primary {
+    background: linear-gradient(135deg, #1A3316, #2D5A27);
+    color: #fff;
+  }
+
+  .ops-btn-secondary {
+    background: linear-gradient(135deg, #C5D86D, #D4E89A);
+    color: #1A3316;
+  }
+
+  .ops-btn-outline {
+    background: rgba(255,255,255,0.72);
+    color: var(--brand-primary);
+    border-color: rgba(26, 51, 22, 0.16);
+  }
+
+  .ops-card {
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(26, 51, 22, 0.08);
+    border-radius: 22px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .ops-card.soft {
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,249,245,0.88));
+  }
+
+  .ops-section {
+    padding: 1.5rem;
+  }
+
+  .ops-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .ops-stat {
+    padding: 1.4rem;
+  }
+
+  .ops-stat-label {
+    color: #5f6f63;
+    font-size: 0.92rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .ops-stat-value {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: var(--brand-primary);
+    margin-top: 0.45rem;
+  }
+
+  .ops-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .ops-stack {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .ops-list-item {
+    display: block;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(26, 51, 22, 0.08);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.76);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .ops-list-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(26, 51, 22, 0.18);
+    box-shadow: 0 10px 22px rgba(26, 51, 22, 0.08);
+  }
+
+  .ops-kicker {
+    font-size: 0.8rem;
+    color: #738072;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+  }
+
+  .ops-item-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #17221a;
+  }
+
+  .ops-item-meta {
+    font-size: 0.95rem;
+    color: #5b6770;
+    margin-top: 0.3rem;
+    line-height: 1.6;
+  }
+
+  .ops-table-wrap {
+    overflow-x: auto;
+  }
+
+  .ops-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .ops-table th,
+  .ops-table td {
+    text-align: left;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(26, 51, 22, 0.08);
+  }
+
+  .ops-table th {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #68766c;
+    background: rgba(248,249,245,0.9);
+  }
+
+  .ops-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem 1.25rem;
+    margin-top: 1.25rem;
+  }
+
+  .ops-detail {
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    background: rgba(248,249,245,0.9);
+    border: 1px solid rgba(26, 51, 22, 0.06);
+  }
+
+  .ops-detail strong {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #738072;
+    margin-bottom: 0.35rem;
+  }
+
+  .ops-columns-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .ops-form {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .ops-form label {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #223027;
+    margin-bottom: 0.45rem;
+  }
+
+  .ops-form input[type="text"],
+  .ops-form input[type="number"],
+  .ops-form input[type="date"],
+  .ops-form input[type="file"],
+  .ops-form textarea,
+  .ops-form select {
+    width: 100%;
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(26, 51, 22, 0.16);
+    background: rgba(255,255,255,0.92);
+    color: #1e293b;
+    box-sizing: border-box;
+  }
+
+  .ops-form textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .ops-form input:focus,
+  .ops-form textarea:focus,
+  .ops-form select:focus {
+    outline: none;
+    border-color: #2D5A27;
+    box-shadow: 0 0 0 4px rgba(197, 216, 109, 0.22);
+  }
+
+  .ops-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ops-help {
+    font-size: 0.85rem;
+    color: #738072;
+    margin-top: 0.35rem;
+  }
+
+  .ops-error {
+    font-size: 0.85rem;
+    color: #b42318;
+    margin-top: 0.35rem;
+  }
+
+  .ops-qr {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1rem;
+    border: 1px solid rgba(26, 51, 22, 0.08);
+    width: fit-content;
+  }
+
+  .ops-empty {
+    color: #6b7280;
+    font-style: italic;
+  }
+
+  @media (max-width: 960px) {
+    .ops-grid,
+    .ops-columns-3,
+    .ops-detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}

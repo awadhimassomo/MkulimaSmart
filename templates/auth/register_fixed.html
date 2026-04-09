@@ -1,0 +1,1058 @@
+{% extends "website/base.html" %}
+
+{% block title %}Register - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --register-deep: #17351f;
+    --register-leaf: #2f6b3c;
+    --register-mint: #dff0d8;
+    --register-sand: #f4eee3;
+    --register-ink: #1d2b1f;
+    --register-muted: #66756a;
+    --register-line: rgba(23, 53, 31, 0.12);
+    --register-glow: rgba(197, 216, 109, 0.28);
+  }
+
+  .register-shell {
+    position: relative;
+    overflow: hidden;
+    padding: 3rem 0 4rem;
+  }
+
+  .register-wrap {
+    width: min(1520px, calc(100vw - 2rem));
+    margin: 0 auto;
+  }
+
+  .register-shell::before,
+  .register-shell::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(10px);
+    pointer-events: none;
+  }
+
+  .register-shell::before {
+    width: 22rem;
+    height: 22rem;
+    top: -4rem;
+    left: -6rem;
+    background: radial-gradient(circle, rgba(197, 216, 109, 0.35) 0%, rgba(197, 216, 109, 0) 70%);
+  }
+
+  .register-shell::after {
+    width: 18rem;
+    height: 18rem;
+    right: -4rem;
+    bottom: 2rem;
+    background: radial-gradient(circle, rgba(47, 107, 60, 0.22) 0%, rgba(47, 107, 60, 0) 72%);
+  }
+
+  .register-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.05fr 1.35fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .register-panel,
+  .register-form-card {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 1.75rem;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(22, 35, 20, 0.12);
+  }
+
+  .register-panel {
+    min-height: 100%;
+    background:
+      linear-gradient(145deg, rgba(11, 31, 18, 0.96), rgba(30, 76, 40, 0.94)),
+      linear-gradient(45deg, rgba(197, 216, 109, 0.12), transparent);
+    color: #f6f8f1;
+    padding: 2rem;
+  }
+
+  .register-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #eaf4cb;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .register-panel h1 {
+    font-size: clamp(2rem, 3vw, 3rem);
+    line-height: 1.04;
+    margin-bottom: 1rem;
+    color: #ffffff;
+  }
+
+  .register-panel p {
+    color: rgba(246, 248, 241, 0.82);
+    font-size: 1rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .register-feature-list {
+    display: grid;
+    gap: 0.9rem;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .register-feature-list li {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 0.85rem 0.95rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .register-feature-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(197, 216, 109, 0.18);
+    color: #eaf4cb;
+    flex: 0 0 auto;
+  }
+
+  .register-feature-list strong {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: #ffffff;
+  }
+
+  .register-feature-list span {
+    color: rgba(246, 248, 241, 0.78);
+    font-size: 0.92rem;
+  }
+
+  .register-form-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .register-form-inner {
+    padding: 2rem;
+  }
+
+  .register-stepper {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.35rem;
+  }
+
+  .register-step {
+    position: relative;
+    padding: 0.9rem 0.9rem 0.95rem;
+    border-radius: 1rem;
+    border: 1px solid var(--register-line);
+    background: rgba(255, 255, 255, 0.72);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .register-step.is-active {
+    border-color: rgba(47, 107, 60, 0.4);
+    background: linear-gradient(135deg, #eef6dd, #fbf8ef);
+    box-shadow: 0 0 0 4px rgba(197, 216, 109, 0.16);
+    transform: translateY(-1px);
+  }
+
+  .register-step.is-complete {
+    border-color: rgba(47, 107, 60, 0.26);
+    background: linear-gradient(135deg, rgba(239, 247, 221, 0.86), rgba(255, 255, 255, 0.92));
+  }
+
+  .register-step-index {
+    width: 1.9rem;
+    height: 1.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--register-deep);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.65rem;
+  }
+
+  .register-step.is-complete .register-step-index {
+    background: var(--register-leaf);
+  }
+
+  .register-step strong {
+    display: block;
+    color: var(--register-ink);
+    font-size: 0.93rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .register-step span {
+    color: var(--register-muted);
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .step-panel {
+    display: none;
+  }
+
+  .step-panel.is-active {
+    display: block;
+    animation: fadeSlideIn 0.22s ease;
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .register-topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1.5rem;
+  }
+
+  .register-topbar h2 {
+    margin: 0 0 0.35rem;
+    color: var(--register-ink);
+    font-size: 1.75rem;
+  }
+
+  .register-topbar p {
+    margin: 0;
+    color: var(--register-muted);
+  }
+
+  .register-badge {
+    padding: 0.55rem 0.8rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #edf5d7, #f8f5ea);
+    color: var(--register-leaf);
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .register-hidden-select {
+    display: none;
+  }
+
+  .selection-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0.2rem 0 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 1rem;
+    border: 1px solid var(--register-line);
+    background: linear-gradient(135deg, #eef6dd, #fbf8ef);
+    color: var(--register-ink);
+  }
+
+  .selection-summary i {
+    color: var(--register-leaf);
+  }
+
+  .selection-summary strong {
+    display: block;
+    font-size: 0.92rem;
+  }
+
+  .selection-summary span {
+    color: var(--register-muted);
+    font-size: 0.84rem;
+  }
+
+  .account-switcher {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .account-card {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    border-radius: 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--register-line);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 244, 236, 0.84));
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .account-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(47, 107, 60, 0.28);
+    box-shadow: 0 16px 30px rgba(30, 56, 32, 0.08);
+  }
+
+  .account-card.active {
+    border-color: rgba(47, 107, 60, 0.4);
+    box-shadow: 0 0 0 4px var(--register-glow);
+  }
+
+  .account-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, #edf5d7, #fffaf0);
+    color: var(--register-deep);
+  }
+
+  .account-card h3 {
+    margin: 0 0 0.25rem;
+    color: var(--register-ink);
+    font-size: 1rem;
+  }
+
+  .account-card p {
+    margin: 0;
+    color: var(--register-muted);
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .register-section {
+    padding: 1.15rem;
+    border: 1px solid var(--register-line);
+    border-radius: 1.25rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(247, 244, 236, 0.62));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+
+  .register-section[hidden] {
+    display: none !important;
+  }
+
+  .register-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 0.25rem;
+    color: var(--register-ink);
+    font-size: 1.05rem;
+  }
+
+  .register-section p {
+    color: var(--register-muted);
+    margin-bottom: 1rem;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .field-grid .field-span {
+    grid-column: 1 / -1;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-field label {
+    font-weight: 700;
+    color: var(--register-ink);
+    font-size: 0.94rem;
+  }
+
+  .field-help {
+    margin-top: -0.15rem;
+    color: var(--register-muted);
+    font-size: 0.82rem;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea,
+  .register-form-card input,
+  .register-form-card select,
+  .register-form-card textarea {
+    width: 100%;
+    border-radius: 1rem;
+    border: 1px solid rgba(23, 53, 31, 0.14);
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--register-ink);
+    padding: 0.92rem 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .register-form-card input:focus,
+  .register-form-card select:focus,
+  .register-form-card textarea:focus {
+    outline: none;
+    border-color: rgba(47, 107, 60, 0.4);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(197, 216, 109, 0.22);
+  }
+
+  .crop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .crop-pill {
+    position: relative;
+  }
+
+  .crop-pill input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+  }
+
+  .crop-pill label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.82rem 0.95rem;
+    border-radius: 1rem;
+    border: 1px solid var(--register-line);
+    background: rgba(255, 255, 255, 0.86);
+    color: var(--register-ink);
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .crop-pill label::before {
+    content: "";
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 999px;
+    border: 2px solid rgba(47, 107, 60, 0.45);
+    background: transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .crop-pill input:checked + label {
+    border-color: rgba(47, 107, 60, 0.4);
+    background: linear-gradient(135deg, #eef7db, #faf6ea);
+    box-shadow: 0 0 0 4px rgba(197, 216, 109, 0.18);
+    transform: translateY(-1px);
+  }
+
+  .crop-pill input:checked + label::before {
+    background: var(--register-leaf);
+    border-color: var(--register-leaf);
+  }
+
+  .error-text {
+    color: #b42318;
+    font-size: 0.83rem;
+    font-weight: 600;
+  }
+
+  .register-alert {
+    border: 1px solid rgba(180, 35, 24, 0.14);
+    background: rgba(255, 240, 238, 0.92);
+    color: #7a1d16;
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .register-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.75rem;
+    padding-top: 1.35rem;
+    border-top: 1px solid var(--register-line);
+  }
+
+  .register-actions p {
+    margin: 0;
+    color: var(--register-muted);
+    font-size: 0.9rem;
+  }
+
+  .register-submit {
+    min-width: 220px;
+    border: 0;
+    border-radius: 1rem;
+    padding: 0.95rem 1.35rem;
+    background: linear-gradient(135deg, var(--register-deep), var(--register-leaf));
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 18px 28px rgba(23, 53, 31, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .register-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 34px rgba(23, 53, 31, 0.22);
+  }
+
+  .register-footer-link {
+    margin-top: 1rem;
+    color: var(--register-muted);
+    text-align: center;
+  }
+
+  .register-footer-link a {
+    color: var(--register-leaf);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  @media (max-width: 991px) {
+    .register-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .register-panel {
+      padding: 1.5rem;
+    }
+
+    .register-stepper {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767px) {
+    .register-form-inner {
+      padding: 1.25rem;
+    }
+
+    .register-topbar,
+    .register-actions,
+    .field-grid,
+    .crop-grid,
+    .account-switcher {
+      grid-template-columns: 1fr;
+      flex-direction: column;
+    }
+
+    .register-stepper {
+      grid-template-columns: 1fr;
+    }
+
+    .register-submit {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="register-shell">
+  <div class="register-wrap">
+    <div class="register-grid">
+      <aside class="register-panel">
+        <div class="register-kicker">
+          <i class="fas fa-seedling"></i>
+          Mkulima Smart
+        </div>
+        <h1>Build your farm profile with a page that feels ready for real work.</h1>
+        <p>Farmers can create an account, add production details, and start using marketplace and support features without the old broken step flow.</p>
+
+        <ul class="register-feature-list">
+          <li>
+            <div class="register-feature-icon"><i class="fas fa-user-check"></i></div>
+            <div>
+              <strong>Direct account creation</strong>
+              <span>Phone-based signup stays simple and works for both farmer and supplier roles.</span>
+            </div>
+          </li>
+          <li>
+            <div class="register-feature-icon"><i class="fas fa-tractor"></i></div>
+            <div>
+              <strong>Farm details included</strong>
+              <span>Add location, size, soil type, and crops during signup when you have them.</span>
+            </div>
+          </li>
+          <li>
+            <div class="register-feature-icon"><i class="fas fa-mobile-screen-button"></i></div>
+            <div>
+              <strong>Consistent with mobile flow</strong>
+              <span>The fields here mirror the data your app and backend already understand.</span>
+            </div>
+          </li>
+        </ul>
+      </aside>
+
+      <div class="register-form-card">
+        <div class="register-form-inner">
+          <div class="register-topbar">
+            <div>
+              <h2>Create Account</h2>
+              <p>Choose the account type first, then complete the essentials.</p>
+            </div>
+            <div class="register-badge">Fresh signup flow</div>
+          </div>
+
+          {% if form.non_field_errors %}
+            <div class="register-alert">
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if form.errors %}
+            <div class="register-alert" data-form-error-summary>
+              {% if form.phone_number.errors %}
+                <div>This phone number is already registered. Please use a different number or sign in with the existing account.</div>
+              {% else %}
+                <div>Please correct the highlighted fields and try again.</div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="register-stepper" id="registerStepper">
+              <div class="register-step is-active" data-step-marker="0">
+                <div class="register-step-index">1</div>
+                <strong>Account</strong>
+                <span>Choose the role for this signup.</span>
+              </div>
+              <div class="register-step" data-step-marker="1">
+                <div class="register-step-index">2</div>
+                <strong>Profile</strong>
+                <span>Basic identity and contact details.</span>
+              </div>
+              <div class="register-step" data-step-marker="2">
+                <div class="register-step-index">3</div>
+                <strong>Farm</strong>
+                <span>Shown only for farmer accounts.</span>
+              </div>
+              <div class="register-step" data-step-marker="3">
+                <div class="register-step-index">4</div>
+                <strong>Security</strong>
+                <span>Create the password and finish.</span>
+              </div>
+            </div>
+
+            <div class="step-panel is-active" data-step-panel="0">
+              <div class="form-field">
+                <label>Account Type</label>
+                <div class="account-switcher" data-account-switcher>
+                  <button type="button" class="account-card active" data-account-value="farmer">
+                    <span class="account-icon"><i class="fas fa-wheat-awn"></i></span>
+                    <h3>Farmer</h3>
+                    <p>Sell produce, manage farm details, and access agricultural support.</p>
+                  </button>
+                  <button type="button" class="account-card" data-account-value="supplier">
+                    <span class="account-icon"><i class="fas fa-store"></i></span>
+                    <h3>Supplier</h3>
+                    <p>Buy products, manage orders, and connect with producers and markets.</p>
+                  </button>
+                </div>
+                <div class="register-hidden-select">
+                  {{ form.user_type }}
+                </div>
+                <div class="selection-summary" id="selectionSummary">
+                  <i class="fas fa-circle-check"></i>
+                  <div>
+                    <strong id="selectionTitle">Farmer account selected</strong>
+                    <span id="selectionText">Farm profile fields are visible below.</span>
+                  </div>
+                </div>
+                {% if form.user_type.errors %}
+                  <div class="error-text">{{ form.user_type.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="step-panel" data-step-panel="1">
+              <section class="register-section" data-section="personal">
+                <h3><i class="fas fa-id-card"></i> Personal Details</h3>
+                <p>These are the required fields for creating the account.</p>
+
+                <div class="field-grid">
+                  <div class="form-field">
+                    <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                      <div class="error-text">{{ form.first_name.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field">
+                    <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                      <div class="error-text">{{ form.last_name.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field field-span">
+                    <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                    {{ form.phone_number }}
+                    <div class="field-help">Use the farmer login number, for example <span>+255712345678</span>.</div>
+                    {% if form.phone_number.errors %}
+                      <div class="error-text">{{ form.phone_number.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field field-span">
+                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    {{ form.email }}
+                    <div class="field-help">Optional, but useful for password reset and notifications.</div>
+                    {% if form.email.errors %}
+                      <div class="error-text">{{ form.email.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="step-panel" data-step-panel="2">
+              <section class="register-section" data-section="farm">
+                <h3><i class="fas fa-leaf"></i> Farm Details</h3>
+                <p>Optional for signup, but filling this helps the platform personalize support immediately.</p>
+
+                <div class="field-grid">
+                  <div class="form-field field-span">
+                    <label for="farm_name">Farm Name</label>
+                    <input type="text" id="farm_name" name="farm_name" value="{{ request.POST.farm_name|default:'' }}">
+                  </div>
+
+                  <div class="form-field">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" value="{{ request.POST.location|default:'' }}">
+                  </div>
+
+                  <div class="form-field">
+                    <label for="farm_size">Farm Size</label>
+                    <input type="number" step="0.01" min="0" id="farm_size" name="farm_size" value="{{ request.POST.farm_size|default:'' }}">
+                  </div>
+
+                  <div class="form-field">
+                    <label for="soil_type">Soil Type</label>
+                    <input type="text" id="soil_type" name="soil_type" value="{{ request.POST.soil_type|default:'' }}">
+                  </div>
+
+                  <div class="form-field field-span">
+                    <label for="farm_description">Farm Description</label>
+                    <textarea id="farm_description" name="farm_description" rows="4">{{ request.POST.farm_description|default:'' }}</textarea>
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label>Crops</label>
+                  <div class="crop-grid">
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Maize" id="crop_maize">
+                      <label for="crop_maize">Maize</label>
+                    </div>
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Beans" id="crop_beans">
+                      <label for="crop_beans">Beans</label>
+                    </div>
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Rice" id="crop_rice">
+                      <label for="crop_rice">Rice</label>
+                    </div>
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Potato" id="crop_potato">
+                      <label for="crop_potato">Potato</label>
+                    </div>
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Coffee" id="crop_coffee">
+                      <label for="crop_coffee">Coffee</label>
+                    </div>
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Tea" id="crop_tea">
+                      <label for="crop_tea">Tea</label>
+                    </div>
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Vegetables" id="crop_vegetables">
+                      <label for="crop_vegetables">Vegetables</label>
+                    </div>
+                    <div class="crop-pill">
+                      <input type="checkbox" name="crops" value="Fruits" id="crop_fruits">
+                      <label for="crop_fruits">Fruits</label>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+
+            <div class="step-panel" data-step-panel="3">
+              <section class="register-section" data-section="security">
+                <h3><i class="fas fa-shield-heart"></i> Security</h3>
+                <p>Set a password for the account. The backend still applies its normal password validation.</p>
+
+                <div class="field-grid">
+                  <div class="form-field">
+                    <label for="{{ form.password1.id_for_label }}">Password</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                      <div class="error-text">{{ form.password1.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field">
+                    <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                      <div class="error-text">{{ form.password2.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="register-actions">
+              <button type="button" class="btn btn-outline" id="stepBackBtn">Back</button>
+              <p id="stepHelperText">Already have an account? <a href="{% url 'website:login' %}">Sign in</a>.</p>
+              <button type="button" class="register-submit" id="stepNextBtn">Continue</button>
+              <button type="submit" class="register-submit" id="stepSubmitBtn" hidden>Create Account</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const formSelect = document.getElementById('{{ form.user_type.id_for_label }}');
+    const accountCards = document.querySelectorAll('[data-account-value]');
+    const farmSection = document.querySelector('[data-section="farm"]');
+    const selectionTitle = document.getElementById('selectionTitle');
+    const selectionText = document.getElementById('selectionText');
+    const stepMarkers = Array.from(document.querySelectorAll('[data-step-marker]'));
+    const stepPanels = Array.from(document.querySelectorAll('[data-step-panel]'));
+    const backBtn = document.getElementById('stepBackBtn');
+    const nextBtn = document.getElementById('stepNextBtn');
+    const submitBtn = document.getElementById('stepSubmitBtn');
+    const stepHelperText = document.getElementById('stepHelperText');
+    let currentStep = 0;
+
+    function findFirstErrorStep() {
+      if ({% if form.user_type.errors %}true{% else %}false{% endif %}) {
+        return 0;
+      }
+
+      if ({% if form.first_name.errors or form.last_name.errors or form.phone_number.errors or form.email.errors %}true{% else %}false{% endif %}) {
+        return 1;
+      }
+
+      if ({% if form.password1.errors or form.password2.errors %}true{% else %}false{% endif %}) {
+        return 3;
+      }
+
+      return null;
+    }
+
+    document.querySelectorAll('.register-form-card input, .register-form-card select, .register-form-card textarea').forEach((field) => {
+      if (!field.classList.contains('form-check-input')) {
+        field.classList.add('focus-ring');
+      }
+    });
+
+    function setAccountType(value) {
+      if (formSelect) {
+        formSelect.value = value;
+      }
+
+      accountCards.forEach((card) => {
+        card.classList.toggle('active', card.dataset.accountValue === value);
+      });
+
+      if (value === 'supplier') {
+        if (farmSection) {
+          farmSection.hidden = true;
+        }
+        const farmStep = document.querySelector('[data-step-marker="2"]');
+        if (farmStep) {
+          farmStep.hidden = true;
+        }
+        if (selectionTitle) {
+          selectionTitle.textContent = 'Supplier account selected';
+        }
+        if (selectionText) {
+          selectionText.textContent = 'Only supplier-relevant signup fields are shown.';
+        }
+      } else {
+        if (farmSection) {
+          farmSection.hidden = false;
+        }
+        const farmStep = document.querySelector('[data-step-marker="2"]');
+        if (farmStep) {
+          farmStep.hidden = false;
+        }
+        if (selectionTitle) {
+          selectionTitle.textContent = 'Farmer account selected';
+        }
+        if (selectionText) {
+          selectionText.textContent = 'Farm profile fields are visible below.';
+        }
+      }
+
+      if (currentStep === 2 && value === 'supplier') {
+        goToStep(3);
+      }
+    }
+
+    function getVisibleSteps() {
+      return formSelect && formSelect.value === 'supplier' ? [0, 1, 3] : [0, 1, 2, 3];
+    }
+
+    function updateStepper() {
+      const visibleSteps = getVisibleSteps();
+
+      stepPanels.forEach((panel) => {
+        panel.classList.toggle('is-active', Number(panel.dataset.stepPanel) === currentStep);
+      });
+
+      stepMarkers.forEach((marker) => {
+        const markerStep = Number(marker.dataset.stepMarker);
+        const visibleIndex = visibleSteps.indexOf(markerStep);
+        marker.classList.toggle('is-active', markerStep === currentStep);
+        marker.classList.toggle('is-complete', visibleIndex !== -1 && visibleIndex < visibleSteps.indexOf(currentStep));
+      });
+
+      const currentVisibleIndex = visibleSteps.indexOf(currentStep);
+      backBtn.hidden = currentVisibleIndex <= 0;
+      nextBtn.hidden = currentVisibleIndex === visibleSteps.length - 1;
+      submitBtn.hidden = currentVisibleIndex !== visibleSteps.length - 1;
+
+      if (currentStep === 0) {
+        stepHelperText.innerHTML = 'Pick the account experience to continue.';
+      } else if (currentStep === 1) {
+        stepHelperText.innerHTML = 'Fill the main identity details before moving on.';
+      } else if (currentStep === 2) {
+        stepHelperText.innerHTML = 'Add farm information now, or keep it lightweight.';
+      } else {
+        stepHelperText.innerHTML = 'Review the password and finish the registration.';
+      }
+    }
+
+    function validateStep(step) {
+      if (step === 0) {
+        return !!(formSelect && formSelect.value);
+      }
+
+      if (step === 1) {
+        const requiredIds = [
+          '{{ form.first_name.id_for_label }}',
+          '{{ form.last_name.id_for_label }}',
+          '{{ form.phone_number.id_for_label }}'
+        ];
+        for (const id of requiredIds) {
+          const field = document.getElementById(id);
+          if (field && !field.value.trim()) {
+            field.focus();
+            return false;
+          }
+        }
+      }
+
+      if (step === 3) {
+        const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+        const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+        if (password1 && password2) {
+          if (!password1.value.trim()) {
+            password1.focus();
+            return false;
+          }
+          if (!password2.value.trim()) {
+            password2.focus();
+            return false;
+          }
+          if (password1.value !== password2.value) {
+            password2.focus();
+            return false;
+          }
+        }
+      }
+
+      return true;
+    }
+
+    function goToStep(step) {
+      currentStep = step;
+      updateStepper();
+    }
+
+    accountCards.forEach((card) => {
+      card.addEventListener('click', function () {
+        setAccountType(card.dataset.accountValue);
+      });
+    });
+
+    nextBtn.addEventListener('click', function () {
+      if (!validateStep(currentStep)) {
+        return;
+      }
+
+      const visibleSteps = getVisibleSteps();
+      const currentIndex = visibleSteps.indexOf(currentStep);
+      if (currentIndex < visibleSteps.length - 1) {
+        goToStep(visibleSteps[currentIndex + 1]);
+      }
+    });
+
+    backBtn.addEventListener('click', function () {
+      const visibleSteps = getVisibleSteps();
+      const currentIndex = visibleSteps.indexOf(currentStep);
+      if (currentIndex > 0) {
+        goToStep(visibleSteps[currentIndex - 1]);
+      }
+    });
+
+    setAccountType((formSelect && formSelect.value) || 'farmer');
+    const firstErrorStep = findFirstErrorStep();
+    if (firstErrorStep !== null) {
+      goToStep(firstErrorStep);
+    } else {
+      updateStepper();
+    }
+  });
+</script>
+{% endblock %}

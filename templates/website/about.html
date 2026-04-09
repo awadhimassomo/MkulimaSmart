@@ -1,0 +1,948 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}About Us - Mkulima Smart{% endblock %}
+
+<<<<<<< HEAD
+{% block content %}
+<main id="main" class="relative overflow-hidden bg-[linear-gradient(180deg,#f8faf6_0%,#eef3e5_48%,#f9fbf7_100%)]">
+  <div class="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(197,216,109,0.22),transparent_36rem)]"></div>
+  <div class="pointer-events-none absolute right-0 top-24 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(45,90,39,0.16),transparent_70%)]"></div>
+
+  <section class="container relative py-10 lg:py-16">
+    <div class="mx-auto grid max-w-6xl gap-6 overflow-hidden rounded-[2rem] border border-white/50 bg-white/75 p-5 text-center shadow-[0_24px_70px_rgba(26,51,22,0.12)] backdrop-blur md:p-8 xl:p-10">
+      <div class="flex flex-col items-center justify-center">
+        <span class="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-[var(--brand-primary)]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+          <i class="fas fa-seedling"></i>
+          Built for farmers
+        </span>
+
+        <h1 class="max-w-4xl text-4xl font-black leading-tight text-[var(--brand-primary)] md:text-5xl xl:text-6xl">
+          Practical agricultural technology that helps farmers plan better.
+        </h1>
+
+        <p class="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
+          Mkulima Smart is designed around real farming decisions. We connect weather-informed planning, service access, and operational support so the mobile experience can deliver guidance that feels timely, clear, and useful.
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="#story" class="btn btn-primary">Our Story <i class="fas fa-arrow-right"></i></a>
+          <a href="#contact" class="btn btn-outline">Contact Us</a>
+        </div>
+
+        <div class="mx-auto mt-8 grid w-full max-w-5xl gap-3 sm:grid-cols-3">
+          <div class="rounded-3xl border border-[var(--brand-primary)]/8 bg-white/90 p-4 shadow-[0_12px_30px_rgba(26,51,22,0.08)]">
+            <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Focus</div>
+            <div class="mt-2 text-2xl font-bold text-[var(--brand-primary)]">Planning</div>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Weather, timing and daily farm actions.</p>
+          </div>
+          <div class="rounded-3xl border border-[var(--brand-primary)]/8 bg-white/90 p-4 shadow-[0_12px_30px_rgba(26,51,22,0.08)]">
+            <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Approach</div>
+            <div class="mt-2 text-2xl font-bold text-[var(--brand-primary)]">Useful tech</div>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Simple tools built around farmer workflows.</p>
+          </div>
+          <div class="rounded-3xl border border-[var(--brand-primary)]/8 bg-white/90 p-4 shadow-[0_12px_30px_rgba(26,51,22,0.08)]">
+            <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Goal</div>
+            <div class="mt-2 text-2xl font-bold text-[var(--brand-primary)]">Confidence</div>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Less guesswork and stronger farm decisions.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto min-h-[24rem] w-full max-w-3xl overflow-hidden rounded-[1.75rem] bg-[linear-gradient(180deg,rgba(26,51,22,0.18),rgba(26,51,22,0.72)),url('{% static "images/mobile.jpg" %}')] bg-cover bg-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)]">
+        <div class="absolute inset-x-4 bottom-4 rounded-[1.4rem] bg-white/90 p-5 shadow-[0_18px_36px_rgba(15,31,12,0.14)] backdrop-blur">
+          <div class="flex flex-col items-center gap-4 text-center">
+            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white shadow-[0_12px_28px_rgba(45,90,39,0.2)]">
+              <i class="fas fa-cloud-sun-rain text-lg"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">What we build</div>
+              <h2 class="mt-2 text-xl font-bold text-[var(--brand-primary)]">Backend-driven planning support</h2>
+              <p class="mt-2 text-sm leading-6 text-slate-600">
+                Weather and farm context are processed on the backend, then shaped into planning guidance the mobile app can deliver clearly.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="story" class="container relative py-8 lg:py-14">
+    <div class="mx-auto max-w-6xl">
+    <div class="flex flex-col items-center gap-4 text-center">
+      <div>
+        <span class="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+          <i class="fas fa-leaf"></i>
+          Our story
+        </span>
+        <h2 class="mt-4 text-3xl font-black text-[var(--brand-primary)] md:text-5xl">Why Mkulima Smart exists</h2>
+      </div>
+      <p class="max-w-3xl text-base leading-8 text-slate-600">
+        We are building around the real rhythm of farming, not around abstract software features. The goal is to help farmers act earlier, plan better, and access support with less friction.
+      </p>
+    </div>
+
+    <div class="mx-auto mt-8 grid max-w-5xl gap-4 lg:grid-cols-2">
+      <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white shadow-[0_12px_28px_rgba(45,90,39,0.2)]">
+          <i class="fas fa-bullseye"></i>
+        </div>
+        <h3 class="mt-5 text-2xl font-bold text-[var(--brand-primary)] text-center">Our mission</h3>
+        <p class="mt-3 text-base leading-8 text-slate-600 text-center">
+          To help farmers make better decisions through practical technology, useful support systems, and digital tools grounded in real agricultural needs.
+        </p>
+      </article>
+      <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white shadow-[0_12px_28px_rgba(45,90,39,0.2)]">
+          <i class="fas fa-eye"></i>
+        </div>
+        <h3 class="mt-5 text-2xl font-bold text-[var(--brand-primary)] text-center">Our vision</h3>
+        <p class="mt-3 text-base leading-8 text-slate-600 text-center">
+          A stronger agricultural ecosystem where farmers use timely information and simple digital systems to plan with more confidence and resilience.
+        </p>
+      </article>
+    </div>
+
+    <div class="mx-auto mt-4 grid max-w-5xl gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <h3 class="text-2xl font-bold text-[var(--brand-primary)] text-center">What makes us different</h3>
+        <p class="mt-4 text-base leading-8 text-slate-600 text-center">
+          We are not only displaying information. We are building backend systems that collect weather and farm data, process it, and transform it into recommendations that can be delivered through the mobile app.
+        </p>
+        <p class="mt-3 text-base leading-8 text-slate-600 text-center">
+          That means planning, advice, and service workflows are connected so the platform feels actionable instead of overwhelming.
+        </p>
+      </article>
+
+      <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <h3 class="text-2xl font-bold text-[var(--brand-primary)] text-center">What we care about</h3>
+        <div class="mt-5 space-y-4">
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
+              <i class="fas fa-wifi"></i>
+            </div>
+            <div>
+              <div class="font-semibold text-slate-800">Accessibility</div>
+              <p class="mt-1 text-sm leading-6 text-slate-500">Technology should be easy to reach and easy to use.</p>
+            </div>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+              <div class="font-semibold text-slate-800">Practical impact</div>
+              <p class="mt-1 text-sm leading-6 text-slate-500">Advice should help with real field decisions, not just look impressive.</p>
+            </div>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
+              <i class="fas fa-people-group"></i>
+            </div>
+            <div>
+              <div class="font-semibold text-slate-800">Farmer-centered design</div>
+              <p class="mt-1 text-sm leading-6 text-slate-500">The platform should adapt to farmer workflows, not the other way around.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+    </div>
+  </section>
+
+  <section class="container relative py-8 lg:py-14">
+    <div class="mx-auto max-w-6xl">
+    <div class="text-center">
+      <span class="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+        <i class="fas fa-compass"></i>
+        Our values
+      </span>
+      <h2 class="mt-4 text-3xl font-black text-[var(--brand-primary)] md:text-5xl">The principles behind the platform</h2>
+      <p class="mx-auto mt-4 max-w-3xl text-base leading-8 text-slate-600">
+        These values guide how we build products, improve services, and decide what will create the most practical value for farmers.
+      </p>
+    </div>
+
+    <div class="mx-auto mt-8 grid max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 text-center shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white"><i class="fas fa-handshake"></i></div>
+        <h3 class="mt-5 text-xl font-bold text-[var(--brand-primary)]">Trust</h3>
+        <p class="mt-3 text-sm leading-7 text-slate-600">Reliability, honesty and clear support for farmers and partners.</p>
+      </article>
+      <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white"><i class="fas fa-lightbulb"></i></div>
+        <h3 class="mt-5 text-xl font-bold text-[var(--brand-primary)]">Innovation</h3>
+        <p class="mt-3 text-sm leading-7 text-slate-600">Technology should solve practical agricultural problems without adding noise.</p>
+      </article>
+      <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white"><i class="fas fa-seedling"></i></div>
+        <h3 class="mt-5 text-xl font-bold text-[var(--brand-primary)]">Sustainability</h3>
+        <p class="mt-3 text-sm leading-7 text-slate-600">Better planning and smarter resource use for stronger long-term resilience.</p>
+      </article>
+      <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white"><i class="fas fa-bolt"></i></div>
+        <h3 class="mt-5 text-xl font-bold text-[var(--brand-primary)]">Actionability</h3>
+        <p class="mt-3 text-sm leading-7 text-slate-600">Information should point to clear next steps a farmer can use immediately.</p>
+      </article>
+    </div>
+    </div>
+  </section>
+
+  <section class="container relative py-8 lg:py-14">
+    <div class="mx-auto max-w-6xl grid gap-6">
+      <div class="text-center">
+        <span class="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+          <i class="fas fa-users"></i>
+          Team
+        </span>
+        <h2 class="mt-4 text-3xl font-black text-[var(--brand-primary)] md:text-5xl">A cross-functional team</h2>
+        <p class="mx-auto mt-4 max-w-3xl text-base leading-8 text-slate-600">
+          Mkulima Smart brings together agricultural understanding, backend development, operations thinking, and product design so the platform stays practical and grounded.
+        </p>
+
+        <div class="mx-auto mt-8 grid max-w-5xl gap-4 sm:grid-cols-2">
+          <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-5 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,rgba(197,216,109,0.8),rgba(255,255,255,0.95))] text-lg font-black text-[var(--brand-primary)]">AG</div>
+            <h3 class="mt-4 text-lg font-bold text-[var(--brand-primary)]">Agriculture specialists</h3>
+            <p class="mt-2 text-sm leading-7 text-slate-600">They help shape planning logic, field relevance, and farmer-centered workflows.</p>
+          </article>
+          <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-5 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,rgba(197,216,109,0.8),rgba(255,255,255,0.95))] text-lg font-black text-[var(--brand-primary)]">BE</div>
+            <h3 class="mt-4 text-lg font-bold text-[var(--brand-primary)]">Backend engineers</h3>
+            <p class="mt-2 text-sm leading-7 text-slate-600">They build the systems that gather, process and return weather-backed guidance.</p>
+          </article>
+          <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-5 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,rgba(197,216,109,0.8),rgba(255,255,255,0.95))] text-lg font-black text-[var(--brand-primary)]">OP</div>
+            <h3 class="mt-4 text-lg font-bold text-[var(--brand-primary)]">Operations leads</h3>
+            <p class="mt-2 text-sm leading-7 text-slate-600">They connect the digital platform with service delivery and real field execution.</p>
+          </article>
+          <article class="rounded-[1.6rem] border border-[var(--brand-primary)]/8 bg-white/80 p-5 shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,rgba(197,216,109,0.8),rgba(255,255,255,0.95))] text-lg font-black text-[var(--brand-primary)]">PD</div>
+            <h3 class="mt-4 text-lg font-bold text-[var(--brand-primary)]">Product thinkers</h3>
+            <p class="mt-2 text-sm leading-7 text-slate-600">They keep the experience focused, simple, and aligned with how farmers actually use tools.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <span class="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+          <i class="fas fa-road"></i>
+          Journey
+        </span>
+        <h2 class="mt-4 text-3xl font-black text-[var(--brand-primary)] md:text-5xl">How the platform has grown</h2>
+        <p class="mx-auto mt-4 max-w-3xl text-base leading-8 text-slate-600">
+          The direction has stayed consistent: solve more of the planning and service challenges farmers face in day-to-day work.
+        </p>
+
+        <div class="relative mx-auto mt-8 max-w-4xl rounded-[1.8rem] border border-[var(--brand-primary)]/8 bg-white/80 p-6 text-left shadow-[0_18px_40px_rgba(15,31,12,0.08)] backdrop-blur">
+          <div class="absolute bottom-8 left-7 top-8 w-px bg-gradient-to-b from-[var(--brand-primary)]/10 via-[var(--brand-primary)]/30 to-[var(--brand-primary)]/10"></div>
+
+          <div class="space-y-6">
+            <div class="relative pl-10">
+              <span class="absolute left-[0.12rem] top-1 h-4 w-4 rounded-full bg-[linear-gradient(135deg,var(--brand-accent),var(--brand-primary-light))] shadow-[0_0_0_6px_rgba(197,216,109,0.18)]"></span>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Phase 1</div>
+              <h3 class="mt-2 text-lg font-bold text-[var(--brand-primary)]">Start with access</h3>
+              <p class="mt-2 text-sm leading-7 text-slate-600">Create easier pathways to services, products and farmer support.</p>
+            </div>
+            <div class="relative pl-10">
+              <span class="absolute left-[0.12rem] top-1 h-4 w-4 rounded-full bg-[linear-gradient(135deg,var(--brand-accent),var(--brand-primary-light))] shadow-[0_0_0_6px_rgba(197,216,109,0.18)]"></span>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Phase 2</div>
+              <h3 class="mt-2 text-lg font-bold text-[var(--brand-primary)]">Add operational tools</h3>
+              <p class="mt-2 text-sm leading-7 text-slate-600">Support storage, logistics, communication and day-to-day farm coordination.</p>
+            </div>
+            <div class="relative pl-10">
+              <span class="absolute left-[0.12rem] top-1 h-4 w-4 rounded-full bg-[linear-gradient(135deg,var(--brand-accent),var(--brand-primary-light))] shadow-[0_0_0_6px_rgba(197,216,109,0.18)]"></span>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Phase 3</div>
+              <h3 class="mt-2 text-lg font-bold text-[var(--brand-primary)]">Strengthen planning intelligence</h3>
+              <p class="mt-2 text-sm leading-7 text-slate-600">Use backend processing and weather-backed logic to prepare mobile-friendly planning guidance.</p>
+            </div>
+            <div class="relative pl-10">
+              <span class="absolute left-[0.12rem] top-1 h-4 w-4 rounded-full bg-[linear-gradient(135deg,var(--brand-accent),var(--brand-primary-light))] shadow-[0_0_0_6px_rgba(197,216,109,0.18)]"></span>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Next</div>
+              <h3 class="mt-2 text-lg font-bold text-[var(--brand-primary)]">Keep reducing decision friction</h3>
+              <p class="mt-2 text-sm leading-7 text-slate-600">Improve the quality, timing and clarity of recommendations farmers receive.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="container relative py-10 lg:py-16">
+    <div class="mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_top_right,rgba(197,216,109,0.35),transparent_20rem),linear-gradient(135deg,#183116_0%,#22431d_45%,#315d28_100%)] p-6 text-center text-white shadow-[0_24px_50px_rgba(15,31,12,0.2)] md:p-8 xl:p-10">
+      <div class="mx-auto max-w-3xl">
+        <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-white">
+          <i class="fas fa-comments"></i>
+          Contact us
+        </span>
+        <h2 class="mt-4 text-3xl font-black md:text-5xl">Want to work with Mkulima Smart?</h2>
+        <p class="mx-auto mt-4 max-w-3xl text-base leading-8 text-white/75">
+          Reach out if you want to learn more about the platform, farmer support workflows, or the planning tools we are building around weather and field operations.
+        </p>
+      </div>
+
+      <div class="mx-auto mt-8 grid w-full max-w-5xl gap-4">
+        <article class="rounded-[1.5rem] bg-white p-6 text-slate-800 shadow-[0_18px_36px_rgba(15,31,12,0.16)]">
+          <div class="flex flex-col items-center gap-4 text-center">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white">
+              <i class="fas fa-location-dot"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Location</div>
+              <div class="mt-2 text-lg font-bold text-[var(--brand-primary)]">Arusha, Tanzania</div>
+              <p class="mt-1 text-sm leading-6 text-slate-700">Serving farmers through digital and operational support.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="rounded-[1.5rem] bg-white p-6 text-slate-800 shadow-[0_18px_36px_rgba(15,31,12,0.16)]">
+          <div class="flex flex-col items-center gap-4 text-center">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white">
+              <i class="fas fa-phone"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Phone</div>
+              <a href="tel:+255687046323" class="mt-2 block text-lg font-bold text-[var(--brand-primary)] no-underline hover:text-[var(--brand-primary-light)]">+255 687 046 323</a>
+              <p class="mt-1 text-sm leading-6 text-slate-700">Call for support, partnerships or product questions.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="rounded-[1.5rem] bg-white p-6 text-slate-800 shadow-[0_18px_36px_rgba(15,31,12,0.16)]">
+          <div class="flex flex-col items-center gap-4 text-center">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-primary),var(--brand-primary-light))] text-white">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Email</div>
+              <a href="mailto:awadhi.massomo@sotechtz.com" class="mt-2 block break-all text-lg font-bold text-[var(--brand-primary)] no-underline hover:text-[var(--brand-primary-light)]">awadhi.massomo@sotechtz.com</a>
+              <p class="mt-1 text-sm leading-6 text-slate-700">We're happy to hear from collaborators, farmers and partners.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+=======
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #2e7d32;
+        --primary-light: #60ad5e;
+        --secondary: #ff9800;
+        --dark: #2c3e50;
+        --light: #f8f9fa;
+        --gray: #6c757d;
+    }
+    
+    .about-hero {
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5)), 
+                    url('{% static "images/about-bg.jpg" %}') no-repeat center center/cover;
+        padding: 120px 0 100px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .about-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to bottom, transparent, var(--light));
+        z-index: 1;
+    }
+    
+    .mission-vision-card {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        height: 100%;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border-radius: 15px;
+        overflow: hidden;
+        background: white;
+        border-top: 4px solid var(--primary);
+    }
+    
+    .mission-vision-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+    
+    .mission-vision-icon {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 20px;
+        margin: -40px auto 1.5rem;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .mission-vision-card:hover .mission-vision-icon {
+        transform: rotate(10deg) scale(1.1);
+    }
+    
+    .team-member-card {
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border-radius: 15px;
+        overflow: hidden;
+        height: 100%;
+        background: white;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .team-member-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        opacity: 0;
+        transition: all 0.4s ease;
+        z-index: -1;
+    }
+    
+    .team-member-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+    
+    .team-member-card:hover::before {
+        height: 100%;
+        opacity: 0.05;
+    }
+    
+    .team-member-img {
+        height: 250px;
+        object-fit: cover;
+        transition: all 0.5s ease;
+    }
+    
+    .team-member-card:hover .team-member-img {
+        transform: scale(1.05);
+    }
+    
+    .social-icons a {
+        color: var(--gray);
+        margin: 0 5px;
+        transition: all 0.3s ease;
+        width: 35px;
+        height: 35px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #f1f3f5;
+    }
+    
+    .social-icons a:hover {
+        color: white;
+        background: var(--primary);
+        transform: translateY(-3px);
+    }
+    
+    .timeline {
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .timeline::after {
+        content: '';
+        position: absolute;
+        width: 6px;
+        background-color: #27ae60;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        margin-left: -3px;
+    }
+    
+    .timeline-container {
+        padding: 10px 40px;
+        position: relative;
+        background-color: inherit;
+        width: 50%;
+    }
+    
+    .timeline-container::after {
+        content: '';
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        right: -13px;
+        background-color: white;
+        border: 4px solid #27ae60;
+        top: 15px;
+        border-radius: 50%;
+        z-index: 1;
+    }
+    
+    .left {
+        left: 0;
+    }
+    
+    .right {
+        left: 50%;
+    }
+    
+    .left::before {
+        content: " ";
+        height: 0;
+        position: absolute;
+        top: 22px;
+        width: 0;
+        z-index: 1;
+        right: 30px;
+        border: medium solid white;
+        border-width: 10px 0 10px 10px;
+        border-color: transparent transparent transparent white;
+    }
+    
+    .right::before {
+        content: " ";
+        height: 0;
+        position: absolute;
+        top: 22px;
+        width: 0;
+        z-index: 1;
+        left: 30px;
+        border: medium solid white;
+        border-width: 10px 10px 10px 0;
+        border-color: transparent white transparent transparent;
+    }
+    
+    .right::after {
+        left: -12px;
+    }
+    
+    .timeline-content {
+        padding: 20px 30px;
+        background-color: white;
+        position: relative;
+        border-radius: 6px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .partner-logo {
+        height: 80px;
+        object-fit: contain;
+        filter: grayscale(100%);
+        transition: filter 0.3s ease, transform 0.3s ease;
+        margin: 1rem;
+    }
+    
+    .partner-logo:hover {
+        filter: grayscale(0%);
+        transform: scale(1.05);
+    }
+    
+    .value-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 10px 20px rgba(46, 125, 50, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .value-item:hover .value-icon {
+        transform: rotate(10deg) scale(1.1);
+    }
+    
+    @media screen and (max-width: 768px) {
+        .timeline::after {
+            left: 31px;
+        }
+        
+        .timeline-container {
+            width: 100%;
+            padding-left: 70px;
+            padding-right: 25px;
+        }
+        
+        .timeline-container::before {
+            left: 60px;
+            border: medium solid white;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent white transparent transparent;
+        }
+        
+        .left::after, .right::after {
+            left: 18px;
+        }
+        
+        .right {
+            left: 0%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="about-hero">
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-10">
+                <h1 class="display-3 fw-bold mb-4">About Mkulima Smart</h1>
+                <div class="divider mx-auto bg-white mb-4" style="width: 80px; height: 4px; border-radius: 2px;"></div>
+                <p class="lead mb-4" style="font-size: 1.5rem; max-width: 800px; margin: 0 auto;">Empowering farmers with innovative technology and comprehensive services to cultivate sustainable and profitable agricultural businesses across Africa.</p>
+                <a href="#contact" class="btn btn-light btn-lg mt-4 px-4 py-2" style="border-radius: 50px; font-weight: 500; transition: all 0.3s ease;">
+                    Get in Touch <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-down">
+        <a href="#who-we-are" class="scroll-link">
+            <i class="fas fa-chevron-down"></i>
+        </a>
+    </div>
+</section>
+
+<!-- Company Overview Section -->
+<section id="who-we-are" class="py-5 position-relative overflow-hidden" style="padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Story</span>
+            <h2 class="display-5 fw-bold mb-4">Who We Are</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+        </div>
+        
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <div class="position-relative">
+                    <img src="{% static 'images/about-overview.jpg' %}" alt="Mkulima Smart Team" class="img-fluid rounded-3 shadow-lg" style="border: 10px solid white;">
+                    <div class="position-absolute" style="width: 200px; height: 200px; background: rgba(46, 125, 50, 0.1); top: -30px; left: -30px; z-index: -1; border-radius: 30px;"></div>
+                    <div class="position-absolute" style="width: 150px; height: 150px; background: rgba(255, 152, 0, 0.1); bottom: -30px; right: -30px; z-index: -1; border-radius: 20px;"></div>
+                </div>
+            <div class="col-lg-6">
+                <h2 class="mb-4">Who We Are</h2>
+                <p>Mkulima Smart is a leading agricultural technology company that connects farmers with the resources, tools, knowledge, and markets they need to thrive in today's competitive landscape.</p>
+                <p>Founded in 2020, we have grown from a simple marketplace to a comprehensive platform offering e-commerce, storage solutions, transportation services, training programs, and innovative farming solutions.</p>
+                <p>Our team consists of agricultural experts, technology specialists, and business professionals passionate about transforming African agriculture through sustainable practices and modern technology.</p>
+                <p>We serve thousands of farmers across the region, helping them increase productivity, reduce waste, and connect directly with buyers for better profits.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mission and Vision Section -->
+<section class="py-5 position-relative" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Purpose</span>
+            <h2 class="display-5 fw-bold mb-4">Mission & Vision</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+            <p class="lead" style="max-width: 700px; margin: 0 auto;">Driving agricultural transformation through innovation, sustainability, and community empowerment.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card mission-vision-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mission-vision-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3>Our Mission</h3>
+                        <p>To empower farmers with technology, knowledge, and market access, enabling sustainable agricultural practices and improved livelihoods.</p>
+                        <p>We strive to create an ecosystem where farmers can easily access all they need to grow their operations, from quality inputs to reliable buyers, while implementing environmentally responsible farming methods.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mission-vision-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mission-vision-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h3>Our Vision</h3>
+                        <p>To transform African agriculture into a technologically advanced, sustainable, and profitable sector that ensures food security while supporting rural development.</p>
+                        <p>We envision a future where small-scale farmers have the same advantages as large commercial operations through shared resources, knowledge, and market opportunities.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Values Section -->
+<section class="py-5 position-relative" style="padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Foundation</span>
+            <h2 class="display-5 fw-bold mb-4">Core Values</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+            <p class="lead" style="max-width: 700px; margin: 0 auto;">Guiding principles that shape our decisions and actions every day.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h4>Integrity</h4>
+                    <p>We operate with honesty, transparency, and fairness in all our dealings with farmers, suppliers, and partners.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h4>Innovation</h4>
+                    <p>We continuously seek new technologies and approaches to solve agricultural challenges and improve efficiency.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>Community</h4>
+                    <p>We believe in building strong networks of farmers, suppliers, and buyers who support each other's success.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h4>Sustainability</h4>
+                    <p>We promote farming practices that preserve natural resources and protect the environment for future generations.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <h4>Equity</h4>
+                    <p>We work to ensure fair opportunities and access for all farmers, regardless of size or resources.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="value-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Impact</h4>
+                    <p>We measure our success by the positive difference we make in farmers' productivity and prosperity.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Team Section -->
+<section class="py-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 6rem 0;">
+    <div class="container position-relative">
+        <div class="section-header text-center mb-5">
+            <span class="text-uppercase text-primary fw-bold" style="letter-spacing: 2px;">Our Experts</span>
+            <h2 class="display-5 fw-bold mb-4">Meet Our Team</h2>
+            <div class="divider mx-auto bg-primary mb-4" style="width: 60px; height: 3px; border-radius: 2px;"></div>
+            <p class="lead" style="max-width: 700px; margin: 0 auto;">Passionate individuals dedicated to transforming agriculture in Africa.</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- CEO -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="CEO">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">John Kamau</h5>
+                        <p class="text-muted">CEO & Founder</p>
+                        <p class="small">Agricultural economist with 15+ years experience in agribusiness and technology ventures.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- COO -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="COO">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">Sarah Odhiambo</h5>
+                        <p class="text-muted">Chief Operations Officer</p>
+                        <p class="small">Supply chain expert with a passion for streamlining agricultural logistics.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CTO -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="CTO">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">David Mwangi</h5>
+                        <p class="text-muted">Chief Technology Officer</p>
+                        <p class="small">Software engineer specialized in agricultural technology and IoT solutions.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-github"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Head of Training -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card team-member-card">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="team-member-img" alt="Head of Training">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">Grace Njeri</h5>
+                        <p class="text-muted">Head of Training</p>
+                        <p class="small">Agricultural education specialist with a focus on practical skill development.</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="#" class="btn btn-outline-success">View Full Team</a>
+        </div>
+    </div>
+</section>
+
+<!-- Our Journey Timeline -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Journey</h2>
+        
+        <div class="timeline">
+            <div class="timeline-container left">
+                <div class="timeline-content">
+                    <h4>2020</h4>
+                    <p>Founded as a simple online marketplace connecting farmers directly to buyers.</p>
+                </div>
+            </div>
+            <div class="timeline-container right">
+                <div class="timeline-content">
+                    <h4>2021</h4>
+                    <p>Expanded services to include warehouse booking and transportation solutions.</p>
+                </div>
+            </div>
+            <div class="timeline-container left">
+                <div class="timeline-content">
+                    <h4>2022</h4>
+                    <p>Launched our farmer training programs and introduced smart hydroponics solutions.</p>
+                </div>
+            </div>
+            <div class="timeline-container right">
+                <div class="timeline-content">
+                    <h4>2022</h4>
+                    <p>Partnered with Kikapu to enhance payment and financial services for farmers.</p>
+                </div>
+            </div>
+            <div class="timeline-container left">
+                <div class="timeline-content">
+                    <h4>2023</h4>
+                    <p>Reached 10,000 active farmers on the platform across multiple counties.</p>
+                </div>
+            </div>
+            <div class="timeline-container right">
+                <div class="timeline-content">
+                    <h4>2024</h4>
+                    <p>Expanding to neighboring countries while introducing new technological innovations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Partners Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Partners</h2>
+        
+        <div class="d-flex flex-wrap justify-content-center align-items-center">
+            <img src="https://via.placeholder.com/150x80?text=Kikapu" class="partner-logo" alt="Kikapu">
+            <img src="https://via.placeholder.com/150x80?text=Ministry+of+Agriculture" class="partner-logo" alt="Ministry of Agriculture">
+            <img src="https://via.placeholder.com/150x80?text=KARI" class="partner-logo" alt="Kenya Agricultural Research Institute">
+            <img src="https://via.placeholder.com/150x80?text=EAFA" class="partner-logo" alt="East African Farmers Association">
+            <img src="https://via.placeholder.com/150x80?text=Agri-Tech+Hub" class="partner-logo" alt="Agri-Tech Innovation Hub">
+        </div>
+    </div>
+</section>
+
+<!-- Contact Info Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Get In Touch</h2>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-map-marker-alt fa-3x text-success mb-3"></i>
+                        <h4>Our Location</h4>
+                        <p>Agriculture House, Haile Selassie Avenue<br>Nairobi, Kenya</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-phone fa-3x text-success mb-3"></i>
+                        <h4>Call Us</h4>
+                        <p>+254 712 345 678<br>+254 798 765 432</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-envelope fa-3x text-success mb-3"></i>
+                        <h4>Email Us</h4>
+                        <p>info@mkulimasmart.co.ke<br>support@mkulimasmart.co.ke</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="#" class="btn btn-success btn-lg">Contact Us</a>
+        </div>
+    </div>
+</section>
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+{% endblock %}

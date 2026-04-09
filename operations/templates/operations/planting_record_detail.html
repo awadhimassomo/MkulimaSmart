@@ -1,0 +1,88 @@
+{% extends 'operations/base.html' %}
+
+{% block title %}{{ record.planting_cycle_id }} - Mkulima Smart{% endblock %}
+
+{% block content %}
+<div class="ops-page">
+  <div class="ops-card soft ops-section" style="margin-bottom:1.25rem;">
+    <div class="ops-hero">
+      <div>
+        <div class="ops-kicker">{{ record.planting_cycle_id }}</div>
+        <h1 class="ops-title">{{ record.crop_type }}</h1>
+        <p class="ops-subtitle">{{ record.farm.name }} | {{ record.location|default:record.farm.location }}</p>
+
+        <div class="ops-detail-grid">
+          <div class="ops-detail"><strong>Farmer</strong>{{ record.farmer.get_full_name|default:record.farmer.phone_number }}</div>
+          <div class="ops-detail"><strong>Planting Date</strong>{{ record.planting_date }}</div>
+          <div class="ops-detail"><strong>Quantity</strong>{{ record.quantity_planted }} {{ record.unit }}</div>
+          <div class="ops-detail"><strong>Expected Harvest</strong>{{ record.expected_harvest_date|default:"-" }}</div>
+          <div class="ops-detail"><strong>Expected Yield</strong>{{ record.expected_yield|default:"-" }}</div>
+          <div class="ops-detail"><strong>Verification</strong>{{ record.get_verification_status_display }}</div>
+          <div class="ops-detail"><strong>Seedling Batch</strong>{{ record.seedling_batch.seedling_batch_id|default:"Not linked" }}</div>
+          <div class="ops-detail"><strong>Coordinates</strong>{{ record.latitude|default:"-" }}, {{ record.longitude|default:"-" }}</div>
+        </div>
+
+        {% if record.notes %}
+          <div class="ops-detail" style="margin-top:1rem;">
+            <strong>Notes</strong>
+            {{ record.notes }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="ops-actions">
+        <a class="ops-btn ops-btn-primary" href="{% url 'operations:add_activity' record.pk %}">Add Activity</a>
+        <a class="ops-btn ops-btn-secondary" href="{% url 'operations:add_input_usage' record.pk %}">Add Input Usage</a>
+        <a class="ops-btn ops-btn-outline" href="{% url 'operations:add_inspection' record.pk %}">Add Inspection</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="ops-columns-3">
+    <section class="ops-card ops-section">
+      <h2>Activities</h2>
+      <div class="ops-stack">
+        {% for activity in record.activities.all %}
+          <div class="ops-list-item">
+            <div class="ops-item-title">{{ activity.get_activity_type_display }}</div>
+            <div class="ops-item-meta">{{ activity.activity_date }}</div>
+            <div class="ops-item-meta">{{ activity.notes|default:"No notes" }}</div>
+          </div>
+        {% empty %}
+          <p class="ops-empty">No activities logged yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="ops-card ops-section">
+      <h2>Input Usage</h2>
+      <div class="ops-stack">
+        {% for usage in record.input_usages.all %}
+          <div class="ops-list-item">
+            <div class="ops-item-title">{{ usage.product_name }}</div>
+            <div class="ops-item-meta">{{ usage.input_type }} | {{ usage.application_date }}</div>
+            <div class="ops-item-meta">{{ usage.quantity }} {{ usage.unit }}</div>
+          </div>
+        {% empty %}
+          <p class="ops-empty">No input usage records yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="ops-card ops-section">
+      <h2>Inspection Logs</h2>
+      <div class="ops-stack">
+        {% for inspection in record.inspection_logs.all %}
+          <div class="ops-list-item">
+            <div class="ops-item-title">{{ inspection.purpose }}</div>
+            <div class="ops-item-meta">{{ inspection.visit_date }}</div>
+            <div class="ops-item-meta">{{ inspection.findings|default:"No findings recorded" }}</div>
+          </div>
+        {% empty %}
+          <p class="ops-empty">No inspection logs yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

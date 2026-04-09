@@ -1,0 +1,203 @@
+{% extends 'gova_pp/base.html' %}
+{% load static %}
+
+{% block title %}GOV APP - Messages{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .message-row {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    
+    .message-row:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+        border-left-color: #2D5A27;
+    }
+
+    a.message-row {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+    
+    .priority-urgent { border-left-color: #dc2626; }
+    .priority-high { border-left-color: #ea580c; }
+    .priority-medium { border-left-color: #f59e0b; }
+    .priority-low { border-left-color: #22c55e; }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-new { background-color: #dbeafe; color: #1e40af; }
+    .status-in_progress { background-color: #fef3c7; color: #92400e; }
+    .status-replied { background-color: #d1fae5; color: #065f46; }
+    .status-resolved { background-color: #e5e7eb; color: #374151; }
+    .status-archived { background-color: #f3f4f6; color: #6b7280; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50" style="padding: 1rem;">
+        <!-- Filters -->
+        <div class="filter-card">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message Type</label>
+                    <select name="message_type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">All Types</option>
+                        {% for value, label in message_types %}
+                        <option value="{{ value }}" {% if message_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select name="priority" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">All Priorities</option>
+                        {% for value, label in priority_choices %}
+                        <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search messages..." 
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                </div>
+                
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
+                        <i class="fas fa-search mr-2"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Messages List -->
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="px-6 py-4 border-b">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    Messages ({{ page_obj.paginator.count }} total)
+                </h2>
+            </div>
+            
+            <div class="p-6">
+                {% for message in page_obj %}
+                <a href="{% url 'gova_pp:message_detail' message.id %}" class="message-row priority-{{ message.priority }}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <h3 class="font-semibold text-gray-900">{{ message.farmer_name }}</h3>
+                                <span class="status-badge status-{{ message.status }}">{{ message.get_status_display }}</span>
+                                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{{ message.get_priority_display }}</span>
+                                {% if message.has_image %}
+                                <i class="fas fa-image text-blue-500" title="Has Image"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <h4 class="text-lg font-medium text-gray-800 mb-1">{{ message.subject }}</h4>
+                            <p class="text-gray-600 mb-2">{{ message.message|truncatewords:20 }}</p>
+                            
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span><i class="fas fa-clock mr-1"></i>{{ message.created_at|timesince }} ago</span>
+                                <span>{{ message.replies.count }} reply{{ message.replies.count|pluralize }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center py-12">
+                    <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No messages found</h3>
+                    <p class="text-gray-500">No messages match your current filters.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if message_type_filter %}&message_type={{ message_type_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Previous</a>
+                {% endif %}
+                
+                <span class="px-3 py-2 bg-primary text-white rounded-lg">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if message_type_filter %}&message_type={{ message_type_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Next</a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function analyzeImage(messageId) {
+    if (confirm('Analyze this image using AI? This will use OpenAI credits.')) {
+        fetch(`/gova-pp/analyze-image/${messageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Image analysis completed! View the message details to see results.');
+                location.reload();
+            } else {
+                alert('Analysis failed: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

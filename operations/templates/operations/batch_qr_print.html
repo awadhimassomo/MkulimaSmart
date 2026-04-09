@@ -1,0 +1,79 @@
+{% extends 'operations/base.html' %}
+
+{% block title %}Print QR - {{ batch.seedling_batch_id }}{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+  .ops-print-sheet {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    color: #17221a;
+  }
+
+  .ops-print-meta {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1.5rem;
+  }
+
+  .ops-print-qr {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem;
+    border-radius: 18px;
+    border: 1px solid rgba(26, 51, 22, 0.12);
+    background: #fff;
+  }
+
+  @media print {
+    .site-header,
+    .site-footer,
+    .ops-actions {
+      display: none !important;
+    }
+
+    .ops-page {
+      max-width: none;
+      padding: 0;
+    }
+
+    .ops-card {
+      box-shadow: none;
+      border: 0;
+      background: #fff;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ops-page narrow">
+  <div class="ops-card soft ops-section ops-print-sheet">
+    <div class="ops-hero">
+      <div>
+        <div class="ops-kicker">Printable QR</div>
+        <h1 class="ops-title">{{ batch.seedling_batch_id }}</h1>
+        <p class="ops-subtitle">Print this QR and place it on the seedling batch. When scanned, it opens the planting intake form for this batch.</p>
+      </div>
+
+      <div class="ops-actions">
+        <button type="button" class="ops-btn ops-btn-primary" onclick="window.print()">Print Now</button>
+        <a class="ops-btn ops-btn-outline" href="{% url 'operations:batch_detail' batch.pk %}">Back to Batch</a>
+      </div>
+    </div>
+
+    <div class="ops-print-qr">
+      <img src="{% url 'operations:batch_qr_image' batch.pk %}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
+    </div>
+
+    <div class="ops-print-meta">
+      <div class="ops-detail"><strong>Seedling Type</strong>{{ batch.seedling_type }}</div>
+      <div class="ops-detail"><strong>Seller</strong>{{ batch.seller }}</div>
+      <div class="ops-detail"><strong>Scan URL</strong><span style="word-break:break-all;">{{ batch.get_absolute_scan_url }}</span></div>
+      <div class="ops-detail"><strong>Use</strong>Scan during planting to open the form and record where this batch was planted.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

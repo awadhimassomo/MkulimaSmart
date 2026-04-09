@@ -1,0 +1,93 @@
+{% extends "marketplace/supplier_base.html" %}
+
+{% block supplier_title %}Run Your Supplier Storefront{% endblock %}
+{% block supplier_subtitle %}See how many products are live, watch low stock items, and jump straight into publishing your next listing.{% endblock %}
+
+{% block supplier_content %}
+<div class="supplier-grid">
+  <section class="supplier-stats">
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Total Listings</div>
+      <div class="supplier-stat-value">{{ product_count }}</div>
+    </article>
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Live Products</div>
+      <div class="supplier-stat-value">{{ active_count }}</div>
+    </article>
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Inventory Units</div>
+      <div class="supplier-stat-value">{{ inventory_units }}</div>
+    </article>
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Low Stock</div>
+      <div class="supplier-stat-value">{{ low_stock_count }}</div>
+    </article>
+  </section>
+
+  <section class="supplier-card">
+    <div class="supplier-card-body">
+      <h2 class="supplier-section-title">Your Listings</h2>
+      <p class="supplier-section-copy">These are the products currently attached to your supplier account.</p>
+    </div>
+
+    {% if products %}
+      <div style="overflow-x:auto;">
+        <table class="supplier-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+              <tr>
+                <td>
+                  <a href="{% url 'marketplace:supplier_product_detail' product.pk %}" class="supplier-product-link">{{ product.name }}</a>
+                </td>
+                <td>{{ product.category.name }}</td>
+                <td>TZS {{ product.price|floatformat:0 }}</td>
+                <td>{{ product.stock }}</td>
+                <td>
+                  {% if product.is_active %}
+                    <span class="supplier-pill supplier-pill-live">Live</span>
+                  {% else %}
+                    <span class="supplier-pill supplier-pill-draft">Hidden</span>
+                  {% endif %}
+                </td>
+                <td>{{ product.updated_at|date:"M j, Y" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="supplier-empty">
+        <h3 style="margin:0 0 0.5rem;color:#173019;">No products yet</h3>
+        <p style="margin:0 0 1rem;">Create your first listing and start showing buyers what you offer.</p>
+        <a href="{% url 'marketplace:supplier_product_create' %}" class="supplier-btn-primary" style="text-decoration:none;">Create Your First Listing</a>
+      </div>
+    {% endif %}
+  </section>
+
+  {% if low_stock_products %}
+    <section class="supplier-card">
+      <div class="supplier-card-body">
+        <h2 class="supplier-section-title">Low Stock Watch</h2>
+        <p class="supplier-section-copy">These items are close to selling out and may need an update soon.</p>
+        <div class="supplier-actions" style="margin-top:1rem;">
+          {% for product in low_stock_products %}
+            <a href="{% url 'marketplace:supplier_product_edit' product.pk %}" class="supplier-btn-secondary">
+              {{ product.name }}: {{ product.stock }} left
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

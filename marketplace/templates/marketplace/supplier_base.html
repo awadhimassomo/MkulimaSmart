@@ -1,0 +1,318 @@
+{% extends "website/base.html" %}
+
+{% block extra_css %}
+<style>
+  .supplier-shell {
+    padding: 2.5rem 0 4rem;
+  }
+
+  .supplier-hero {
+    background:
+      radial-gradient(circle at top right, rgba(197, 216, 109, 0.2), transparent 35%),
+      linear-gradient(135deg, #17301a 0%, #234726 55%, #315d2f 100%);
+    border-radius: 1.75rem;
+    color: white;
+    padding: 2rem;
+    box-shadow: 0 24px 50px rgba(26, 51, 22, 0.2);
+  }
+
+  .supplier-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #d9ebb1;
+  }
+
+  .supplier-title {
+    margin: 0.75rem 0 0.5rem;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.05;
+  }
+
+  .supplier-subtitle {
+    max-width: 50rem;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 1rem;
+  }
+
+  .supplier-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .supplier-nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .supplier-nav a:hover {
+    transform: translateY(-1px);
+  }
+
+  .supplier-nav-primary {
+    background: #c5d86d;
+    color: #163016;
+  }
+
+  .supplier-nav-secondary {
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .supplier-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+  }
+
+  .supplier-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .supplier-stat {
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+  }
+
+  .supplier-stat-label {
+    color: #5d6d63;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .supplier-stat-value {
+    color: #153116;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-top: 0.35rem;
+  }
+
+  .supplier-card {
+    background: rgba(255, 255, 255, 0.84);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 1.5rem;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+  }
+
+  .supplier-card-body {
+    padding: 1.5rem;
+  }
+
+  .supplier-section-title {
+    margin: 0;
+    color: #173019;
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .supplier-section-copy {
+    margin-top: 0.4rem;
+    color: #5f6f65;
+  }
+
+  .supplier-empty {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: #647267;
+  }
+
+  .supplier-form-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .supplier-form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .supplier-field label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-weight: 700;
+    color: #1a3316;
+  }
+
+  .supplier-field .helptext {
+    display: block;
+    margin-top: 0.45rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  .supplier-errors {
+    margin-top: 0.4rem;
+    color: #b42318;
+    font-size: 0.92rem;
+  }
+
+  .supplier-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .supplier-table th,
+  .supplier-table td {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid #e9eee7;
+    vertical-align: middle;
+  }
+
+  .supplier-table th {
+    color: #5d6d63;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .supplier-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .supplier-pill-live {
+    background: rgba(16, 185, 129, 0.14);
+    color: #047857;
+  }
+
+  .supplier-pill-draft {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+  }
+
+  .supplier-product-link {
+    color: #173019;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .supplier-product-link:hover {
+    color: #2d5a27;
+  }
+
+  .supplier-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .supplier-actions a,
+  .supplier-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.15rem;
+    border-radius: 0.9rem;
+    text-decoration: none;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+  }
+
+  .supplier-btn-primary {
+    background: var(--brand-primary);
+    color: white;
+  }
+
+  .supplier-btn-secondary {
+    background: #eef4e6;
+    color: #173019;
+  }
+
+  .supplier-media {
+    border-radius: 1.25rem;
+    overflow: hidden;
+    background: #eff5ea;
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .supplier-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 768px) {
+    .supplier-shell {
+      padding-top: 1.5rem;
+    }
+
+    .supplier-hero {
+      padding: 1.5rem;
+      border-radius: 1.4rem;
+    }
+
+    .supplier-table,
+    .supplier-table tbody,
+    .supplier-table tr,
+    .supplier-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .supplier-table thead {
+      display: none;
+    }
+
+    .supplier-table tr {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #e9eee7;
+    }
+
+    .supplier-table td {
+      padding: 0.35rem 0;
+      border: none;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="supplier-shell">
+  <div class="container">
+    <div class="supplier-hero">
+      <div class="supplier-kicker">Supplier Hub</div>
+      <h1 class="supplier-title">{% block supplier_title %}Manage Your Listings{% endblock %}</h1>
+      <p class="supplier-subtitle">{% block supplier_subtitle %}Create polished marketplace listings, keep stock current, and publish products buyers can discover right away.{% endblock %}</p>
+      <div class="supplier-nav">
+        <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-nav-secondary">Dashboard</a>
+        <a href="{% url 'marketplace:supplier_product_create' %}" class="supplier-nav-primary">New Listing</a>
+        <a href="{% url 'marketplace:home' %}" class="supplier-nav-secondary">Browse Marketplace</a>
+      </div>
+    </div>
+
+    {% block supplier_content %}{% endblock %}
+  </div>
+</section>
+{% endblock %}

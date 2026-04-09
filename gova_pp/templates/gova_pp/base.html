@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mkulima Smart Government Dashboard{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/icon.png' %}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Government Dashboard Styles -->
+    <style>
+        :root {
+            /* Mkulima Smart Brand Colors */
+            --gov-primary: #2D5A27;
+            --gov-primary-medium: #4A7C3A;
+            --gov-primary-dark: #1A3316;
+            --gov-accent: #C5D86D;
+            --gov-accent-light: #D4E89A;
+            --gov-accent-dark: #B5C95A;
+            --gov-secondary: #8B4513;
+            --gov-success: #22c55e;
+            --gov-warning: #f59e0b;
+            --gov-danger: #dc2626;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background: linear-gradient(180deg, var(--gov-primary-dark) 0%, var(--gov-primary) 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto; /* CRITICAL: Make sidebar scrollable */
+            overflow-x: hidden;
+        }
+        
+        /* Scrollbar styling for sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--gov-accent);
+            border-radius: 4px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--gov-accent-dark);
+        }
+        
+        .sidebar-collapsed {
+            transform: translateX(-250px);
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .sidebar-brand {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .sidebar-brand:hover {
+            color: var(--gov-accent);
+            text-decoration: none;
+        }
+        
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+        
+        .sidebar-nav-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-nav-item:hover {
+            background: rgba(197, 216, 109, 0.15);
+            color: white;
+            text-decoration: none;
+            border-left-color: var(--gov-accent);
+        }
+        
+        .sidebar-nav-item.active {
+            background: rgba(197, 216, 109, 0.2);
+            color: var(--gov-accent);
+            border-left-color: var(--gov-accent);
+            font-weight: 600;
+        }
+        
+        .sidebar-nav-icon {
+            width: 20px;
+            margin-right: 0.75rem;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        .sidebar-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: var(--gov-primary);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        /* Main content area */
+        .main-content {
+            margin-left: 280px;
+            min-height: calc(100vh - 60px); /* Account for footer height */
+            background-color: #f8f9fa;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
+        }
+        
+        /* Footer positioning */
+        .footer-gov {
+            margin-left: 250px;  /* Align with main content, not overlapping sidebar */
+            z-index: 999;
+            position: relative;
+            background-color: var(--gov-primary);
+            transition: margin-left 0.3s ease;
+        }
+        
+        .footer-gov.sidebar-collapsed {
+            margin-left: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .sidebar-toggle {
+                display: block;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .footer-gov {
+                margin-left: 0;
+            }
+        }
+        
+        .gov-navbar {
+            background: linear-gradient(135deg, var(--gov-primary-dark) 0%, var(--gov-primary) 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .gov-brand {
+            color: white;
+            font-weight: 600;
+            font-size: 1.5rem;
+            text-decoration: none;
+        }
+        
+        .gov-brand:hover {
+            color: var(--gov-accent);
+            text-decoration: none;
+        }
+        
+        .user-info {
+            line-height: 1.2;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .user-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        
+        .dropdown-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--gov-primary) 0%, var(--gov-secondary) 100%);
+            color: white;
+            margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--gov-beige) !important;
+        }
+        
+        .btn-gov-primary {
+            background: linear-gradient(135deg, var(--gov-primary-dark) 0%, var(--gov-primary) 100%);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gov-primary:hover {
+            background: linear-gradient(135deg, var(--gov-primary) 0%, var(--gov-primary-medium) 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(45, 90, 39, 0.4);
+            color: white;
+        }
+        
+        .card-gov {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card-gov:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--gov-primary) 0%, var(--gov-secondary) 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .footer-gov {
+            background: var(--gov-primary);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .alert-gov {
+            border-radius: 8px;
+            border: none;
+        }
+        
+        .message-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--gov-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .priority-urgent { border-left-color: var(--gov-danger); }
+        .priority-high { border-left-color: #ea580c; }
+        .priority-medium { border-left-color: var(--gov-warning); }
+        .priority-low { border-left-color: var(--gov-success); }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-new { background-color: #dbeafe; color: #1e40af; }
+        .status-in_progress { background-color: #fef3c7; color: #92400e; }
+        .status-replied { background-color: #d1fae5; color: #065f46; }
+        .status-resolved { background-color: #e0e7ff; color: #3730a3; }
+        .status-archived { background-color: #f3f4f6; color: #374151; }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar Toggle Button (Mobile) -->
+    <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Navigation Menu">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <a href="{% url 'gova_pp:dashboard' %}" class="sidebar-brand">
+                <img src="{% static 'images/icon.png' %}" alt="Mkulima Smart" style="height: 50px; width: auto; margin-bottom: 0.5rem;">
+                <div>Mkulima Smart</div>
+                <small style="font-size: 0.8rem; opacity: 0.8;">Government Dashboard</small>
+            </a>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar-nav">
+            <a href="{% url 'gova_pp:dashboard' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt sidebar-nav-icon"></i>
+                Dashboard
+            </a>
+            <a href="{% url 'gova_pp:messages_list' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'messages_list' %}active{% endif %}">
+                <i class="fas fa-envelope sidebar-nav-icon"></i>
+                Messages
+                {% if new_messages > 0 %}
+                <span class="badge bg-warning text-dark ms-auto">{{ new_messages }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'gova_pp:alerts' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'alerts' %}active{% endif %}">
+                <i class="fas fa-bell sidebar-nav-icon"></i>
+                Alerts
+                {% if pending_alerts > 0 %}
+                <span class="badge bg-danger ms-auto">{{ pending_alerts }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'gova_pp:messages_list' %}?status=new" class="sidebar-nav-item">
+                <i class="fas fa-inbox sidebar-nav-icon"></i>
+                Requests
+            </a>
+            <a href="{% url 'gova_pp:reports' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <i class="fas fa-chart-bar sidebar-nav-icon"></i>
+                Reports
+            </a>
+            <a href="#" class="sidebar-nav-item">
+                <i class="fas fa-users sidebar-nav-icon"></i>
+                Farmers
+            </a>
+            
+            <!-- Divider -->
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 1rem 1.5rem;">
+            
+            <!-- User Profile Section -->
+            {% if user.is_authenticated %}
+            <div class="px-3 py-2">
+                <div class="d-flex align-items-center text-white mb-2">
+                    <i class="fas fa-user-circle me-2" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <div style="font-size: 0.9rem; font-weight: 500;">{{ user.get_full_name|default:user.phone_number }}</div>
+                        <small style="opacity: 0.8;">Government Officer</small>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="#" class="sidebar-nav-item">
+                <i class="fas fa-user sidebar-nav-icon"></i>
+                Profile Settings
+            </a>
+            <a href="#" class="sidebar-nav-item">
+                <i class="fas fa-cog sidebar-nav-icon"></i>
+                Settings
+            </a>
+            <a href="#" class="sidebar-nav-item">
+                <i class="fas fa-question-circle sidebar-nav-icon"></i>
+                Help & Support
+            </a>
+            <a href="{% url 'gova_pp:logout' %}" class="sidebar-nav-item" style="color: #fca5a5;">
+                <i class="fas fa-sign-out-alt sidebar-nav-icon"></i>
+                Logout
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <!-- Messages Display -->
+    {% if messages %}
+        <div class="container-fluid mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" title="Close alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="container-fluid py-4">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Government Footer -->
+    <footer class="footer-gov mt-auto">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <img src="{% static 'images/icon.png' %}" alt="Mkulima Smart" style="height: 32px; width: auto;">
+                        <h5 class="mb-0">Mkulima Smart</h5>
+                    </div>
+                    <p class="mb-0">Government Agricultural Support Dashboard</p>
+                    <small class="text-light">Empowering Tanzanian farmers through digital innovation</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Authorized Government Personnel Only
+                    </p>
+                    <small class="text-light">
+                        Powered by Kikapu Platform
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Sidebar Toggle JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const footer = document.querySelector('.footer-gov');
+            
+            // Toggle sidebar on mobile
+            sidebarToggle.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('active');
+                } else {
+                    // On desktop, collapse/expand sidebar
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('sidebar-collapsed');
+                    if (footer) {
+                        footer.classList.toggle('sidebar-collapsed');
+                    }
+                }
+            });
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

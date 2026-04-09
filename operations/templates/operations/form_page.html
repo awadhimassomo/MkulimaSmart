@@ -1,0 +1,52 @@
+{% extends 'operations/base.html' %}
+
+{% block title %}{{ title }} - Mkulima Smart{% endblock %}
+
+{% block content %}
+<div class="ops-page narrow">
+  <div class="ops-card soft ops-section">
+    <div class="ops-hero">
+      <div>
+        <h1 class="ops-title">{{ title }}</h1>
+        <p class="ops-subtitle">{{ subtitle }}</p>
+        {% if batch %}
+          <div class="ops-detail-grid" style="margin-top:1rem;">
+            <div class="ops-detail"><strong>Seedling Batch</strong>{{ batch.seedling_batch_id }}</div>
+            <div class="ops-detail"><strong>Seedling Type</strong>{{ batch.seedling_type }}</div>
+            <div class="ops-detail"><strong>Seller</strong>{{ batch.seller }}</div>
+            <div class="ops-detail"><strong>Batch Date</strong>{{ batch.batch_date }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="ops-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        {% if field.is_hidden %}
+          {{ field }}
+        {% else %}
+          <div>
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {% if field.field.widget.input_type == 'checkbox' %}
+              <div class="ops-check">{{ field }}<span>Enable this option</span></div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}<p class="ops-help">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}<p class="ops-error">{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="ops-actions">
+        <button type="submit" class="ops-btn ops-btn-primary">{{ submit_label|default:"Save" }}</button>
+        {% if show_cancel|default:True %}
+          <a href="{% url 'operations:dashboard' %}" class="ops-btn ops-btn-outline">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

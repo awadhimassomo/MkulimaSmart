@@ -1,0 +1,586 @@
+{% extends 'website/base.html' %}
+<<<<<<< HEAD
+{% load static product_filters humanize %}
+=======
+{% load static %}
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+
+{% block title %}Shopping Cart - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+<<<<<<< HEAD
+    :root {
+        --cart-bg: #f5f7f2;
+        --cart-panel: #ffffff;
+        --cart-ink: #123019;
+        --cart-muted: #65746a;
+        --cart-accent: #2f6b3c;
+        --cart-soft: rgba(47, 107, 60, 0.12);
+    }
+
+    .cart-section {
+        padding: 110px 0 70px;
+        background: radial-gradient(circle at 15% 12%, rgba(197, 216, 109, 0.18), transparent 30%), var(--cart-bg);
+    }
+
+    .cart-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .cart-hero h1 {
+        margin: 0;
+        color: var(--cart-ink);
+        font-weight: 800;
+    }
+
+    .cart-hero .hint {
+        color: var(--cart-muted);
+        font-size: 0.95rem;
+    }
+
+    .cart-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 18px 36px rgba(19, 48, 25, 0.08);
+        background: var(--cart-panel);
+    }
+
+    .cart-card .card-body {
+        padding: 1.25rem 1.25rem 1rem;
+    }
+
+    .cart-item-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto auto;
+        gap: 14px;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px dashed #e2e9e1;
+    }
+
+    .cart-item-row:last-child {
+        border-bottom: none;
+    }
+
+    .product-img-small {
+        width: 76px;
+        height: 76px;
+        object-fit: cover;
+        border-radius: 12px;
+        background: var(--cart-soft);
+    }
+
+    .cart-product-title {
+        font-weight: 700;
+        color: var(--cart-ink);
+        margin-bottom: 4px;
+    }
+
+    .cart-product-meta {
+        color: var(--cart-muted);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .price-col {
+        text-align: right;
+        min-width: 100px;
+    }
+
+    .price-col .old {
+        display: block;
+        color: #9aa5a0;
+        text-decoration: line-through;
+        font-size: 0.9rem;
+    }
+
+    .quantity-input {
+        width: 90px;
+        text-align: center;
+        border-radius: 10px;
+        border: 1px solid #dfe5dc;
+    }
+
+    .subtotal {
+        font-weight: 800;
+        color: var(--cart-ink);
+        text-align: right;
+        min-width: 110px;
+    }
+
+    .cart-summary {
+        background: var(--cart-panel);
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 0 18px 36px rgba(19, 48, 25, 0.08);
+        border: 1px solid rgba(47, 107, 60, 0.08);
+        position: sticky;
+        top: 110px;
+    }
+
+=======
+    .cart-section {
+        padding-top: 120px;
+        padding-bottom: 60px;
+    }
+    
+    .product-img-small {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    
+    .cart-product-title {
+        font-weight: 500;
+    }
+    
+    .quantity-input {
+        width: 70px;
+        text-align: center;
+    }
+    
+    .subtotal {
+        font-weight: 600;
+    }
+    
+    .cart-summary {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+<<<<<<< HEAD
+        color: var(--cart-muted);
+        font-weight: 600;
+    }
+
+    .summary-total {
+        font-size: 1.2rem;
+        font-weight: 800;
+        border-top: 1px solid #e4e9e2;
+        padding-top: 10px;
+        margin-top: 10px;
+        color: var(--cart-ink);
+    }
+
+    .empty-cart-container {
+        text-align: center;
+        padding: 60px 0;
+    }
+
+=======
+    }
+    
+    .summary-total {
+        font-size: 1.2rem;
+        font-weight: 700;
+        border-top: 1px solid #dee2e6;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+    
+    .empty-cart-container {
+        text-align: center;
+        padding: 50px 0;
+    }
+    
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+    .empty-cart-icon {
+        font-size: 5rem;
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+<<<<<<< HEAD
+
+    .mobile-checkout-bar {
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #e5eadf;
+        padding: 0.75rem 1rem;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        box-shadow: 0 -10px 30px rgba(19, 48, 25, 0.08);
+        z-index: 5;
+    }
+
+    .mobile-checkout-bar .total {
+        font-weight: 800;
+        color: var(--cart-ink);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #2f6b3c, #3c7f46);
+        border-color: #2f6b3c;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #3c7f46, #2f6b3c);
+        border-color: #2f6b3c;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-checkout-bar {
+            display: flex;
+        }
+    }
+
+    .coupon-box {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--cart-soft);
+        border: 1px dashed var(--cart-accent);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+    }
+
+    .coupon-box .label {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: var(--cart-ink);
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .coupon-box .label i {
+        color: var(--cart-accent);
+    }
+
+    .coupon-input {
+        min-width: 220px;
+        border-radius: 10px;
+        border: 1px solid #dfe5dc;
+    }
+
+    .coupon-hint {
+        color: var(--cart-muted);
+        font-size: 0.9rem;
+    }
+=======
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="cart-section">
+    <div class="container">
+<<<<<<< HEAD
+        <div class="cart-hero">
+            <div>
+                <h1>Shopping Cart</h1>
+                <div class="hint">Review your items, adjust quantities, and continue to checkout.</div>
+            </div>
+            <a href="{% url 'website:marketplace' %}" class="btn btn-outline-success">
+                <i class="fas fa-arrow-left me-2"></i> Continue Shopping
+            </a>
+        </div>
+        
+        {% if cart.items.all %}
+            <div class="row g-4">
+                <!-- Cart Items -->
+                <div class="col-lg-8">
+                    <div class="cart-card card">
+                        <div class="card-body">
+                            {% for item in cart.items.all %}
+                                <div class="cart-item-row">
+                                    {% with product_image=item.product.images.all|primary_image %}
+                                    {% if product_image %}
+                                        <img src="{{ product_image.image.url }}" class="product-img-small" alt="{{ item.product.name }}">
+                                    {% else %}
+                                        <img src="{% static 'images/product-placeholder.jpg' %}" class="product-img-small" alt="{{ item.product.name }}">
+                                    {% endif %}
+                                    {% endwith %}
+
+                                    <div>
+                                        <a href="{{ item.product.get_absolute_url }}" class="text-decoration-none cart-product-title">{{ item.product.name }}</a>
+                                        <p class="cart-product-meta">{{ item.product.category.name }}</p>
+                                    </div>
+
+                                    <div class="price-col">
+                                        {% if item.product.discount_price %}
+                                            <span class="text-danger fw-bold">TSh {{ item.product.discount_price|intcomma }}</span>
+                                            <span class="old">TSh {{ item.product.price|intcomma }}</span>
+                                        {% else %}
+                                            <span class="fw-bold">TSh {{ item.product.price|intcomma }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <form action="{% url 'website:update_cart_item' item.id %}" method="post" class="d-flex align-items-center">
+                                        {% csrf_token %}
+                                        <input type="number" name="quantity" class="form-control quantity-input" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" onchange="this.form.submit()">
+                                    </form>
+
+                                    <div class="subtotal">
+                                        TSh {{ item.get_total_price|intcomma }}
+                                    </div>
+
+                                    <a href="{% url 'website:remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="cart-card card mt-3">
+                        <div class="card-body">
+                            <div class="coupon-box">
+                                <div class="label">
+                                    <i class="fas fa-ticket-alt"></i>
+                                    <span>Apply coupon</span>
+                                </div>
+                                <form class="d-flex gap-2 flex-wrap mb-0">
+                                    <input type="text" class="form-control coupon-input" placeholder="Enter code">
+                                    <button type="submit" class="btn btn-success">Apply</button>
+                                </form>
+                                <div class="coupon-hint">Tip: add your voucher code and tap Apply to update totals.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="cart-summary shadow-sm">
+                        <h4 class="mb-4">Order Summary</h4>
+
+                        <div class="summary-item">
+                            <span>Subtotal ({{ cart_item_count }} items)</span>
+                            <span>TSh {{ cart_subtotal|intcomma }}</span>
+                        </div>
+
+                        <div class="summary-item">
+                            <span>Delivery Fee</span>
+                            <span>TSh {{ cart_delivery_fee|intcomma }}</span>
+                        </div>
+
+                        <div class="summary-item">
+                            <span>Tax (18% VAT)</span>
+                            <span>TSh {{ cart_tax|intcomma }}</span>
+                        </div>
+
+                        <div class="summary-item summary-total">
+                            <span>Total</span>
+                            <span>TSh {{ cart_total_with_fees|intcomma }}</span>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 justify-content-end align-items-center mt-4">
+                            <button id="updateCartBtn" class="btn btn-outline-success">
+                                <i class="fas fa-sync-alt me-2"></i> Update Cart
+                            </button>
+                            <a href="{% url 'website:checkout' %}" class="btn btn-primary btn-lg">
+                                Proceed to Checkout
+                            </a>
+                        </div>
+
+=======
+        <h1 class="mb-4">Shopping Cart</h1>
+        
+        {% if cart.items.all %}
+            <div class="row">
+                <!-- Cart Items -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-borderless">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" colspan="2">Product</th>
+                                            <th scope="col">Price</th>
+                                            <th scope="col">Quantity</th>
+                                            <th scope="col">Subtotal</th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in cart.items.all %}
+                                            <tr>
+                                                <!-- Product Image -->
+                                                <td style="width: 100px;">
+                                                    {% if item.product.images.filter(is_primary=True).first %}
+                                                        <img src="{{ item.product.images.filter(is_primary=True).first.image.url }}" class="product-img-small" alt="{{ item.product.name }}">
+                                                    {% elif item.product.images.first %}
+                                                        <img src="{{ item.product.images.first.image.url }}" class="product-img-small" alt="{{ item.product.name }}">
+                                                    {% else %}
+                                                        <img src="{% static 'images/product-placeholder.jpg' %}" class="product-img-small" alt="{{ item.product.name }}">
+                                                    {% endif %}
+                                                </td>
+                                                
+                                                <!-- Product Name -->
+                                                <td>
+                                                    <a href="{{ item.product.get_absolute_url }}" class="text-decoration-none cart-product-title">{{ item.product.name }}</a>
+                                                    <p class="text-muted small mb-0">{{ item.product.category.name }}</p>
+                                                </td>
+                                                
+                                                <!-- Price -->
+                                                <td>
+                                                    {% if item.product.discount_price %}
+                                                        <span class="text-danger">KSh {{ item.product.discount_price }}</span>
+                                                        <br>
+                                                        <small class="text-muted text-decoration-line-through">KSh {{ item.product.price }}</small>
+                                                    {% else %}
+                                                        <span>KSh {{ item.product.price }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                
+                                                <!-- Quantity -->
+                                                <td>
+                                                    <form action="{% url 'website:update_cart_item' item.id %}" method="post" class="d-flex align-items-center">
+                                                        {% csrf_token %}
+                                                        <input type="number" name="quantity" class="form-control quantity-input" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" onchange="this.form.submit()">
+                                                    </form>
+                                                </td>
+                                                
+                                                <!-- Subtotal -->
+                                                <td class="subtotal">
+                                                    KSh {{ item.get_total_price }}
+                                                </td>
+                                                
+                                                <!-- Remove Button -->
+                                                <td>
+                                                    <a href="{% url 'website:remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <a href="{% url 'website:marketplace' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i> Continue Shopping
+                                </a>
+                                <button id="updateCartBtn" class="btn btn-outline-success">
+                                    <i class="fas fa-sync-alt me-2"></i> Update Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Coupon Code Section -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Have a coupon code?</h5>
+                            <form class="d-flex gap-2">
+                                <input type="text" class="form-control" placeholder="Enter coupon code">
+                                <button type="submit" class="btn btn-outline-success">Apply</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cart Summary -->
+                <div class="col-lg-4">
+                    <div class="cart-summary shadow-sm">
+                        <h4 class="mb-4">Order Summary</h4>
+                        
+                        <div class="summary-item">
+                            <span>Subtotal ({{ cart.items.count }} items)</span>
+                            <span>KSh {{ cart.get_total }}</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span>Delivery Fee</span>
+                            <span>KSh 350</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span>Tax (16% VAT)</span>
+                            <span>KSh {{ cart.get_total|floatformat:"0"|add:0|multiply:0.16|floatformat:"0" }}</span>
+                        </div>
+                        
+                        <div class="summary-item summary-total">
+                            <span>Total</span>
+                            <span>KSh {{ cart.get_total|add:350|add:cart.get_total|floatformat:"0"|add:0|multiply:0.16|floatformat:"0" }}</span>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <a href="{% url 'website:checkout' %}" class="btn btn-success btn-lg">
+                                Proceed to Checkout
+                            </a>
+                        </div>
+                        
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+                        <div class="mt-4">
+                            <p class="mb-2"><i class="fas fa-lock me-2"></i> Secure Checkout</p>
+                            <div class="d-flex gap-2">
+                                <i class="fab fa-cc-visa fa-2x"></i>
+                                <i class="fab fa-cc-mastercard fa-2x"></i>
+<<<<<<< HEAD
+=======
+                                <i class="fab fa-paypal fa-2x"></i>
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+                                <i class="fas fa-money-bill-wave fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty Cart -->
+            <div class="empty-cart-container">
+                <div class="empty-cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 class="mb-3">Your cart is empty</h3>
+                <p class="text-muted mb-4">Looks like you haven't added any products to your cart yet.</p>
+                <a href="{% url 'website:marketplace' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-shopping-bag me-2"></i> Shop Now
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+<<<<<<< HEAD
+
+{% if cart.items.all %}
+<div class="mobile-checkout-bar">
+    <div>
+        <div class="text-sm text-gray-500">Total</div>
+        <div class="total">TSh {{ cart_total_with_fees|intcomma }}</div>
+    </div>
+    <a href="{% url 'website:checkout' %}" class="btn btn-success w-auto">Checkout</a>
+</div>
+{% endif %}
+=======
+>>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle "Update Cart" button click
+        const updateCartBtn = document.getElementById('updateCartBtn');
+        if (updateCartBtn) {
+            updateCartBtn.addEventListener('click', function() {
+                const forms = document.querySelectorAll('form');
+                forms.forEach(form => {
+                    if (form.action.includes('update_cart_item')) {
+                        form.submit();
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
