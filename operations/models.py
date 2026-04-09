@@ -25,19 +25,13 @@ def build_qr_image(payload: str) -> ContentFile:
 
     try:
         import qrcode  # type: ignore
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(payload)
-        qr.make(fit=True)
-        image = qr.make_image(fill_color="black", back_color="white")
+        image = qrcode.make(payload)
+        if hasattr(image, "get_image"):
+            image = image.get_image()
         image.save(buffer, format="PNG")
     except Exception as exc:
         logger.exception("QR code generation failed for payload: %s", payload)
-        raise RuntimeError("QR code generation failed.") from exc
+        raise RuntimeError(f"QR code generation failed: {exc}") from exc
 
     return ContentFile(buffer.getvalue())
 
