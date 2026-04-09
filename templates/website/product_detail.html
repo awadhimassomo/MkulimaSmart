@@ -131,7 +131,6 @@
             <!-- Product Images -->
             <div class="col-lg-6 mb-4">
                 <div class="mb-3">
-<<<<<<< HEAD
                     {% with product_image=product.images.all|primary_image %}
                     {% if product_image %}
                         <img id="mainProductImage" src="{{ product_image.image.url }}" class="product-main-img" alt="{{ product.name }}">
@@ -139,15 +138,6 @@
                         <img id="mainProductImage" src="{% static 'images/product-placeholder.jpg' %}" class="product-main-img" alt="{{ product.name }}">
                     {% endif %}
                     {% endwith %}
-=======
-                    {% if product.images.filter(is_primary=True).first %}
-                        <img id="mainProductImage" src="{{ product.images.filter(is_primary=True).first.image.url }}" class="product-main-img" alt="{{ product.name }}">
-                    {% elif product.images.first %}
-                        <img id="mainProductImage" src="{{ product.images.first.image.url }}" class="product-main-img" alt="{{ product.name }}">
-                    {% else %}
-                        <img id="mainProductImage" src="{% static 'images/product-placeholder.jpg' %}" class="product-main-img" alt="{{ product.name }}">
-                    {% endif %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 </div>
                 
                 {% if product.images.count > 1 %}
@@ -168,17 +158,10 @@
                 
                 <div class="price-section mb-4">
                     {% if product.discount_price %}
-<<<<<<< HEAD
                         <span class="original-price">TSh {{ product.price }}</span>
                         <span class="discount-price">TSh {{ product.discount_price }}</span>
                     {% else %}
                         <span class="regular-price">TSh {{ product.price }}</span>
-=======
-                        <span class="original-price">KSh {{ product.price }}</span>
-                        <span class="discount-price">KSh {{ product.discount_price }}</span>
-                    {% else %}
-                        <span class="regular-price">KSh {{ product.price }}</span>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                     {% endif %}
                 </div>
                 
@@ -352,7 +335,6 @@
                 {% for related_product in related_products %}
                     <div class="col-md-6 col-lg-3">
                         <div class="card related-product-card">
-<<<<<<< HEAD
                             {% with related_product_image=related_product.images.all|primary_image %}
                             {% if related_product_image %}
                                 <img src="{{ related_product_image.image.url }}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
@@ -360,32 +342,16 @@
                                 <img src="{% static 'images/product-placeholder.jpg' %}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
                             {% endif %}
                             {% endwith %}
-=======
-                            {% if related_product.images.filter(is_primary=True).first %}
-                                <img src="{{ related_product.images.filter(is_primary=True).first.image.url }}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
-                            {% elif related_product.images.first %}
-                                <img src="{{ related_product.images.first.image.url }}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
-                            {% else %}
-                                <img src="{% static 'images/product-placeholder.jpg' %}" class="related-product-img card-img-top" alt="{{ related_product.name }}">
-                            {% endif %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                             
                             <div class="card-body">
                                 <h5 class="card-title">{{ related_product.name|truncatechars:30 }}</h5>
                                 
                                 <div class="mb-2">
                                     {% if related_product.discount_price %}
-<<<<<<< HEAD
                                         <span class="text-decoration-line-through text-muted me-1">TSh {{ related_product.price }}</span>
                                         <span class="fw-bold text-danger">TSh {{ related_product.discount_price }}</span>
                                     {% else %}
                                         <span class="fw-bold">TSh {{ related_product.price }}</span>
-=======
-                                        <span class="text-decoration-line-through text-muted me-1">KSh {{ related_product.price }}</span>
-                                        <span class="fw-bold text-danger">KSh {{ related_product.discount_price }}</span>
-                                    {% else %}
-                                        <span class="fw-bold">KSh {{ related_product.price }}</span>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                                     {% endif %}
                                 </div>
                                 

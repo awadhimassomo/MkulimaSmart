@@ -14,7 +14,6 @@ from .serializers import (
     UserProfileSerializer
 )
 
-<<<<<<< HEAD
 
 def build_auth_response(message, user, refresh):
     """Return auth payload with both nested and top-level token fields."""
@@ -34,8 +33,6 @@ def build_auth_response(message, user, refresh):
         }
     }
 
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 class UserRegistrationAPIView(APIView):
     """
     API endpoint for user registration.
@@ -50,22 +47,10 @@ class UserRegistrationAPIView(APIView):
             # Generate tokens
             refresh = RefreshToken.for_user(user)
             
-<<<<<<< HEAD
             return Response(
                 build_auth_response(_('User registered successfully'), user, refresh),
                 status=status.HTTP_201_CREATED
             )
-=======
-            return Response({
-                'status': 'success',
-                'message': _('User registered successfully'),
-                'user': UserProfileSerializer(user).data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
-            }, status=status.HTTP_201_CREATED)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         return Response({
             'status': 'error',
             'errors': serializer.errors
@@ -91,19 +76,7 @@ class UserLoginAPIView(APIView):
                 login(request, user)
                 refresh = RefreshToken.for_user(user)
                 
-<<<<<<< HEAD
                 return Response(build_auth_response(_('Login successful'), user, refresh))
-=======
-                return Response({
-                    'status': 'success',
-                    'message': _('Login successful'),
-                    'user': UserProfileSerializer(user).data,
-                    'tokens': {
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token),
-                    }
-                })
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             
             return Response({
                 'status': 'error',
@@ -172,12 +145,9 @@ class UserProfileAPIView(APIView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-<<<<<<< HEAD
     def patch(self, request):
         return self.put(request)
 
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 class RefreshTokenView(TokenRefreshView):
     """

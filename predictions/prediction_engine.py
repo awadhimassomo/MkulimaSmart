@@ -21,14 +21,11 @@ from predictions.models import CropData, SoilData, PredictionResult
 
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
 
 def _clamp(value, minimum, maximum):
     """Clamp a numeric value to an inclusive range."""
     return max(minimum, min(maximum, value))
 
-=======
->>>>>>> 
 class BasePredictionModel:
     """Base class for all prediction models"""
     
@@ -75,11 +72,7 @@ class RainfallPredictionModel(BasePredictionModel):
             return None
             
         # Convert to DataFrame for Prophet
-<<<<<<< HEAD
         df = pd.DataFrame(list(weather_data.values('date', 'rainfall')))
-=======
-        df = pd.DataFrame(list(weather_data.values('date', 'rainfall_mm')))
->>>>>>> 
         df.columns = ['ds', 'y']  # Prophet expects these column names
         
         # Handle zeros and missing values
@@ -120,16 +113,14 @@ class RainfallPredictionModel(BasePredictionModel):
             # Make future predictions
             future = model.make_future_dataframe(periods=days_to_predict)
             forecast = model.predict(future)
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 
+
+
             # Save predictions to database
             for _, row in forecast.tail(days_to_predict).iterrows():
                 date = row['ds'].to_pydatetime().date()
                 rain_mm = max(0, row['yhat'])  # Ensure non-negative rainfall
-<<<<<<< HEAD
+
                 interval_width = max(0.0, row['yhat_upper'] - row['yhat_lower'])
                 relative_spread = interval_width / max(1.0, abs(row['yhat']))
                 probability = _clamp((rain_mm / max(1.0, rain_mm + interval_width)) * 100, 5, 95)
@@ -141,35 +132,26 @@ class RainfallPredictionModel(BasePredictionModel):
                 else:
                     accuracy = 'low'
 
-=======
+
                 confidence = min(1.0, max(0.1, 1.0 - (row['yhat_upper'] - row['yhat_lower']) / max(1.0, row['yhat'])))
                 
->>>>>>> 
+
                 # Update or create forecast in RainForecast model
                 RainForecast.objects.update_or_create(
                     farm=farm,
                     forecast_date=date,
                     defaults={
-<<<<<<< HEAD
                         'expected_rainfall': rain_mm,
                         'probability': probability,
                         'accuracy': accuracy,
                         'source': 'Prophet rainfall model',
-=======
-                        'predicted_rain_mm': rain_mm,
-                        'confidence': confidence
->>>>>>> 
                     }
                 )
             
             # Also save as a generic prediction result
             prediction_data = {
                 'forecast_dates': [row['ds'].strftime('%Y-%m-%d') for _, row in forecast.tail(days_to_predict).iterrows()],
-<<<<<<< HEAD
                 'expected_rainfall_mm': [max(0, row['yhat']) for _, row in forecast.tail(days_to_predict).iterrows()],
-=======
-                'predicted_rain_mm': [max(0, row['yhat']) for _, row in forecast.tail(days_to_predict).iterrows()],
->>>>>>> 
                 'lower_bounds': [max(0, row['yhat_lower']) for _, row in forecast.tail(days_to_predict).iterrows()],
                 'upper_bounds': [max(0, row['yhat_upper']) for _, row in forecast.tail(days_to_predict).iterrows()],
                 'updated_at': timezone.now().isoformat()
@@ -204,7 +186,7 @@ class YieldPredictionModel(BasePredictionModel):
         
         # Get soil data if available
         try:
-<<<<<<< HEAD
+
             farm_lat = getattr(farm, 'latitude', None)
             farm_lon = getattr(farm, 'longitude', None)
             if farm_lat is None or farm_lon is None:
@@ -214,12 +196,12 @@ class YieldPredictionModel(BasePredictionModel):
                     lat__range=(farm_lat - 0.01, farm_lat + 0.01),
                     lon__range=(farm_lon - 0.01, farm_lon + 0.01)
                 ).latest('date')
-=======
+
             soil_data = SoilData.objects.filter(
                 lat__range=(farm.latitude-0.01, farm.latitude+0.01),
                 lon__range=(farm.longitude-0.01, farm.longitude+0.01)
             ).latest('date')
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+
         except SoilData.DoesNotExist:
             soil_data = None
         
@@ -230,11 +212,11 @@ class YieldPredictionModel(BasePredictionModel):
             'planting_date': crop_data.planting_date,
             'field_size_acres': crop_data.field_size_acres,
             'days_since_planting': (timezone.now().date() - crop_data.planting_date).days,
-<<<<<<< HEAD
+
             'total_rainfall_mm': sum(w.rainfall for w in weather_data),
-=======
+
             'total_rainfall_mm': sum(w.rainfall_mm for w in weather_data),
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
+
             'avg_temperature': np.mean([w.temperature for w in weather_data]) if weather_data else None,
             'soil_ph': soil_data.ph if soil_data else None,
             'soil_moisture': soil_data.moisture if soil_data else None,
@@ -344,11 +326,7 @@ class PestDiseasePredictionModel(BasePredictionModel):
             'avg_humidity': np.mean([w.humidity for w in weather_data]),
             'max_humidity': max([w.humidity for w in weather_data]),
             'avg_temperature': np.mean([w.temperature for w in weather_data]),
-<<<<<<< HEAD
             'total_rainfall': sum([w.rainfall for w in weather_data]),
-=======
-            'total_rainfall': sum([w.rainfall_mm for w in weather_data]),
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             'consecutive_wet_days': self._calculate_wet_streak(weather_data)
         }
         
@@ -362,11 +340,7 @@ class PestDiseasePredictionModel(BasePredictionModel):
         max_streak = 0
         
         for w in weather_data:
-<<<<<<< HEAD
             if w.rainfall >= wet_threshold:
-=======
-            if w.rainfall_mm >= wet_threshold:
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 current_streak += 1
                 max_streak = max(max_streak, current_streak)
             else:
@@ -512,14 +486,9 @@ class PredictionManager:
                 success_count += 1
                 
             # Update pest/disease risk if primary crop is known
-<<<<<<< HEAD
             primary_crop = getattr(farm, 'primary_crop', None)
             if primary_crop:
                 self.pest_disease_model.predict(farm, primary_crop)
-=======
-            if farm.primary_crop:
-                self.pest_disease_model.predict(farm, farm.primary_crop)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             
             # Update yield predictions for all crops on this farm
             for crop in CropData.objects.filter(farm=farm):

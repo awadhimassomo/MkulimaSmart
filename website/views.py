@@ -5,16 +5,12 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Sum, Q
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-<<<<<<< HEAD
 from decimal import Decimal
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 from .models import (User, Farm, Crop, Category, Product, ProductImage, Cart, CartItem, Order,
                       Warehouse, WarehouseBooking, Transport, TransportBooking, Course, Lesson, Testimonial)
 
 
-<<<<<<< HEAD
 def build_cart_summary(cart):
     subtotal = Decimal(cart.get_total() or 0)
     delivery_fee = Decimal("350.00")
@@ -31,8 +27,6 @@ def build_cart_summary(cart):
     }
 
 
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 def home(request):
     """
     Home page view - scrollable landing page with sections
@@ -77,11 +71,7 @@ def dashboard(request):
     # Count crops for sale
     crops_for_sale = Crop.objects.filter(farm__owner=request.user, is_available_for_sale=True).count()
     
-<<<<<<< HEAD
     # Get weather for the first farm (prefer mapped GPS coordinates when available)
-=======
-    # Get weather for the first farm (or use default location)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     weather_data = None
     weather_location = None
     
@@ -95,7 +85,6 @@ def dashboard(request):
         print(f"First farm: {first_farm.name}")
         print(f"Farm location: {first_farm.location}")
         weather_location = first_farm.location
-<<<<<<< HEAD
 
         lat, lon = first_farm.get_effective_coordinates()
         print(f"Fetching weather for: {weather_location}")
@@ -104,11 +93,6 @@ def dashboard(request):
             weather_data = get_weather_data(lat, lon)
         else:
             weather_data = get_weather_for_location(first_farm.location)
-=======
-        
-        print(f"Fetching weather for: {weather_location}")
-        weather_data = get_weather_for_location(first_farm.location)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         
         if weather_data:
             print(f"Weather data received: Temperature {weather_data.get('temperature')}°C")
@@ -289,11 +273,7 @@ def category_detail(request, slug):
     Display products in a specific category
     """
     category = get_object_or_404(Category, slug=slug, is_active=True)
-<<<<<<< HEAD
     products = Product.objects.filter(category=category, is_active=True).select_related('category', 'supplier').prefetch_related('images')
-=======
-    products = Product.objects.filter(category=category, is_active=True)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     context = {
         'category': category,
@@ -306,7 +286,6 @@ def product_detail(request, slug):
     """
     Display details of a specific product
     """
-<<<<<<< HEAD
     product = get_object_or_404(
         Product.objects.select_related('category', 'supplier').prefetch_related('images'),
         slug=slug,
@@ -316,13 +295,6 @@ def product_detail(request, slug):
         category=product.category,
         is_active=True
     ).exclude(id=product.id).select_related('category', 'supplier').prefetch_related('images')[:4]
-=======
-    product = get_object_or_404(Product, slug=slug, is_active=True)
-    related_products = Product.objects.filter(
-        category=product.category,
-        is_active=True
-    ).exclude(id=product.id)[:4]
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     context = {
         'product': product,
@@ -337,7 +309,6 @@ def cart(request):
     View the shopping cart
     """
     cart, created = Cart.objects.get_or_create(user=request.user)
-<<<<<<< HEAD
     cart = Cart.objects.prefetch_related(
         'items__product__images',
         'items__product__category',
@@ -346,11 +317,6 @@ def cart(request):
     context = {
         'cart': cart,
         **build_cart_summary(cart),
-=======
-    
-    context = {
-        'cart': cart,
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
     return render(request, 'website/cart.html', context)
 
@@ -386,7 +352,6 @@ def remove_from_cart(request, item_id):
 
 
 @login_required
-<<<<<<< HEAD
 def update_cart_item(request, item_id):
     """
     Update cart item quantity
@@ -421,13 +386,10 @@ def update_cart_item(request, item_id):
 
 
 @login_required
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 def checkout(request):
     """
     Checkout process for orders
     """
-<<<<<<< HEAD
     cart = get_object_or_404(
         Cart.objects.prefetch_related(
             'items__product__images',
@@ -435,9 +397,6 @@ def checkout(request):
         ),
         user=request.user,
     )
-=======
-    cart = get_object_or_404(Cart, user=request.user)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     if request.method == 'POST':
         # Process order
@@ -462,10 +421,7 @@ def checkout(request):
     
     context = {
         'cart': cart,
-<<<<<<< HEAD
         **build_cart_summary(cart),
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     }
     return render(request, 'website/checkout.html', context)
 

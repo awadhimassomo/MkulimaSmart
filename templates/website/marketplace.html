@@ -1,9 +1,5 @@
 {% extends "website/base.html" %}
-<<<<<<< HEAD
 {% load static product_filters %}
-=======
-{% load static %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 {% block title %}Agricultural Marketplace - Mkulima Smart{% endblock %}
 
@@ -507,7 +503,6 @@
         {% for product in products %}
           <div class="product-card">
             <div class="product-image-container">
-<<<<<<< HEAD
               {% with product_image=product.images.all|primary_image %}
               {% if product_image %}
                 <img src="{{ product_image.image.url }}" alt="{{ product.name }}" class="product-image">
@@ -515,13 +510,6 @@
                 <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}" class="product-image">
               {% endif %}
               {% endwith %}
-=======
-              {% if product.images.first %}
-                <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-image">
-              {% else %}
-                <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}" class="product-image">
-              {% endif %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
               
               {% if product.discount_percentage %}
                 <span class="product-badge">-{{ product.discount_percentage }}%</span>
@@ -540,11 +528,7 @@
               <p class="product-description">{{ product.description|truncatewords:15 }}</p>
               
               <div class="product-footer">
-<<<<<<< HEAD
                 <div class="product-price">TSh {{ product.price|floatformat:0 }}</div>
-=======
-                <div class="product-price">TZS {{ product.price|floatformat:0 }}</div>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                 
                 {% if product.stock > 0 %}
                   <a href="{% url 'website:add_to_cart' product.id %}" class="add-to-cart-btn">🛒 Add to Cart</a>

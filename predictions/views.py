@@ -167,11 +167,7 @@ class RainObservationFormView(FormView):
         weather_data = WeatherData.objects.create(
             farm=farm,
             date=date,
-<<<<<<< HEAD
             rainfall=rainfall_mm,
-=======
-            rainfall_mm=rainfall_mm,
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             temperature=None,  # Manual rain observations might not include temperature
             humidity=None,     # or humidity
             source='manual_observation',

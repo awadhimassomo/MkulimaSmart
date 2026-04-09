@@ -1,10 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from website.models import Category, Product
-<<<<<<< HEAD
 from website.category_defaults import DEFAULT_SUPPLIER_CATEGORIES
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 from decimal import Decimal
 
 User = get_user_model()
@@ -32,20 +29,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'Created supplier user: {supplier.email}'))
 
         # Create Categories
-<<<<<<< HEAD
         categories_data = DEFAULT_SUPPLIER_CATEGORIES
-=======
-        categories_data = [
-            {'name': 'Seeds', 'slug': 'seeds', 'description': 'Quality seeds for various crops'},
-            {'name': 'Fertilizers', 'slug': 'fertilizers', 'description': 'Organic and chemical fertilizers'},
-            {'name': 'Crop Protection', 'slug': 'crop-protection', 'description': 'Pesticides and herbicides'},
-            {'name': 'Animal Feed', 'slug': 'animal-feed', 'description': 'Feed for livestock and poultry'},
-            {'name': 'Farm Machinery', 'slug': 'farm-machinery', 'description': 'Tractors and equipment'},
-            {'name': 'Irrigation', 'slug': 'irrigation', 'description': 'Drip systems and sprinklers'},
-            {'name': 'Fencing & Housing', 'slug': 'fencing', 'description': 'Farm infrastructure materials'},
-            {'name': 'Farm Technology', 'slug': 'technology', 'description': 'Smart farming solutions'},
-        ]
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
         categories = {}
         for cat_data in categories_data:

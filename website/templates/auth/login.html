@@ -1,28 +1,19 @@
 {% extends 'auth/base_auth.html' %}
 {% load widget_tweaks %}
 
-<<<<<<< HEAD
 {% block title %}{% if requested_user_type == 'supplier' %}Seller Login{% else %}Login{% endif %} - Mkulima Smart{% endblock %}
 
 {% block auth_heading %}{% if requested_user_type == 'supplier' %}Seller Sign In{% else %}Welcome Back!{% endif %}{% endblock %}
-=======
-{% block title %}Login - Mkulima Smart{% endblock %}
-
-{% block auth_heading %}Welcome Back!{% endblock %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 {% block content %}
     <form method="post" class="needs-validation" novalidate>
         {% csrf_token %}
-<<<<<<< HEAD
 
         {% if requested_user_type == 'supplier' %}
             <div class="alert alert-success">
                 Sign in with your supplier account to open the seller dashboard and manage product listings.
             </div>
         {% endif %}
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         
         {% if form.non_field_errors %}
             <div class="alert alert-danger">
@@ -81,11 +72,7 @@
     </form>
     
     <div class="auth-links mt-3">
-<<<<<<< HEAD
         Don't have an account? <a href="{% if requested_user_type == 'supplier' %}{% url 'website:register' %}?user_type=supplier{% else %}{% url 'website:register' %}{% endif %}">Sign up</a>
-=======
-        Don't have an account? <a href="{% url 'website:register' %}">Sign up</a>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     </div>
 {% endblock %}
 

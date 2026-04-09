@@ -1,7 +1,6 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-<<<<<<< HEAD
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction
@@ -10,17 +9,11 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 import os
-=======
-from django.utils.translation import gettext_lazy as _
-from django.db import transaction
-from django.conf import settings
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 import jwt
 import requests
 from datetime import datetime, timedelta
 import json
 
-<<<<<<< HEAD
 from .models import Farm, Crop, Product, Category, User, RainForecast
 from .weather_utils import get_coordinates_from_location
 from gova_pp.models import FarmerMessage, GovernmentReply
@@ -116,10 +109,6 @@ def build_static_map_url(boundary_points):
         "https://staticmap.openstreetmap.de/staticmap.php"
         f"?bbox={bbox}&size=640x420&maptype=mapnik"
     )
-=======
-from .models import Farm, Crop, Product, Category, User
-from gova_pp.models import FarmerMessage, GovernmentReply
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 # Farm API Views
 class FarmListCreateAPIView(generics.ListCreateAPIView):
@@ -127,15 +116,11 @@ class FarmListCreateAPIView(generics.ListCreateAPIView):
     API view to retrieve list of farms or create new farm
     """
     permission_classes = [permissions.IsAuthenticated]
-<<<<<<< HEAD
     serializer_class = FarmSerializer
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     def get_queryset(self):
         return Farm.objects.filter(owner=self.request.user)
     
-<<<<<<< HEAD
     def create(self, request, *args, **kwargs):
         if self.get_queryset().count() >= 2:
             return Response(
@@ -147,8 +132,6 @@ class FarmListCreateAPIView(generics.ListCreateAPIView):
             )
         return super().create(request, *args, **kwargs)
 
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
@@ -158,16 +141,12 @@ class FarmDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     API view to retrieve, update or delete a farm
     """
     permission_classes = [permissions.IsAuthenticated]
-<<<<<<< HEAD
     serializer_class = FarmSerializer
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     def get_queryset(self):
         return Farm.objects.filter(owner=self.request.user)
 
 
-<<<<<<< HEAD
 class FarmBoundaryUploadAPIView(APIView):
     """Upload walked farm boundary points and run automated verification."""
     permission_classes = [permissions.IsAuthenticated]
@@ -368,18 +347,13 @@ class FarmBoundaryPdfAPIView(APIView):
         return response
 
 
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 # Crop API Views
 class CropListCreateAPIView(generics.ListCreateAPIView):
     """
     API view to retrieve list of crops or create new crop
     """
     permission_classes = [permissions.IsAuthenticated]
-<<<<<<< HEAD
     serializer_class = CropSerializer
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     def get_queryset(self):
         return Crop.objects.filter(farm__owner=self.request.user)
@@ -395,10 +369,7 @@ class CropDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     API view to retrieve, update or delete a crop
     """
     permission_classes = [permissions.IsAuthenticated]
-<<<<<<< HEAD
     serializer_class = CropSerializer
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     def get_queryset(self):
         return Crop.objects.filter(farm__owner=self.request.user)
@@ -538,7 +509,6 @@ def generate_farming_timetable(forecast_data):
     
     return timetable
 
-<<<<<<< HEAD
 
 def build_monthly_rainfall_plan(forecasts):
     """Create a mobile-friendly monthly planning summary from daily forecasts."""
@@ -682,8 +652,6 @@ def fetch_weather_forecast_data(lat, lon, days_requested=5):
     data['formatted_message'] = format_weather_forecast_message(data['daily_forecast'])
     return data
 
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def weather_forecast(request):
@@ -699,10 +667,7 @@ def weather_forecast(request):
         return Response({'error': 'Weather service unavailable'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     try:
-<<<<<<< HEAD
         return Response(fetch_weather_forecast_data(lat, lon, days_requested))
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         base_url = "https://api.openweathermap.org/data/3.0/onecall"
         params = {
             'lat': lat,
@@ -860,7 +825,6 @@ def plan_farming_timetable(request):
 
 
 @api_view(['GET'])
-<<<<<<< HEAD
 @permission_classes([permissions.IsAuthenticated])
 def monthly_rainfall_plan(request):
     """Generate a 30-day rainfall planning response for the mobile app."""
@@ -941,8 +905,6 @@ def monthly_rainfall_plan(request):
 
 
 @api_view(['GET'])
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 def crop_prices(request):
     """
     API view to retrieve current crop prices
@@ -1102,31 +1064,16 @@ def get_farmer_crops_weather(request):
         # Get all crops for this farm
         crops = Crop.objects.filter(farm=farm)
         
-<<<<<<< HEAD
         # Prefer saved GPS coordinates, falling back to geocoding the text location.
         lat, lon = farm.get_effective_coordinates()
         if (lat is None or lon is None) and farm.location:
             lat, lon = get_coordinates_from_location(farm.location)
-=======
-        # Get weather data for the farm's location
-        # Note: This assumes the farm model has latitude and longitude fields
-        # If not, you'll need to modify this to get the location from somewhere else
-        lat = getattr(farm, 'latitude', None)
-        lon = getattr(farm, 'longitude', None)
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
         
         weather_data = None
         if lat is not None and lon is not None:
             try:
-<<<<<<< HEAD
                 weather_data = fetch_weather_forecast_data(lat, lon, 5)
                 weather_data['location'] = farm.location
-=======
-                # Use the existing weather_forecast function
-                weather_response = weather_forecast(request._request)  # Pass the original request
-                if weather_response.status_code == 200:
-                    weather_data = weather_response.data
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
             except Exception as e:
                 # Log the error but don't fail the whole request
                 print(f"Error fetching weather data for farm {farm.id}: {str(e)}")

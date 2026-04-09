@@ -2,7 +2,6 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.password_validation import validate_password
-<<<<<<< HEAD
 from .models import Farm, Crop
 
 User = get_user_model()
@@ -119,18 +118,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
                  'is_farmer', 'is_supplier', 'is_trainer', 'address',
                  'date_joined', 'farms')
         read_only_fields = ('id', 'date_joined', 'farms')
-=======
-
-User = get_user_model()
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for user profile data"""
-    class Meta:
-        model = User
-        fields = ('id', 'phone_number', 'email', 'first_name', 'last_name', 
-                 'is_farmer', 'is_supplier', 'is_trainer', 'date_joined')
-        read_only_fields = ('id', 'date_joined')
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

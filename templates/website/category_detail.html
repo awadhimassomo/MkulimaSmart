@@ -1,9 +1,5 @@
 {% extends 'website/base.html' %}
-<<<<<<< HEAD
 {% load static product_filters %}
-=======
-{% load static %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
 
 {% block title %}{{ category.name }} - Mkulima Smart Marketplace{% endblock %}
 
@@ -142,19 +138,11 @@
                 </button>
                 <div class="collapse show filter-collapse" id="priceCollapse">
                     <div class="mb-3">
-<<<<<<< HEAD
                         <label for="minPrice" class="form-label">Min Price (TSh)</label>
                         <input type="number" class="form-control" id="minPrice" min="0">
                     </div>
                     <div class="mb-3">
                         <label for="maxPrice" class="form-label">Max Price (TSh)</label>
-=======
-                        <label for="minPrice" class="form-label">Min Price (KSh)</label>
-                        <input type="number" class="form-control" id="minPrice" min="0">
-                    </div>
-                    <div class="mb-3">
-                        <label for="maxPrice" class="form-label">Max Price (KSh)</label>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                         <input type="number" class="form-control" id="maxPrice" min="0">
                     </div>
                 </div>
@@ -216,7 +204,6 @@
                                     </div>
                                 {% endif %}
                                 
-<<<<<<< HEAD
                                 {% with product_image=product.images.all|primary_image %}
                                 {% if product_image %}
                                     <img src="{{ product_image.image.url }}" class="product-img card-img-top" alt="{{ product.name }}">
@@ -224,32 +211,16 @@
                                     <img src="{% static 'images/product-placeholder.jpg' %}" class="product-img card-img-top" alt="{{ product.name }}">
                                 {% endif %}
                                 {% endwith %}
-=======
-                                {% if product.images.filter(is_primary=True).first %}
-                                    <img src="{{ product.images.filter(is_primary=True).first.image.url }}" class="product-img card-img-top" alt="{{ product.name }}">
-                                {% elif product.images.first %}
-                                    <img src="{{ product.images.first.image.url }}" class="product-img card-img-top" alt="{{ product.name }}">
-                                {% else %}
-                                    <img src="{% static 'images/product-placeholder.jpg' %}" class="product-img card-img-top" alt="{{ product.name }}">
-                                {% endif %}
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                                 
                                 <div class="card-body">
                                     <h5 class="card-title">{{ product.name|truncatechars:40 }}</h5>
                                     
                                     <div class="price-section mb-3">
                                         {% if product.discount_price %}
-<<<<<<< HEAD
                                             <span class="original-price">TSh {{ product.price }}</span>
                                             <span class="discount-price">TSh {{ product.discount_price }}</span>
                                         {% else %}
                                             <span class="fw-bold">TSh {{ product.price }}</span>
-=======
-                                            <span class="original-price">KSh {{ product.price }}</span>
-                                            <span class="discount-price">KSh {{ product.discount_price }}</span>
-                                        {% else %}
-                                            <span class="fw-bold">KSh {{ product.price }}</span>
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
                                         {% endif %}
                                     </div>
                                     

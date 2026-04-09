@@ -36,11 +36,6 @@ class FarmerRegistrationForm(UserCreationForm):
         required=False,
         help_text=_("Optional. Used for password resets and notifications.")
     )
-<<<<<<< HEAD
-
-=======
-    
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     password1 = forms.CharField(
         label=_("Password"),
         strip=False,
@@ -57,7 +52,6 @@ class FarmerRegistrationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('user_type', 'phone_number', 'first_name', 'last_name', 'email')
-<<<<<<< HEAD
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,8 +61,6 @@ class FarmerRegistrationForm(UserCreationForm):
                 widget.attrs.setdefault("placeholder", field.label)
             elif not isinstance(widget, forms.CheckboxInput):
                 widget.attrs.setdefault("placeholder", field.label)
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
@@ -77,7 +69,6 @@ class FarmerRegistrationForm(UserCreationForm):
         if User.objects.filter(phone_number=phone_number).exists():
             raise forms.ValidationError(_("A user with this phone number already exists."))
         return phone_number
-<<<<<<< HEAD
 
     def clean(self):
         cleaned_data = super().clean()
@@ -91,9 +82,6 @@ class FarmerRegistrationForm(UserCreationForm):
 
         return cleaned_data
 
-=======
-    
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     def save(self, commit=True, farm_data=None, crops_data=None):
         """Save user and optionally create farm and crops"""
         user = super().save(commit=False)

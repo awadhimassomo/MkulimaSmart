@@ -15,10 +15,7 @@ urlpatterns = [
     path('marketplace/product/<slug:slug>/', views.product_detail, name='product_detail'),
     path('marketplace/cart/', views.cart, name='cart'),
     path('marketplace/cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
-<<<<<<< HEAD
     path('marketplace/cart/update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),
-=======
->>>>>>> 41ded11a88a936651d40cdbfd9f129ce3e3c686d
     path('marketplace/cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('marketplace/checkout/', views.checkout, name='checkout'),
     path('marketplace/orders/', views.order_list, name='order_list'),
