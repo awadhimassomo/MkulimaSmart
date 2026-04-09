@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -88,19 +88,33 @@ def batch_create(request):
 @login_required
 def batch_detail(request, pk):
     batch = get_object_or_404(SeedlingBatch.objects.select_related("seller"), pk=pk)
+    if not batch.qr_code:
+        batch.ensure_qr_code()
+        batch.save(update_fields=["qr_code"])
     return render(request, "operations/batch_detail.html", {"batch": batch})
 
 
 @login_required
 def batch_qr_print(request, pk):
     batch = get_object_or_404(SeedlingBatch.objects.select_related("seller"), pk=pk)
+    if not batch.qr_code:
+        batch.ensure_qr_code()
+        batch.save(update_fields=["qr_code"])
     return render(request, "operations/batch_qr_print.html", {"batch": batch})
 
 
 def batch_qr_image(request, pk):
     batch = get_object_or_404(SeedlingBatch, pk=pk)
-    qr_image = build_qr_image(batch.get_absolute_scan_url())
-    response = HttpResponse(qr_image.read(), content_type="image/png")
+    if not batch.qr_code:
+        batch.ensure_qr_code()
+        batch.save(update_fields=["qr_code"])
+
+    if batch.qr_code:
+        response = FileResponse(batch.qr_code.open("rb"), content_type="image/png")
+    else:
+        qr_image = build_qr_image(batch.get_absolute_scan_url())
+        response = HttpResponse(qr_image.read(), content_type="image/png")
+
     response["Content-Disposition"] = f'inline; filename="{batch.seedling_batch_id}.png"'
     return response
 

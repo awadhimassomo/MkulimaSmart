@@ -65,7 +65,11 @@
     </div>
 
     <div class="ops-print-qr">
-      <img src="{% url 'operations:batch_qr_image' batch.pk %}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
+      {% if batch.qr_code %}
+        <img src="{{ batch.qr_code.url }}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
+      {% else %}
+        <img src="{% url 'operations:batch_qr_image' batch.pk %}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
+      {% endif %}
     </div>
 
     <div class="ops-print-meta">

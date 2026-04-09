@@ -96,6 +96,12 @@ class SeedlingBatch(models.Model):
         base_url = getattr(settings, "SITE_BASE_URL", "").rstrip("/")
         return f"{base_url}{self.get_scan_url()}"
 
+    def ensure_qr_code(self):
+        if not self.qr_code:
+            payload = self.get_absolute_scan_url()
+            file_name = f"{self.seedling_batch_id}.png"
+            self.qr_code.save(file_name, build_qr_image(payload), save=False)
+
     def save(self, *args, **kwargs):
         if not self.seedling_batch_id:
             self.seedling_batch_id = f"SB-{timezone.now():%Y%m%d}-{uuid.uuid4().hex[:8].upper()}"
@@ -103,9 +109,7 @@ class SeedlingBatch(models.Model):
         super().save(*args, **kwargs)
 
         if not self.qr_code:
-            payload = self.get_absolute_scan_url()
-            file_name = f"{self.seedling_batch_id}.png"
-            self.qr_code.save(file_name, build_qr_image(payload), save=False)
+            self.ensure_qr_code()
             super().save(update_fields=["qr_code"])
 
 
