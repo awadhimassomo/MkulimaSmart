@@ -29,7 +29,6 @@ urlpatterns = [
     
     # API URLs (no language prefix)
     path('api/', include('website.api_urls')),
-    path('api/operations/', include('operations.api_urls')),
     path('api/traceability/', include('traceability.urls')),
     
     # Ecop (E-Cooperative) API endpoints
@@ -69,9 +68,6 @@ urlpatterns += i18n_patterns(
     
     # Include website URLs
     path('', include('website.urls', namespace='website')),
-
-    path('operations/', include('operations.urls', namespace='operations')),
-    
     # Gov app App
     path('gova-pp/', include('gova_pp.urls', namespace='gova_pp')),
     

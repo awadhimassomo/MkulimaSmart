@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.text import slugify
 
+from operations.models import SeedlingBatch
 from website.models import Category, Product, ProductImage
 
 
@@ -99,3 +100,35 @@ class SupplierProductForm(forms.ModelForm):
                     ProductImage.objects.create(product=product, image=image, is_primary=True)
 
         return product
+
+
+class SupplierSeedlingBatchForm(forms.ModelForm):
+    class Meta:
+        model = SeedlingBatch
+        fields = [
+            "seedling_type",
+            "variety",
+            "source_name",
+            "quantity_available",
+            "unit",
+            "batch_date",
+            "recommended_planting_until",
+            "notes",
+        ]
+        widgets = {
+            "batch_date": forms.DateInput(attrs={"type": "date"}),
+            "recommended_planting_until": forms.DateInput(attrs={"type": "date"}),
+            "notes": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for _, field in self.fields.items():
+            widget = field.widget
+            existing = widget.attrs.get("class", "")
+            if isinstance(widget, forms.Textarea):
+                widget.attrs["class"] = f"form-input min-h-32 {existing}".strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = f"form-select {existing}".strip()
+            else:
+                widget.attrs["class"] = f"form-input {existing}".strip()

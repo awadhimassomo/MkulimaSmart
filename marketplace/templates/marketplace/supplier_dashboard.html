@@ -1,7 +1,7 @@
 {% extends "marketplace/supplier_base.html" %}
 
 {% block supplier_title %}Run Your Supplier Storefront{% endblock %}
-{% block supplier_subtitle %}See how many products are live, watch low stock items, and jump straight into publishing your next listing.{% endblock %}
+{% block supplier_subtitle %}Manage marketplace listings, seedling batches, stock visibility, and QR-powered traceability from one supplier dashboard.{% endblock %}
 
 {% block supplier_content %}
 <div class="supplier-grid">
@@ -22,6 +22,80 @@
       <div class="supplier-stat-label">Low Stock</div>
       <div class="supplier-stat-value">{{ low_stock_count }}</div>
     </article>
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Seedling Batches</div>
+      <div class="supplier-stat-value">{{ seedling_batch_count }}</div>
+    </article>
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Batch Units</div>
+      <div class="supplier-stat-value">{{ seedling_units_total }}</div>
+    </article>
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Low Batch Stock</div>
+      <div class="supplier-stat-value">{{ seedling_low_stock_count }}</div>
+    </article>
+    <article class="supplier-stat">
+      <div class="supplier-stat-label">Tracked Plantings</div>
+      <div class="supplier-stat-value">{{ seedling_trace_count }}</div>
+    </article>
+  </section>
+
+  <section class="supplier-card">
+    <div class="supplier-card-body">
+      <h2 class="supplier-section-title">Seedling Seller Tools</h2>
+      <p class="supplier-section-copy">Your supplier account is also your seedling seller account. Create batches here, generate QR codes, and track how many batches have been linked to planting records.</p>
+      <div class="supplier-actions" style="margin-top:1rem;">
+        <a href="{% url 'marketplace:supplier_seedling_batch_create' %}" class="supplier-btn-primary">Create Seedling Batch</a>
+        <a href="{% url 'marketplace:supplier_product_create' %}" class="supplier-btn-secondary">Post Product to Marketplace</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="supplier-card">
+    <div class="supplier-card-body">
+      <h2 class="supplier-section-title">Seedling Batches</h2>
+      <p class="supplier-section-copy">Each batch gets its own QR code for planting intake and traceability.</p>
+    </div>
+
+    {% if seedling_batches %}
+      <div style="overflow-x:auto;">
+        <table class="supplier-table">
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Seedling</th>
+              <th>Available</th>
+              <th>Planting Window</th>
+              <th>Trace Records</th>
+              <th>QR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for batch in seedling_batches %}
+              <tr>
+                <td>{{ batch.seedling_batch_id }}</td>
+                <td>{{ batch.seedling_type }}{% if batch.variety %} - {{ batch.variety }}{% endif %}</td>
+                <td>{{ batch.quantity_available }} {{ batch.unit }}</td>
+                <td>{{ batch.recommended_planting_until|default:"-" }}</td>
+                <td>{{ batch.planting_records.count }}</td>
+                <td>
+                  <div class="supplier-actions">
+                    <a href="{% url 'marketplace:batch_qr_print' batch.pk %}" class="supplier-btn-secondary">Print QR</a>
+                    <a href="{% url 'marketplace:batch_qr_image' batch.pk %}" class="supplier-btn-secondary">Open QR</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="supplier-empty">
+        <h3 style="margin:0 0 0.5rem;color:#173019;">No seedling batches yet</h3>
+        <p style="margin:0 0 1rem;">Create your first batch here and the system will prepare the QR code automatically.</p>
+        <a href="{% url 'marketplace:supplier_seedling_batch_create' %}" class="supplier-btn-primary" style="text-decoration:none;">Create Seedling Batch</a>
+      </div>
+    {% endif %}
   </section>
 
   <section class="supplier-card">

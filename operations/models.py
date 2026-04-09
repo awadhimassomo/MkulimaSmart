@@ -43,6 +43,13 @@ class InputSeller(models.Model):
         ("agro_input_dealer", "Agro-Input Dealer"),
     ]
 
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="input_seller_profile",
+        blank=True,
+        null=True,
+    )
     seller_name = models.CharField(max_length=255)
     business_name = models.CharField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=30)
@@ -56,6 +63,42 @@ class InputSeller(models.Model):
 
     def __str__(self):
         return self.business_name or self.seller_name
+
+    @classmethod
+    def get_or_create_for_user(cls, user):
+        seller = cls.objects.filter(user=user).first()
+        if seller:
+            return seller
+
+        display_name = user.get_full_name().strip() or user.phone_number
+        seller, _ = cls.objects.get_or_create(
+            phone_number=user.phone_number,
+            defaults={
+                "user": user,
+                "seller_name": display_name,
+                "business_name": display_name,
+                "seller_type": "seedling_seller",
+                "location": user.address or "Tanzania",
+                "is_active": True,
+            },
+        )
+
+        updates = []
+        if seller.user_id != user.id:
+            seller.user = user
+            updates.append("user")
+        if not seller.seller_name:
+            seller.seller_name = display_name
+            updates.append("seller_name")
+        if not seller.business_name:
+            seller.business_name = display_name
+            updates.append("business_name")
+        if not seller.location:
+            seller.location = user.address or "Tanzania"
+            updates.append("location")
+        if updates:
+            seller.save(update_fields=updates)
+        return seller
 
 
 class SeedlingBatch(models.Model):
@@ -87,10 +130,10 @@ class SeedlingBatch(models.Model):
         return f"{self.seedling_batch_id} - {self.seedling_type}"
 
     def get_absolute_url(self):
-        return reverse("operations:batch_detail", kwargs={"pk": self.pk})
+        return reverse("marketplace:supplier_dashboard")
 
     def get_scan_url(self):
-        return reverse("operations:batch_scan", kwargs={"seedling_batch_id": self.seedling_batch_id})
+        return reverse("marketplace:batch_scan", kwargs={"seedling_batch_id": self.seedling_batch_id})
 
     def get_absolute_scan_url(self):
         base_url = getattr(settings, "SITE_BASE_URL", "").rstrip("/")

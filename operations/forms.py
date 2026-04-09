@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 
 from website.models import Farm
 
-from .models import FarmActivity, FarmInputUsage, InputSeller, InspectionLog, PlantingRecord, SeedlingBatch
+from .models import PlantingRecord
 
 User = get_user_model()
 
@@ -29,32 +29,6 @@ class StyledModelForm(forms.ModelForm):
                 widget.attrs["class"] = f"block w-full text-sm text-gray-600 file:mr-4 file:rounded-xl file:border-0 file:bg-[var(--brand-primary)] file:px-4 file:py-2 file:text-white {existing}".strip()
             else:
                 widget.attrs["class"] = f"form-input {existing}".strip()
-
-
-class InputSellerForm(StyledModelForm):
-    class Meta:
-        model = InputSeller
-        fields = ["seller_name", "business_name", "phone_number", "seller_type", "location", "is_active"]
-
-
-class SeedlingBatchForm(StyledModelForm):
-    class Meta:
-        model = SeedlingBatch
-        fields = [
-            "seller",
-            "seedling_type",
-            "variety",
-            "source_name",
-            "quantity_available",
-            "unit",
-            "batch_date",
-            "recommended_planting_until",
-            "notes",
-        ]
-        widgets = {
-            "batch_date": forms.DateInput(attrs={"type": "date"}),
-            "recommended_planting_until": forms.DateInput(attrs={"type": "date"}),
-        }
 
 
 class PlantingRecordForm(StyledModelForm):
@@ -259,24 +233,3 @@ class PlantingRecordForm(StyledModelForm):
             instance.save()
             self.save_m2m()
         return instance
-
-
-class FarmActivityForm(StyledModelForm):
-    class Meta:
-        model = FarmActivity
-        fields = ["activity_type", "activity_date", "quantity", "unit", "notes", "photo"]
-        widgets = {"activity_date": forms.DateInput(attrs={"type": "date"})}
-
-
-class FarmInputUsageForm(StyledModelForm):
-    class Meta:
-        model = FarmInputUsage
-        fields = ["input_type", "product_name", "quantity", "unit", "application_date", "notes"]
-        widgets = {"application_date": forms.DateInput(attrs={"type": "date"})}
-
-
-class InspectionLogForm(StyledModelForm):
-    class Meta:
-        model = InspectionLog
-        fields = ["visit_date", "purpose", "findings", "recommendations", "photo"]
-        widgets = {"visit_date": forms.DateInput(attrs={"type": "date"})}

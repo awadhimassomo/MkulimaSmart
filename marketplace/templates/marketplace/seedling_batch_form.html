@@ -1,0 +1,37 @@
+{% extends "marketplace/supplier_base.html" %}
+
+{% block supplier_title %}Create Seedling Batch{% endblock %}
+{% block supplier_subtitle %}Register nursery or seedling stock under your supplier account and generate the traceability QR code from the same dashboard.{% endblock %}
+
+{% block supplier_content %}
+<section class="supplier-card" style="margin-top:1.75rem;">
+  <div class="supplier-card-body">
+    <h2 class="supplier-section-title">{{ page_title }}</h2>
+    <p class="supplier-section-copy">{{ page_subtitle }}</p>
+
+    <form method="post" class="supplier-form-grid" style="margin-top:1.5rem;">
+      {% csrf_token %}
+
+      <div class="supplier-form-grid-2">
+        {% for field in form %}
+          <div class="supplier-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text }}</span>
+            {% endif %}
+            {% if field.errors %}
+              <div class="supplier-errors">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="supplier-actions" style="margin-top:0.5rem;">
+        <button type="submit" class="supplier-btn-primary">{{ submit_label }}</button>
+        <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -249,10 +249,17 @@
                     <i class="fas fa-store"></i>
                     {% trans "Visit Marketplace" %}
                 </a>
-                <a href="{% url 'operations:dashboard' %}" class="cta-button">
-                    <i class="fas fa-seedling"></i>
-                    {% trans "Farm Operations" %}
+                {% if user.is_supplier %}
+                <a href="{% url 'marketplace:supplier_dashboard' %}" class="cta-button">
+                    <i class="fas fa-store"></i>
+                    {% trans "Seller Dashboard" %}
                 </a>
+                {% else %}
+                <a href="{% url 'training:home' %}" class="cta-button">
+                    <i class="fas fa-seedling"></i>
+                    {% trans "Training Hub" %}
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>

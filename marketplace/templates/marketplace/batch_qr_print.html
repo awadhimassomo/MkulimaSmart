@@ -1,0 +1,37 @@
+{% extends "marketplace/supplier_base.html" %}
+
+{% block supplier_title %}Print Batch QR{% endblock %}
+{% block supplier_subtitle %}Use this QR on seedling stock so farmers can open the free planting intake form without logging in.{% endblock %}
+
+{% block supplier_content %}
+<section class="supplier-card" style="margin-top:1.75rem;">
+  <div class="supplier-card-body">
+    <div class="supplier-actions" style="justify-content:space-between;align-items:center;">
+      <div>
+        <h2 class="supplier-section-title">{{ batch.seedling_batch_id }}</h2>
+        <p class="supplier-section-copy">{{ batch.seedling_type }}{% if batch.variety %} - {{ batch.variety }}{% endif %}</p>
+      </div>
+      <button type="button" onclick="window.print()" class="supplier-btn-primary">Print Now</button>
+    </div>
+
+    <div style="display:flex;justify-content:center;padding:2rem 0;">
+      {% if batch.qr_code %}
+        <img src="{{ batch.qr_code.url }}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
+      {% else %}
+        <img src="{% url 'marketplace:batch_qr_image' batch.pk %}" alt="Printable QR code for {{ batch.seedling_batch_id }}" style="width:340px;height:340px;object-fit:contain;display:block;">
+      {% endif %}
+    </div>
+
+    <div class="supplier-form-grid-2">
+      <div class="supplier-field">
+        <label>Scan URL</label>
+        <div class="form-input" style="word-break:break-all;">{{ batch.get_absolute_scan_url }}</div>
+      </div>
+      <div class="supplier-field">
+        <label>Purpose</label>
+        <div class="form-input">Farmers scan this code to submit planting details for free. Phone number is required so you can follow up later.</div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
