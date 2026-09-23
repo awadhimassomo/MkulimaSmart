@@ -107,15 +107,12 @@
       box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
     }
 
-<<<<<<< HEAD
     /* The sticky header sits over page content, so it must stay readable:
        a 25% white "glass" lets forms and text show through on phones. */
     header[role="banner"].glass {
       background: rgba(255, 255, 255, 0.94);
     }
 
-=======
->>>>>>> origin/main
     .glass-dark {
       background: rgba(26, 51, 22, 0.85);
       backdrop-filter: blur(10px);
@@ -579,11 +576,7 @@
           {% if url_name != 'login' and url_name != 'register' %}
           <div class="hidden md:flex items-center gap-2">
             {% if user.is_authenticated %}
-<<<<<<< HEAD
               <a href="{% if user.is_supplier %}{% url 'inputs:home' %}{% else %}{% url 'website:dashboard' %}{% endif %}" class="btn btn-ghost text-sm">
-=======
-              <a href="{% if user.is_supplier %}{% url 'marketplace:supplier_dashboard' %}{% else %}{% url 'website:dashboard' %}{% endif %}" class="btn btn-ghost text-sm">
->>>>>>> origin/main
                 <i class="fas fa-user-circle mr-2" aria-hidden="true"></i>
                 Dashboard
               </a>
@@ -617,11 +610,7 @@
     </div>
 
     <!-- Mobile menu -->
-<<<<<<< HEAD
     <div class="lg:hidden hidden absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-xl max-h-[calc(100vh-4rem)] overflow-y-auto" id="mobile-menu" aria-labelledby="mobile-menu-button">
-=======
-    <div class="lg:hidden hidden absolute top-full left-0 right-0 glass border-t border-gray-200/50 shadow-xl" id="mobile-menu" aria-labelledby="mobile-menu-button">
->>>>>>> origin/main
       <div class="container py-4">
         <nav class="space-y-2" aria-label="Mobile navigation">
           {% with url_name=request.resolver_match.url_name %}
@@ -662,11 +651,7 @@
             {% if url_name != 'login' and url_name != 'register' %}
             <div class="flex gap-2 px-1 mt-2">
               {% if user.is_authenticated %}
-<<<<<<< HEAD
                 <a href="{% if user.is_supplier %}{% url 'inputs:home' %}{% else %}{% url 'website:dashboard' %}{% endif %}" class="flex-1 btn btn-outline justify-center py-2.5 text-sm">
-=======
-                <a href="{% if user.is_supplier %}{% url 'marketplace:supplier_dashboard' %}{% else %}{% url 'website:dashboard' %}{% endif %}" class="flex-1 btn btn-outline justify-center py-2.5 text-sm">
->>>>>>> origin/main
                   <i class="fas fa-tachometer-alt mr-1" aria-hidden="true"></i>
                   Dashboard
                 </a>

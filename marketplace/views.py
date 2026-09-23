@@ -99,11 +99,7 @@ def home(request):
 
 def seller_start(request):
     if request.user.is_authenticated and (request.user.is_supplier or request.user.is_staff):
-<<<<<<< HEAD
         return redirect("inputs:home")
-=======
-        return redirect("marketplace:supplier_dashboard")
->>>>>>> origin/main
 
     context = {
         "is_supplier_user": request.user.is_authenticated and request.user.is_supplier,
@@ -133,13 +129,8 @@ def supplier_onboarding(request):
             if not request.user.is_supplier:
                 request.user.is_supplier = True
                 request.user.save(update_fields=["is_supplier"])
-<<<<<<< HEAD
             messages.success(request, "Business profile saved. Welcome to your dashboard.")
             return redirect("inputs:home")
-=======
-            messages.success(request, "Seller profile saved. You can now manage your shop, products, and seedling batches.")
-            return redirect("marketplace:supplier_dashboard")
->>>>>>> origin/main
     else:
         form = SupplierOnboardingForm(instance=seller_profile, initial={"products_offered": seller_profile.products_offered})
 

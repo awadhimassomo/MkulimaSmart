@@ -14,23 +14,26 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from the standard .env file first, then fall back
-# to env.txt for local setups that store secrets there.
-load_dotenv()
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from the project's .env file. An explicit path means the
+# web app, consoles and scheduled/always-on tasks (e.g. on PythonAnywhere) all read the same file.
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!%u-pkmyt&9%(=(vfy%c2=3z2j327#pv$365=rn2kcqdt%c1mn'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-!%u-pkmyt&9%(=(vfy%c2=3z2j327#pv$365=rn2kcqdt%c1mn')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Defaults to on for local development; production sets DJANGO_DEBUG=False in .env.
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
+
+# HTTPS ends at the proxy (PythonAnywhere / nginx), which tells Django via this header.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.197', 'mkulimasmart.co.tz', 'www.mkulimasmart.co.tz', '192.168.100.130', '192.168.199.98','192.168.100.118','192.168.100.114','192.168.1.104']
@@ -72,6 +75,8 @@ INSTALLED_APPS = [
     'chat',  # Add the chat app so Django can find its templates
     'ecop',  # E-Cooperative module for farmer groups and commitments
     'traceability',
+    'inputs',  # Input manufacturers <-> input shops: catalog, orders, POS
+    'kikapu_bridge',  # Kikapu WhatsApp bridge: catalog pull, farmer orders, status webhooks
 
 ]
 
@@ -186,6 +191,8 @@ LOCALE_PATHS = [
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# collectstatic target; WhiteNoise (or PythonAnywhere's static mapping) serves it when DEBUG is off.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
@@ -242,6 +249,17 @@ KIKAPU_OAUTH_BASE_URL = os.environ.get('KIKAPU_OAUTH_BASE_URL', 'http://localhos
 KIKAPU_OAUTH_CLIENT_ID = os.environ.get('KIKAPU_OAUTH_CLIENT_ID', 'mkulima_smart')  # OAuth client ID
 KIKAPU_OAUTH_CLIENT_SECRET = os.environ.get('KIKAPU_OAUTH_CLIENT_SECRET', 'mkulima_smart_secret_key_2024')  # OAuth client secret
 KIKAPU_OAUTH_REDIRECT_URI = os.environ.get('KIKAPU_OAUTH_REDIRECT_URI', 'http://localhost:8000/auth/kikapu/callback')  # OAuth callback URL
+
+# Kikapu <-> Mkulima Smart inputs bridge (docs/integrations/kikapu-bridge.md)
+# Kikapu calls /api/kikapu-bridge/ with a token from `manage.py issue_kikapu_token`.
+# Status webhooks are only sent once KIKAPU_BRIDGE_WEBHOOK_SECRET is set.
+KIKAPU_BRIDGE_WEBHOOK_URL = os.environ.get('KIKAPU_BRIDGE_WEBHOOK_URL', 'https://www.kikapu.co.tz/api/kikapu-bridge/orders/status/')
+KIKAPU_BRIDGE_WEBHOOK_SECRET = os.environ.get('KIKAPU_BRIDGE_WEBHOOK_SECRET', '')  # shared once, out of band
+KIKAPU_BRIDGE_OUTBOUND_TOKEN = os.environ.get('KIKAPU_BRIDGE_OUTBOUND_TOKEN', '')  # optional token Kikapu issues to us
+KIKAPU_BRIDGE_PARTNER_ID = os.environ.get('KIKAPU_BRIDGE_PARTNER_ID', 'mkulima-smart')
+KIKAPU_BRIDGE_WEBHOOK_TIMEOUT = int(os.environ.get('KIKAPU_BRIDGE_WEBHOOK_TIMEOUT', '5'))
+KIKAPU_BRIDGE_PUBLIC_BASE_URL = os.environ.get('KIKAPU_BRIDGE_PUBLIC_BASE_URL', SITE_BASE_URL)  # for image_url
+KIKAPU_BRIDGE_REQUIRE_HTTPS = os.environ.get('KIKAPU_BRIDGE_REQUIRE_HTTPS', str(not DEBUG)).lower() == 'true'
 
 TAILWIND_APP_NAME = 'theme'
 

@@ -302,31 +302,19 @@
 <section class="supplier-shell">
   <div class="container">
     <div class="supplier-hero">
-<<<<<<< HEAD
       <div class="supplier-kicker">{% block supplier_kicker %}Supplier Hub{% endblock %}</div>
       <h1 class="supplier-title">{% block supplier_title %}Manage Your Listings{% endblock %}</h1>
       <p class="supplier-subtitle">{% block supplier_subtitle %}Create polished marketplace listings, keep stock current, and publish products buyers can discover right away.{% endblock %}</p>
       <div class="supplier-nav">
         {% block supplier_nav %}
         <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-nav-secondary">Marketplace Listings</a>
-=======
-      <div class="supplier-kicker">Supplier Hub</div>
-      <h1 class="supplier-title">{% block supplier_title %}Manage Your Listings{% endblock %}</h1>
-      <p class="supplier-subtitle">{% block supplier_subtitle %}Create polished marketplace listings, keep stock current, and publish products buyers can discover right away.{% endblock %}</p>
-      <div class="supplier-nav">
-        <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-nav-secondary">Dashboard</a>
->>>>>>> origin/main
         <a href="{% url 'marketplace:supplier_product_create' %}" class="supplier-nav-primary">New Listing</a>
         {% if can_manage_qr %}
         <a href="{% url 'marketplace:supplier_seedling_batch_create' %}" class="supplier-nav-secondary">New Seedling Batch</a>
         {% endif %}
-<<<<<<< HEAD
         <a href="{% url 'inputs:home' %}" class="supplier-nav-primary">← Back to My Dashboard</a>
         <a href="{% url 'marketplace:home' %}" class="supplier-nav-secondary">Browse Marketplace</a>
         {% endblock %}
-=======
-        <a href="{% url 'marketplace:home' %}" class="supplier-nav-secondary">Browse Marketplace</a>
->>>>>>> origin/main
       </div>
     </div>
 

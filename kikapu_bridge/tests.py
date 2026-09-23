@@ -381,3 +381,24 @@ class ShopHandlesFarmerOrdersTests(BridgeTestBase):
         self.place_order(items=[{"input_id": f"input-{self.npk.pk}", "quantity": 10}])
         with self.assertRaises(services.StockError):
             services.record_sale(self.shop, [{"stock_item": self.npk.pk, "quantity": 1}])
+
+
+class RetryLoopTests(BridgeTestBase):
+    @mock.patch("kikapu_bridge.management.commands.send_kikapu_webhooks.time.sleep", side_effect=KeyboardInterrupt)
+    @mock.patch("kikapu_bridge.management.commands.send_kikapu_webhooks.deliver_pending", return_value=(1, 0))
+    def test_loop_mode_runs_rounds(self, deliver, sleep):
+        out = io.StringIO()
+        with self.assertRaises(KeyboardInterrupt):
+            call_command("send_kikapu_webhooks", "--loop", "--interval", "30", stdout=out)
+        deliver.assert_called_once()
+        sleep.assert_called_once_with(30)
+        self.assertIn("Sent 1, failed 0.", out.getvalue())
+
+    @mock.patch("kikapu_bridge.management.commands.send_kikapu_webhooks.time.sleep", side_effect=[None, KeyboardInterrupt])
+    @mock.patch("kikapu_bridge.management.commands.send_kikapu_webhooks.deliver_pending", side_effect=[RuntimeError("db down"), (0, 0)])
+    def test_loop_survives_errors(self, deliver, sleep):
+        err = io.StringIO()
+        with self.assertRaises(KeyboardInterrupt):
+            call_command("send_kikapu_webhooks", "--loop", stdout=io.StringIO(), stderr=err)
+        self.assertEqual(deliver.call_count, 2)
+        self.assertIn("db down", err.getvalue())

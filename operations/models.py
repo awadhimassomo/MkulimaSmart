@@ -36,7 +36,6 @@ def build_qr_image(payload: str) -> ContentFile:
     return ContentFile(buffer.getvalue())
 
 
-<<<<<<< HEAD
 TANZANIA_REGIONS = [(name, name) for name in [
     "Arusha", "Dar es Salaam", "Dodoma", "Geita", "Iringa", "Kagera", "Katavi", "Kigoma", "Kilimanjaro",
     "Lindi", "Manyara", "Mara", "Mbeya", "Mjini Magharibi", "Morogoro", "Mtwara", "Mwanza", "Njombe",
@@ -45,17 +44,12 @@ TANZANIA_REGIONS = [(name, name) for name in [
 ]]
 
 
-=======
->>>>>>> origin/main
 class InputSeller(models.Model):
     SELLER_TYPE_CHOICES = [
         ("seedling_seller", "Seedling Seller"),
         ("nursery_operator", "Nursery Operator"),
         ("agro_input_dealer", "Agro-Input Dealer"),
-<<<<<<< HEAD
         ("manufacturer", "Input Manufacturer / Distributor"),
-=======
->>>>>>> origin/main
     ]
     PRODUCT_CATEGORY_CHOICES = [
         ("seedlings", "Seedlings"),
@@ -84,7 +78,6 @@ class InputSeller(models.Model):
     certificate_file = models.FileField(upload_to="operations/seller_certificates/", blank=True, null=True)
     onboarding_completed = models.BooleanField(default=False)
     location = models.CharField(max_length=255)
-<<<<<<< HEAD
     region = models.CharField(max_length=40, choices=TANZANIA_REGIONS, blank=True)
     district = models.CharField(max_length=120, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
@@ -96,15 +89,10 @@ class InputSeller(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-=======
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
->>>>>>> origin/main
 
     class Meta:
         ordering = ["seller_name"]
 
-<<<<<<< HEAD
     @property
     def region_or_guess(self):
         """Region field, or the last part of the free-text location ("Moshi, Kilimanjaro" -> "Kilimanjaro")."""
@@ -113,8 +101,6 @@ class InputSeller(models.Model):
         parts = [p.strip() for p in (self.location or "").split(",") if p.strip()]
         return parts[-1] if parts else ""
 
-=======
->>>>>>> origin/main
     def __str__(self):
         return self.business_name or self.seller_name
 
