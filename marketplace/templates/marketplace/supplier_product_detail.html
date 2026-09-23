@@ -1,0 +1,77 @@
+{% extends "marketplace/supplier_base.html" %}
+
+{% block supplier_title %}{{ product.name }}{% endblock %}
+{% block supplier_subtitle %}Review exactly how this listing is set up before buyers see it in the marketplace.{% endblock %}
+
+{% block supplier_content %}
+<div class="supplier-grid" style="grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);">
+  <section class="supplier-card">
+    <div class="supplier-card-body">
+      <div class="supplier-media">
+        {% if product.images.first %}
+          <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+        {% else %}
+          <div style="padding:2rem;text-align:center;color:#607065;">
+            <div style="font-size:3rem;">Product</div>
+            <p style="margin-top:0.75rem;">No cover image uploaded yet.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="supplier-card">
+    <div class="supplier-card-body">
+      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
+        <div>
+          <div class="supplier-kicker" style="color:#5d6d63;">{{ product.category.name }}</div>
+          <h2 class="supplier-section-title" style="font-size:1.8rem;margin-top:0.6rem;">{{ product.name }}</h2>
+        </div>
+        {% if product.is_active %}
+          <span class="supplier-pill supplier-pill-live">Live</span>
+        {% else %}
+          <span class="supplier-pill supplier-pill-draft">Hidden</span>
+        {% endif %}
+      </div>
+
+      <div class="supplier-stats" style="margin-top:1.5rem;">
+        <article class="supplier-stat">
+          <div class="supplier-stat-label">Price</div>
+          <div class="supplier-stat-value" style="font-size:1.45rem;">TZS {{ product.price|floatformat:0 }}</div>
+        </article>
+        <article class="supplier-stat">
+          <div class="supplier-stat-label">Discount</div>
+          <div class="supplier-stat-value" style="font-size:1.45rem;">
+            {% if product.discount_price %}TZS {{ product.discount_price|floatformat:0 }}{% else %}-{% endif %}
+          </div>
+        </article>
+        <article class="supplier-stat">
+          <div class="supplier-stat-label">Stock</div>
+          <div class="supplier-stat-value" style="font-size:1.45rem;">{{ product.stock }}</div>
+        </article>
+      </div>
+
+      <div style="margin-top:1.5rem;">
+        <h3 class="supplier-section-title" style="font-size:1.05rem;">Description</h3>
+        <p class="supplier-section-copy" style="margin-top:0.7rem;">{{ product.description }}</p>
+      </div>
+
+      <div class="supplier-form-grid-2" style="margin-top:1.5rem;">
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">Hydroponics</div>
+          <div class="supplier-stat-value" style="font-size:1.2rem;">{% if product.is_hydroponics %}Yes{% else %}No{% endif %}</div>
+        </div>
+        <div class="supplier-stat">
+          <div class="supplier-stat-label">Requires Quote</div>
+          <div class="supplier-stat-value" style="font-size:1.2rem;">{% if product.requires_quote %}Yes{% else %}No{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="supplier-actions" style="margin-top:1.5rem;">
+        <a href="{% url 'marketplace:supplier_product_edit' product.pk %}" class="supplier-btn-primary">Edit Listing</a>
+        <a href="{% url 'website:product_detail' product.slug %}" class="supplier-btn-secondary">Public View</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

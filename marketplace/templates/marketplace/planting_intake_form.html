@@ -1,0 +1,49 @@
+{% extends "website/base.html" %}
+
+{% block title %}{{ title }} - Mkulima Smart{% endblock %}
+
+{% block content %}
+<div class="container max-w-4xl mx-auto px-4 py-10">
+  <div class="card p-8">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-[var(--brand-primary)]">{{ title }}</h1>
+      <p class="mt-2 text-gray-600">{{ subtitle }}</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+        <div class="p-4 rounded-xl bg-[var(--brand-surface)] border border-[var(--brand-border)]">
+          <div class="text-sm text-gray-500">Seedling Batch</div>
+          <div class="font-semibold text-[var(--brand-primary)]">{{ batch.seedling_batch_id }}</div>
+        </div>
+        <div class="p-4 rounded-xl bg-[var(--brand-surface)] border border-[var(--brand-border)]">
+          <div class="text-sm text-gray-500">Seedling Type</div>
+          <div class="font-semibold text-[var(--brand-primary)]">{{ batch.seedling_type }}</div>
+        </div>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-5">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        {% if field.is_hidden %}
+          {{ field }}
+        {% else %}
+          <div>
+            <label for="{{ field.id_for_label }}" class="block mb-2 font-semibold text-[var(--brand-primary)]">{{ field.label }}</label>
+            {% if field.field.widget.input_type == 'checkbox' %}
+              <div class="flex items-center gap-3">{{ field }}<span>Enable this option</span></div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}<p class="mt-2 text-sm text-gray-500">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}<p class="mt-2 text-sm text-red-600">{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="flex flex-wrap gap-3 pt-2">
+        <button type="submit" class="btn btn-primary">Submit Planting Details</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

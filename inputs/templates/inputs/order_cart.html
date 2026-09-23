@@ -1,0 +1,65 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Order list{% endblock %}
+{% block supplier_title %}Your order list{% endblock %}
+{% block supplier_subtitle %}Items are grouped by manufacturer. Each group is sent as its own purchase order.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  {% for group in groups %}
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-panel-head">
+          <div>
+            <h2 class="in-panel-title">{{ group.manufacturer }}</h2>
+            <div class="in-muted">{{ group.manufacturer.location }} · {{ group.manufacturer.phone_number }}</div>
+          </div>
+          <strong class="in-money" style="font-size:1.2rem">TZS {{ group.total|floatformat:0|intcomma }}</strong>
+        </div>
+        <div class="in-table-wrap">
+          <table class="supplier-table">
+            <thead><tr><th>Product</th><th>Unit price</th><th>Quantity</th><th>Line total</th></tr></thead>
+            <tbody>
+              {% for line in group.lines %}
+                <tr>
+                  <td>
+                    <div class="in-name-cell">
+                      {% with image=line.product.primary_image %}{% if image %}<img src="{{ image.image.url }}" alt="" class="in-thumb">{% else %}<span class="in-thumb"><i class="fa-solid fa-seedling"></i></span>{% endif %}{% endwith %}
+                      <a href="{% url 'inputs:catalog_product' line.product.pk %}" class="in-link">{{ line.product }}</a>
+                    </div>
+                  </td>
+                  <td class="in-money">TZS {{ line.product.wholesale_price|floatformat:0|intcomma }}</td>
+                  <td>
+                    <form method="post" action="{% url 'inputs:order_cart_update' %}" class="in-qty-form" style="padding:0;margin:0">
+                      {% csrf_token %}
+                      <input type="hidden" name="product" value="{{ line.product.pk }}">
+                      <input type="hidden" name="next" value="{% url 'inputs:order_cart' %}">
+                      <input type="number" name="quantity" class="form-input" min="0" step="1" value="{{ line.quantity }}" aria-label="Quantity">
+                      <button type="submit" class="in-btn in-btn-secondary in-btn-sm">Update</button>
+                    </form>
+                  </td>
+                  <td class="in-money"><strong>TZS {{ line.line_total|floatformat:0|intcomma }}</strong></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <form method="post" action="{% url 'inputs:order_submit' group.manufacturer.pk %}" style="margin-top:1rem" class="in-form-grid">
+          {% csrf_token %}
+          <div class="in-field in-field-wide">
+            <label for="notes-{{ group.manufacturer.pk }}">Notes for the manufacturer</label>
+            <textarea name="notes" id="notes-{{ group.manufacturer.pk }}" rows="2" class="form-input" placeholder="Delivery location, preferred date, payment terms…"></textarea>
+          </div>
+          <div><button type="submit" class="in-btn in-btn-primary"><i class="fa-solid fa-paper-plane"></i> Send order to {{ group.manufacturer }}</button></div>
+        </form>
+      </div>
+    </section>
+  {% empty %}
+    <section class="in-panel">
+      <div class="in-empty"><i class="fa-solid fa-clipboard-list"></i>Your order list is empty. <a href="{% url 'inputs:catalog' %}" class="in-link">Browse manufacturer products</a></div>
+    </section>
+  {% endfor %}
+  <div><a href="{% url 'inputs:catalog' %}" class="in-btn in-btn-secondary">← Continue browsing</a></div>
+</div>
+{% endblock %}

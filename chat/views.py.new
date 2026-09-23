@@ -1,0 +1,304 @@
+import base64
+import hashlib
+import json
+import logging
+import traceback
+from django.shortcuts import render, get_object_or_404
+from django.conf import settings
+from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.response import Response
+from rest_framework import status
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.db.models import ObjectDoesNotExist
+
+from .models import Thread, ThreadParticipant, Message, Media, MediaKeyWrap
+
+# Import the old FarmerMessage model for compatibility during transition
+from gova_pp.models import FarmerMessage
+
+# Set up logger
+logger = logging.getLogger('chat')
+
+
+def ws_test(request):
+    """Simple view to render WebSocket test page"""
+    return render(request, 'chat/ws_test.html')
+
+
+class ThreadMessageCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def post(self, request, thread_id: int):
+        """
+        Handles encrypted media uploads in chat messages
+        
+        Expects multipart/form-data with:
+          - content (optional text)
+          - encrypted_blob (File; AES-GCM ciphertext+MAC)
+          - media_metadata (JSON str or JSON obj) with:
+                { "sha256_hex": "...", "mime": "image/jpeg", "size": 211840,
+                  "nonce_b64": "...", "width": 0, "height": 0 }
+          - wrapped_keys (JSON str or JSON obj):
+                { "<recipient_user_id>": "<base64 nonce+cipher+mac>" }
+            or legacy:
+          - wrapped_key (single base64 blob)  -> will be applied to all recipients except sender
+          - thumbnail (base64 small JPEG, optional)
+        """
+        logger.info(f"🚀 ENCRYPTED MEDIA REQUEST - thread_id={thread_id}, user={request.user.id}")
+        logger.info(f"Headers: {dict(request.headers)}")
+        
+        # Log request data
+        data_keys = list(request.data.keys())
+        files_keys = list(request.FILES.keys() if request.FILES else [])
+        logger.info(f"Request data keys: {data_keys}")
+        logger.info(f"Request files keys: {files_keys}")
+        
+        try:
+            user = request.user
+            thread = None
+            farmer_thread = None
+            is_legacy_thread = False
+            
+            # Try to find thread in the new Thread model first
+            try:
+                thread = Thread.objects.get(id=thread_id)
+                # Check membership in new thread model
+                if not ThreadParticipant.objects.filter(thread=thread, user=user).exists():
+                    return Response({"error": "Not in this thread"}, status=status.HTTP_403_FORBIDDEN)
+            except ObjectDoesNotExist:
+                # If not found in Thread model, try the legacy FarmerMessage model
+                try:
+                    farmer_thread = FarmerMessage.objects.get(id=thread_id)
+                    is_legacy_thread = True
+                    
+                    # For legacy threads, verify ownership or assignment for access
+                    if user.is_farmer and farmer_thread.farmer_phone != user.phone_number:
+                        return Response({"error": "Not your thread"}, status=status.HTTP_403_FORBIDDEN)
+                    elif not user.is_farmer and farmer_thread.assigned_to != user:
+                        return Response({"error": "Thread not assigned to you"}, status=status.HTTP_403_FORBIDDEN)
+                    
+                    # Auto-create new thread model from legacy thread
+                    thread = Thread.objects.create(
+                        id=farmer_thread.id,  # Use same ID for consistency
+                        title=farmer_thread.subject,
+                        created_at=farmer_thread.created_at,
+                        updated_at=farmer_thread.updated_at,
+                        is_group=False
+                    )
+                    
+                    # Add the farmer as participant
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    try:
+                        farmer = User.objects.get(phone_number=farmer_thread.farmer_phone)
+                        ThreadParticipant.objects.create(thread=thread, user=farmer)
+                    except ObjectDoesNotExist:
+                        # If farmer user not found, this is a problem but proceed anyway
+                        pass
+                        
+                    # Add the assigned staff member if present
+                    if farmer_thread.assigned_to:
+                        ThreadParticipant.objects.create(
+                            thread=thread, 
+                            user=farmer_thread.assigned_to, 
+                            is_admin=True
+                        )
+                        
+                    # Log migration
+                    logger.info(f"Created new Thread {thread.id} from legacy FarmerMessage {farmer_thread.id}")
+                    
+                    # Make sure current user is a participant
+                    ThreadParticipant.objects.get_or_create(thread=thread, user=user)
+                except ObjectDoesNotExist:
+                    return Response({"error": "Thread not found"}, status=status.HTTP_404_NOT_FOUND)
+                    
+            # Ensure current user is a participant (for both new and migrated threads)
+            ThreadParticipant.objects.get_or_create(thread=thread, user=user)
+
+            # Parse inputs
+            content = request.data.get("content", "").strip()
+            
+            # Get encrypted blob file
+            blob = request.FILES.get("encrypted_blob")
+            if not blob:
+                logger.warning("No encrypted_blob in request")
+                return Response({"error": "No encrypted_blob found"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Parse media metadata
+            media_metadata_raw = request.data.get("media_metadata")
+            if not media_metadata_raw:
+                logger.warning("No media_metadata in request")
+                return Response({"error": "No media_metadata found"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                # Handle both string and direct JSON input
+                if isinstance(media_metadata_raw, str):
+                    media_metadata = json.loads(media_metadata_raw)
+                else:
+                    media_metadata = media_metadata_raw
+                    
+                # Log metadata received
+                logger.info(f"Media metadata: {media_metadata}")
+                
+                # Extract required metadata fields
+                got_sha256 = media_metadata.get("sha256_hex", "")
+                got_size = int(media_metadata.get("size", 0))
+                mime = media_metadata.get("mime", "application/octet-stream")
+                nonce_b64 = media_metadata.get("nonce_b64", "")
+                width = media_metadata.get("width", 0)
+                height = media_metadata.get("height", 0)
+                
+                if not got_sha256 or not nonce_b64:
+                    logger.warning("Missing required metadata fields")
+                    return Response(
+                        {"error": "Incomplete media_metadata (requires sha256_hex, nonce_b64)"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.error(f"Error parsing media_metadata: {str(e)}")
+                return Response(
+                    {"error": f"Invalid media_metadata format: {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Parse wrapped keys for recipients
+            wrapped_keys = None
+            legacy_wrapped = None
+            
+            # Try new format first (per-recipient)
+            wrapped_keys_raw = request.data.get("wrapped_keys")
+            if wrapped_keys_raw:
+                try:
+                    if isinstance(wrapped_keys_raw, str):
+                        wrapped_keys = json.loads(wrapped_keys_raw)
+                    else:
+                        wrapped_keys = wrapped_keys_raw
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.error(f"Error parsing wrapped_keys: {str(e)}")
+                    return Response(
+                        {"error": f"Invalid wrapped_keys format: {str(e)}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # Try legacy format (single key)
+                legacy_wrapped = request.data.get("wrapped_key")
+                if not legacy_wrapped:
+                    logger.warning("No wrapped_keys or wrapped_key found")
+                    return Response(
+                        {"error": "Missing wrapped_keys or wrapped_key"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Get optional thumbnail
+            thumb_b64 = request.data.get("thumbnail")
+            
+            # Store the encrypted media file
+            media = Media.objects.create(
+                size=got_size,
+                sha256_hex=got_sha256,
+                mime=mime,
+                file=blob,  # Will be saved to MEDIA_ROOT/uploads/YYYY/MM/DD/{uuid}.bin
+            )
+            logger.info(f"Created media record: id={media.id}, size={got_size}, sha256={got_sha256[:10]}...")
+            
+            # Create message row
+            message = Message.objects.create(
+                thread=thread,
+                sender=user,
+                text=content,
+                media=media,
+                media_nonce=base64.b64decode(nonce_b64) if nonce_b64 else None,
+                thumb_b64=thumb_b64 or "",
+                media_sha256_hex=got_sha256,
+                created_at=timezone.now(),
+                extra={"width": width, "height": height} if (width or height) else {},
+            )
+            logger.info(f"Created message record: id={message.id}, thread_id={thread.id}")
+            
+            # Store key-wraps per recipient
+            recipients = (ThreadParticipant.objects
+                        .filter(thread=thread)
+                        .exclude(user=user)
+                        .values_list("user_id", flat=True))
+            
+            saved_wraps = {}
+            if wrapped_keys:
+                for rid in recipients:
+                    b64 = wrapped_keys.get(str(rid)) or wrapped_keys.get(int(rid))
+                    if not b64:
+                        continue
+                    MediaKeyWrap.objects.create(message=message, recipient_id=rid, wrapped_key_b64=b64)
+                    saved_wraps[str(rid)] = b64
+            elif legacy_wrapped:
+                # apply same wrap to all recipients (1:1 threads OK; groups not ideal but allowed)
+                for rid in recipients:
+                    MediaKeyWrap.objects.create(message=message, recipient_id=rid, wrapped_key_b64=legacy_wrapped)
+                    saved_wraps[str(rid)] = legacy_wrapped
+            
+            # Prepare fan-out via Channels
+            payload = {
+                "id": message.id,
+                "thread_id": thread.id,
+                "type": "media",
+                "sender_id": user.id,
+                "content": message.text,
+                "media_url": media.file.url if media else None,
+                "media_sha256": got_sha256,
+                "media_nonce_b64": nonce_b64,
+                "thumb_b64": message.thumb_b64,
+                "mime": mime,
+                "size": media.size,
+                "wrapped_keys": saved_wraps,  # per-recipient
+                "created_at": message.created_at.isoformat(),
+            }
+            
+            # Log before sending WebSocket message
+            logger.info(f"Preparing to send WebSocket message for thread {thread.id}, message {message.id}")
+            try:
+                channel_layer = get_channel_layer()
+                message_data = {
+                    "type": "message.created",
+                    "thread_id": thread.id,
+                    "message_id": message.id,
+                    "sender_id": user.id,
+                    "sender_name": user.get_full_name() or user.username or user.phone_number,
+                    "content": content,
+                    "has_media": bool(media),
+                    "media_id": media.id if media else None,
+                    "media_mime": media_metadata.get("mime") if media_metadata else None,
+                    "timestamp": message.created_at.isoformat(),
+                }
+                logger.info(f"WebSocket payload: {message_data}")
+                
+                # Get group name and check if any consumers are connected
+                group_name = f"thread_{thread.id}"
+                logger.info(f"Broadcasting to WebSocket group: {group_name}")
+                
+                async_to_sync(channel_layer.group_send)(group_name, message_data)
+                logger.info("✅ WebSocket message sent successfully")
+                
+                # Also send to individual user channels (to support mobile app)
+                for rid in recipients:
+                    user_group = f"user_{rid}"
+                    logger.info(f"Broadcasting to user channel: {user_group}")
+                    async_to_sync(channel_layer.group_send)(
+                        user_group, 
+                        {"type": "chat.message", "data": payload}
+                    )
+            except Exception as e:
+                logger.error(f"WebSocket error: {str(e)}")
+                logger.error(traceback.format_exc())
+            
+            # HTTP response for sender
+            return Response(payload, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error processing encrypted media upload: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

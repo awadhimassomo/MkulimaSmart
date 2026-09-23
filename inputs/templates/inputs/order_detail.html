@@ -1,0 +1,96 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Order {{ order.order_number }}{% endblock %}
+{% block supplier_title %}Order {{ order.order_number }}{% endblock %}
+{% block supplier_subtitle %}{% if viewer == "manufacturer" %}From {{ order.shop }}{% else %}To {{ order.manufacturer }}{% endif %} · placed {{ order.created_at|date:"M j, Y H:i" }}{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="in-grid-2">
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-panel-head">
+          <h2 class="in-panel-title">Items</h2>
+          <span class="in-pill in-pill-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
+      </div>
+      <div class="in-table-wrap">
+        <table class="supplier-table">
+          <thead><tr><th>Product</th><th>Qty</th><th>Unit price</th><th>Total</th>{% if viewer == "manufacturer" %}<th>Your stock</th>{% endif %}</tr></thead>
+          <tbody>
+            {% for item in order.items.all %}
+              <tr>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.quantity|intcomma }}</td>
+                <td class="in-money">{{ item.unit_price|floatformat:0|intcomma }}</td>
+                <td class="in-money"><strong>{{ item.line_total|floatformat:0|intcomma }}</strong></td>
+                {% if viewer == "manufacturer" %}
+                  <td>{% if item.wholesale_product %}{{ item.wholesale_product.stock_available|intcomma }}{% if item.wholesale_product.stock_available < item.quantity and order.status in "pending confirmed" %} <span class="in-pill in-pill-low">Short</span>{% endif %}{% else %}—{% endif %}</td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr><th colspan="3">Total</th><th class="in-money">TZS {{ order.total|floatformat:0|intcomma }}</th>{% if viewer == "manufacturer" %}<th></th>{% endif %}</tr></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <div class="in-stack" style="margin-top:0">
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <h2 class="in-panel-title" style="margin-bottom:0.75rem">{% if viewer == "manufacturer" %}Shop{% else %}Manufacturer{% endif %}</h2>
+          {% if viewer == "manufacturer" %}{% with party=order.shop %}{% include "inputs/_party.html" %}{% endwith %}{% else %}{% with party=order.manufacturer %}{% include "inputs/_party.html" %}{% endwith %}{% endif %}
+          {% if order.notes %}<div style="margin-top:1rem"><strong>Shop notes</strong><p class="in-muted" style="white-space:pre-line">{{ order.notes }}</p></div>{% endif %}
+          {% if order.manufacturer_note %}<div style="margin-top:1rem"><strong>Manufacturer notes</strong><p class="in-muted" style="white-space:pre-line">{{ order.manufacturer_note }}</p></div>{% endif %}
+          {% if order.received_at %}<p class="in-muted" style="margin-top:1rem">Received {{ order.received_at|date:"M j, Y H:i" }}</p>{% endif %}
+        </div>
+      </section>
+
+      {% if viewer == "manufacturer" and order.status in "pending confirmed" %}
+        <section class="in-panel">
+          <div class="in-panel-body">
+            <h2 class="in-panel-title">Update order</h2>
+            <form method="post" style="margin-top:0.75rem">
+              {% csrf_token %}
+              <div class="in-field"><label for="m-note">Note to shop</label><textarea name="note" id="m-note" rows="2" class="form-input" placeholder="Delivery date, driver contact, reason for declining…">{{ order.manufacturer_note }}</textarea></div>
+              <div class="supplier-actions" style="margin-top:0.75rem">
+                {% if order.status == "pending" %}<button name="status" value="confirmed" class="in-btn in-btn-secondary">Confirm order</button>{% endif %}
+                <button name="status" value="dispatched" class="in-btn in-btn-primary"><i class="fa-solid fa-truck-fast"></i> Mark dispatched</button>
+                <button name="status" value="cancelled" class="in-btn in-btn-danger" onclick="return confirm('Decline this order?')">Decline</button>
+              </div>
+              <p class="in-muted" style="margin-top:0.5rem">Dispatching deducts these quantities from your available stock.</p>
+            </form>
+          </div>
+        </section>
+      {% endif %}
+
+      {% if viewer == "shop" %}
+        {% if order.status == "dispatched" %}
+          <section class="in-panel">
+            <div class="in-panel-body">
+              <h2 class="in-panel-title">Goods arrived?</h2>
+              <p class="in-muted">Confirm delivery to add every item to your stock at the ordered cost price.</p>
+              <form method="post" action="{% url 'inputs:order_action' order.pk %}" style="margin-top:0.75rem">
+                {% csrf_token %}
+                <button name="action" value="receive" class="in-btn in-btn-primary"><i class="fa-solid fa-box-open"></i> Mark as received</button>
+              </form>
+            </div>
+          </section>
+        {% elif order.status == "pending" %}
+          <section class="in-panel">
+            <div class="in-panel-body">
+              <p class="in-muted">Waiting for the manufacturer to confirm. You can still cancel.</p>
+              <form method="post" action="{% url 'inputs:order_action' order.pk %}" style="margin-top:0.5rem">
+                {% csrf_token %}
+                <button name="action" value="cancel" class="in-btn in-btn-danger" onclick="return confirm('Cancel this order?')">Cancel order</button>
+              </form>
+            </div>
+          </section>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  <div><a href="{% if viewer == 'manufacturer' %}{% url 'inputs:manufacturer_orders' %}{% else %}{% url 'inputs:order_list' %}{% endif %}" class="in-btn in-btn-secondary">← All orders</a></div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Sales{% endblock %}
+{% block supplier_title %}Sales{% endblock %}
+{% block supplier_subtitle %}Every receipt from your POS. Filter by date, payment method or product.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <section class="in-panel">
+    <div class="in-panel-body">
+      <form method="get" class="in-toolbar">
+        <div><label for="f-from">From</label><input type="date" id="f-from" name="from" value="{{ filters.from }}" class="form-input"></div>
+        <div><label for="f-to">To</label><input type="date" id="f-to" name="to" value="{{ filters.to }}" class="form-input"></div>
+        <div>
+          <label for="f-pay">Payment</label>
+          <select id="f-pay" name="payment" class="form-select">
+            <option value="">All</option>
+            {% for value, label in payment_choices %}<option value="{{ value }}" {% if filters.payment == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div style="flex:1"><label for="f-q">Search</label><input type="search" id="f-q" name="q" value="{{ filters.q }}" class="form-input" placeholder="Receipt, customer or product"></div>
+        <button class="in-btn in-btn-primary" type="submit">Filter</button>
+        <a href="{% url 'inputs:sale_list' %}" class="in-btn in-btn-secondary">Reset</a>
+      </form>
+    </div>
+  </section>
+
+  <div class="in-kpis">
+    <div class="in-kpi in-kpi-primary"><div class="in-kpi-label">Revenue</div><div class="in-kpi-value">TZS {{ totals.revenue|default:0|floatformat:0|intcomma }}</div></div>
+    <div class="in-kpi"><div class="in-kpi-label">Receipts</div><div class="in-kpi-value">{{ totals.count }}</div></div>
+  </div>
+
+  <section class="in-panel">
+    {% if page_obj.object_list %}
+      <div class="in-table-wrap">
+        <table class="supplier-table">
+          <thead><tr><th>Receipt</th><th>Date</th><th>Customer</th><th>Items</th><th>Payment</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for sale in page_obj %}
+              <tr>
+                <td><a href="{% url 'inputs:sale_detail' sale.pk %}" class="in-link">{{ sale.receipt_number }}</a></td>
+                <td>{{ sale.created_at|date:"M j, Y H:i" }}</td>
+                <td>{{ sale.customer_name|default:"Walk-in" }}{% if sale.customer_phone %}<div class="in-muted">{{ sale.customer_phone }}</div>{% endif %}</td>
+                <td>{{ sale.item_count }}</td>
+                <td><span class="in-pill {% if sale.payment_method == 'credit' %}in-pill-pending{% endif %}">{{ sale.get_payment_method_display }}</span></td>
+                <td class="in-money"><strong>TZS {{ sale.total|floatformat:0|intcomma }}</strong></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "inputs/_pagination.html" %}
+    {% else %}
+      <div class="in-empty"><i class="fa-solid fa-receipt"></i>No sales match these filters.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Manufacturer Dashboard{% endblock %}
+{% block supplier_title %}Manufacturer Dashboard{% endblock %}
+{% block supplier_subtitle %}Reach input shops across the country. List your products, then confirm and dispatch the orders they send.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="in-kpis">
+    <div class="in-kpi in-kpi-primary">
+      <div class="in-kpi-label">New orders</div>
+      <div class="in-kpi-value">{{ pending_count }}</div>
+      <div class="in-kpi-note">Waiting for your confirmation</div>
+    </div>
+    <div class="in-kpi {% if to_ship_count %}in-kpi-warn{% endif %}">
+      <div class="in-kpi-label">To dispatch</div>
+      <div class="in-kpi-value">{{ to_ship_count }}</div>
+      <div class="in-kpi-note">Confirmed, not yet shipped</div>
+    </div>
+    <div class="in-kpi">
+      <div class="in-kpi-label">Shipped this month</div>
+      <div class="in-kpi-value">TZS {{ month_sales|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="in-kpi">
+      <div class="in-kpi-label">Shops buying</div>
+      <div class="in-kpi-value">{{ shop_count }}</div>
+    </div>
+    <div class="in-kpi">
+      <div class="in-kpi-label">Products listed</div>
+      <div class="in-kpi-value">{{ product_count }}</div>
+    </div>
+  </div>
+
+  <div class="supplier-actions">
+    <a href="{% url 'inputs:manufacturer_product_create' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-plus"></i> List a product</a>
+    <a href="{% url 'inputs:manufacturer_orders' %}?status=pending" class="in-btn in-btn-secondary">Review new orders</a>
+  </div>
+
+  <div class="in-grid-2">
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-panel-head">
+          <h2 class="in-panel-title">Recent orders</h2>
+          <a href="{% url 'inputs:manufacturer_orders' %}" class="in-link">All orders →</a>
+        </div>
+      </div>
+      {% if recent_orders %}
+        <div class="in-table-wrap">
+          <table class="supplier-table">
+            <thead><tr><th>Order</th><th>Shop</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for order in recent_orders %}
+                <tr>
+                  <td><a href="{% url 'inputs:manufacturer_order_detail' order.pk %}" class="in-link">{{ order.order_number }}</a><div class="in-muted">{{ order.created_at|naturaltime }}</div></td>
+                  <td>{{ order.shop }}<div class="in-muted">{{ order.shop.location }}</div></td>
+                  <td class="in-money">TZS {{ order.total|floatformat:0|intcomma }}</td>
+                  <td><span class="in-pill in-pill-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="in-empty"><i class="fa-solid fa-inbox"></i>No orders yet. Shops will see your products as soon as you list them.</div>
+      {% endif %}
+    </section>
+
+    <div class="in-stack" style="margin-top:0">
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <div class="in-panel-head"><h2 class="in-panel-title">Most ordered</h2></div>
+          {% if top_products %}
+            <div class="in-list">
+              {% for p in top_products %}
+                <div class="in-list-row"><a href="{% url 'inputs:manufacturer_product_edit' p.pk %}" class="in-link">{{ p.name }}</a><strong>{{ p.ordered|intcomma }}</strong></div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="in-empty">Order volume will show here.</div>
+          {% endif %}
+        </div>
+      </section>
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <div class="in-panel-head"><h2 class="in-panel-title">Stock running low</h2></div>
+          {% if low_products %}
+            <div class="in-list">
+              {% for p in low_products %}
+                <div class="in-list-row"><a href="{% url 'inputs:manufacturer_product_edit' p.pk %}" class="in-link">{{ p.name }}</a><span class="in-pill in-pill-low">{{ p.stock_available|intcomma }} left</span></div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="in-empty">All listed products have healthy stock.</div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

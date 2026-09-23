@@ -1,0 +1,205 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Shop Dashboard{% endblock %}
+{% block supplier_title %}Shop Dashboard{% endblock %}
+{% block supplier_subtitle %}Today's sales, what's running low, and what's on its way from manufacturers.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="in-kpis">
+    <div class="in-kpi in-kpi-primary">
+      <div class="in-kpi-label">Sales today</div>
+      <div class="in-kpi-value">TZS {{ today_revenue|floatformat:0|intcomma }}</div>
+      <div class="in-kpi-note">{{ today_count }} receipt{{ today_count|pluralize }}</div>
+    </div>
+    <div class="in-kpi">
+      <div class="in-kpi-label">This month</div>
+      <div class="in-kpi-value">TZS {{ month_revenue|floatformat:0|intcomma }}</div>
+      <div class="in-kpi-note">{{ month_count }} sale{{ month_count|pluralize }}</div>
+    </div>
+    <div class="in-kpi">
+      <div class="in-kpi-label">Gross profit (month)</div>
+      <div class="in-kpi-value">TZS {{ month_profit|floatformat:0|intcomma }}</div>
+      <div class="in-kpi-note">Sales minus cost of goods</div>
+    </div>
+    <div class="in-kpi">
+      <div class="in-kpi-label">Stock value</div>
+      <div class="in-kpi-value">TZS {{ stock_value|floatformat:0|intcomma }}</div>
+      <div class="in-kpi-note">{{ stock_count }} product{{ stock_count|pluralize }} at cost</div>
+    </div>
+    <div class="in-kpi {% if low_stock_count %}in-kpi-warn{% endif %}">
+      <div class="in-kpi-label">Low stock</div>
+      <div class="in-kpi-value">{{ low_stock_count }}</div>
+      <div class="in-kpi-note">{% if arriving_count %}{{ arriving_count }} order{{ arriving_count|pluralize }} on the way{% else %}At or below reorder level{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="supplier-actions">
+    <a href="{% url 'inputs:pos' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-cash-register"></i> Open POS</a>
+    <a href="{% url 'inputs:catalog' %}" class="in-btn in-btn-secondary"><i class="fa-solid fa-cart-plus"></i> Order stock</a>
+    <a href="{% url 'inputs:stock_create' %}" class="in-btn in-btn-secondary"><i class="fa-solid fa-plus"></i> Add stock item</a>
+  </div>
+
+  <div class="in-grid-2">
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-panel-head">
+          <h2 class="in-panel-title">Last 7 days</h2>
+          <a href="{% url 'inputs:sale_list' %}" class="in-link">All sales →</a>
+        </div>
+        <div class="in-bars" role="img" aria-label="Daily sales for the last 7 days">
+          {% for day in trend %}
+            <div class="in-bar" title="{{ day.label }}: TZS {{ day.value|floatformat:0|intcomma }}">
+              <span class="in-money">{% if day.value %}{{ day.value|floatformat:0|intcomma }}{% endif %}</span>
+              <div class="in-bar-fill" style="height: {{ day.pct }}%"></div>
+              <span>{{ day.label }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-panel-head">
+          <h2 class="in-panel-title">Running low</h2>
+          <a href="{% url 'inputs:stock_list' %}?view=low" class="in-link">View all →</a>
+        </div>
+        {% if low_stock %}
+          <div class="in-list">
+            {% for item in low_stock %}
+              <div class="in-list-row">
+                <div class="in-name-cell">
+                  {% if item.image %}<img src="{{ item.image.url }}" alt="" class="in-thumb">{% else %}<span class="in-thumb"><i class="fa-solid fa-seedling"></i></span>{% endif %}
+                  <div>
+                    <a href="{% url 'inputs:stock_edit' item.pk %}" class="in-link">{{ item.name }}</a>
+                    <div class="in-muted">{{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display|lower }} left</div>
+                  </div>
+                </div>
+                {% if item.wholesale_product_id %}
+                  <a href="{% url 'inputs:catalog_product' item.wholesale_product_id %}" class="in-btn in-btn-secondary in-btn-sm">Reorder</a>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="in-empty"><i class="fa-regular fa-circle-check"></i>Everything is above its reorder level.</div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  {% if farmer_orders_open %}
+  <section class="in-panel" style="border-color:#86efac">
+    <div class="in-panel-body">
+      <div class="in-panel-head">
+        <h2 class="in-panel-title"><i class="fa-brands fa-whatsapp" style="color:#16a34a"></i> Farmer orders to handle{% if farmer_orders_new_count %} · {{ farmer_orders_new_count }} new{% endif %}</h2>
+        <a href="{% url 'inputs:farmer_order_list' %}" class="in-link">All farmer orders →</a>
+      </div>
+      <div class="in-list">
+        {% for order in farmer_orders_open %}
+          <div class="in-list-row">
+            <div><a href="{% url 'inputs:farmer_order_detail' order.pk %}" class="in-link">{{ order.order_number }} · {{ order.farmer_name }}</a><div class="in-muted">{{ order.items.all|length }} item{{ order.items.all|length|pluralize }} · TZS {{ order.total|floatformat:0|intcomma }} · {{ order.created_at|naturaltime }}</div></div>
+            <span class="in-pill in-pill-{{ order.status }}">{{ order.get_status_display }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if expiring %}
+  <section class="in-panel" style="border-color:#f5d08a">
+    <div class="in-panel-body">
+      <div class="in-panel-head">
+        <h2 class="in-panel-title"><i class="fa-solid fa-hourglass-half" style="color:#b45309"></i> Expiring within 60 days ({{ expiring_count }})</h2>
+        <a href="{% url 'inputs:stock_list' %}?view=expiring" class="in-link">View all →</a>
+      </div>
+      <div class="in-list">
+        {% for item in expiring %}
+          <div class="in-list-row">
+            <div><a href="{% url 'inputs:stock_edit' item.pk %}" class="in-link">{{ item.name }}</a><div class="in-muted">{{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display|lower }}{% if item.batch_number %} · batch {{ item.batch_number }}{% endif %}</div></div>
+            {% if item.is_expired %}<span class="in-pill in-pill-low">Expired {{ item.expiry_date|date:"M j" }}</span>{% else %}<span class="in-pill in-pill-pending">{{ item.expiry_date|date:"M j, Y" }}</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="in-grid-2">
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-panel-head">
+          <h2 class="in-panel-title">Recent sales</h2>
+        </div>
+        {% if recent_sales %}
+          <div class="in-table-wrap">
+            <table class="supplier-table">
+              <thead><tr><th>Receipt</th><th>Items</th><th>Payment</th><th>Total</th><th>Time</th></tr></thead>
+              <tbody>
+                {% for sale in recent_sales %}
+                  <tr>
+                    <td><a href="{% url 'inputs:sale_detail' sale.pk %}" class="in-link">{{ sale.receipt_number }}</a></td>
+                    <td>{{ sale.items.all|length }}</td>
+                    <td>{{ sale.get_payment_method_display }}</td>
+                    <td class="in-money">TZS {{ sale.total|floatformat:0|intcomma }}</td>
+                    <td class="in-muted">{{ sale.created_at|naturaltime }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="in-empty"><i class="fa-solid fa-receipt"></i>No sales yet. Open the POS to record your first sale.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <div class="in-stack" style="margin-top:0">
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <div class="in-panel-head">
+            <h2 class="in-panel-title">Orders from manufacturers</h2>
+            <a href="{% url 'inputs:order_list' %}" class="in-link">All orders →</a>
+          </div>
+          {% if open_orders %}
+            <div class="in-list">
+              {% for order in open_orders %}
+                <div class="in-list-row">
+                  <div>
+                    <a href="{% url 'inputs:order_detail' order.pk %}" class="in-link">{{ order.order_number }}</a>
+                    <div class="in-muted">{{ order.manufacturer }} · TZS {{ order.total|floatformat:0|intcomma }}</div>
+                  </div>
+                  <span class="in-pill in-pill-{{ order.status }}">{{ order.get_status_display }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="in-empty"><i class="fa-solid fa-truck"></i>No open orders. <a href="{% url 'inputs:catalog' %}" class="in-link">Browse manufacturers</a></div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <div class="in-panel-head"><h2 class="in-panel-title">Top sellers this month</h2></div>
+          {% if top_sellers %}
+            <div class="in-list">
+              {% for row in top_sellers %}
+                <div class="in-list-row">
+                  <div><strong>{{ row.product_name }}</strong><div class="in-muted">{{ row.qty|floatformat:"-2" }} sold</div></div>
+                  <span class="in-money">TZS {{ row.revenue|floatformat:0|intcomma }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="in-empty">Sales this month will show up here.</div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

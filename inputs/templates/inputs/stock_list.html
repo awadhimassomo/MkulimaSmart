@@ -1,0 +1,83 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Stock{% endblock %}
+{% block supplier_title %}Stock{% endblock %}
+{% block supplier_subtitle %}Everything on your shelves. Items ordered from manufacturers are added here automatically when you receive them.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="in-kpis">
+    <div class="in-kpi in-kpi-primary"><div class="in-kpi-label">Products in POS</div><div class="in-kpi-value">{{ summary.count }}</div></div>
+    <div class="in-kpi"><div class="in-kpi-label">Value at cost</div><div class="in-kpi-value">TZS {{ summary.cost|default:0|floatformat:0|intcomma }}</div></div>
+    <div class="in-kpi"><div class="in-kpi-label">Value at selling price</div><div class="in-kpi-value">TZS {{ summary.retail|default:0|floatformat:0|intcomma }}</div></div>
+  </div>
+
+  <section class="in-panel">
+    <div class="in-panel-body">
+      <div class="in-panel-head">
+        <div class="in-tabs">
+          <a href="?q={{ q|urlencode }}" class="{% if not view %}is-active{% endif %}">All</a>
+          <a href="?view=low&amp;q={{ q|urlencode }}" class="{% if view == 'low' %}is-active{% endif %}">Low stock</a>
+          <a href="?view=expiring&amp;q={{ q|urlencode }}" class="{% if view == 'expiring' %}is-active{% endif %}">Expiring / expired</a>
+          <a href="?view=inactive&amp;q={{ q|urlencode }}" class="{% if view == 'inactive' %}is-active{% endif %}">Hidden from POS</a>
+        </div>
+        <div class="in-toolbar">
+          <form method="get" class="in-toolbar">
+            <input type="hidden" name="view" value="{{ view }}">
+            <input type="search" name="q" value="{{ q }}" class="form-input" placeholder="Search name or SKU" aria-label="Search stock">
+          </form>
+          <a href="{% url 'inputs:stock_create' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-plus"></i> Add item</a>
+        </div>
+      </div>
+    </div>
+    {% if items %}
+      <div class="in-table-wrap">
+        <table class="supplier-table">
+          <thead><tr><th>Product</th><th>Category</th><th>In stock</th><th>Expiry</th><th>Cost</th><th>Price</th><th>Margin</th><th></th></tr></thead>
+          <tbody>
+            {% for item in items %}
+              <tr>
+                <td>
+                  <div class="in-name-cell">
+                    {% if item.image %}<img src="{{ item.image.url }}" alt="" class="in-thumb">{% else %}<span class="in-thumb"><i class="fa-solid fa-seedling"></i></span>{% endif %}
+                    <div>
+                      <a href="{% url 'inputs:stock_edit' item.pk %}" class="in-link">{{ item.name }}</a>
+                      <div class="in-muted">{{ item.brand }}{% if item.brand and item.sku %} · {% endif %}{{ item.sku }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ item.get_category_display }}</td>
+                <td>
+                  {{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display|lower }}
+                  {% if item.is_low_stock and item.is_active %}<span class="in-pill in-pill-low">Low</span>{% endif %}
+                </td>
+                <td>
+                  {% if item.expiry_date %}{{ item.expiry_date|date:"M j, Y" }}
+                    {% if item.is_expired %}<span class="in-pill in-pill-low">Expired</span>{% elif item.expires_soon %}<span class="in-pill in-pill-pending">Soon</span>{% endif %}
+                    {% if item.batch_number %}<div class="in-muted">Batch {{ item.batch_number }}</div>{% endif %}
+                  {% else %}<span class="in-muted">—</span>{% endif %}
+                </td>
+                <td class="in-money">{{ item.cost_price|floatformat:0|intcomma }}</td>
+                <td class="in-money"><strong>{{ item.selling_price|floatformat:0|intcomma }}</strong></td>
+                <td class="in-money">{% if item.margin_percent is not None %}{{ item.margin_percent }}%{% else %}—{% endif %}</td>
+                <td>
+                  <div class="supplier-actions" style="gap:0.4rem;flex-wrap:nowrap">
+                    <a href="{% url 'inputs:stock_edit' item.pk %}" class="in-btn in-btn-secondary in-btn-sm">Edit</a>
+                    {% if item.wholesale_product_id %}<a href="{% url 'inputs:catalog_product' item.wholesale_product_id %}" class="in-btn in-btn-secondary in-btn-sm">Reorder</a>{% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="in-empty">
+        <i class="fa-solid fa-warehouse"></i>
+        {% if q or view %}Nothing matches.{% else %}No stock yet. <a href="{% url 'inputs:stock_create' %}" class="in-link">Add an item</a> or <a href="{% url 'inputs:catalog' %}" class="in-link">order from a manufacturer</a>.{% endif %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

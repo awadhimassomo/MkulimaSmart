@@ -1,0 +1,329 @@
+{% extends "training/base.html" %}
+
+{% block extra_css %}
+<style>
+  /* optional: thinner, subtle scrollbars */
+  .thin-scrollbar::-webkit-scrollbar { width: 6px; height:6px; }
+  .thin-scrollbar::-webkit-scrollbar-thumb { background:#E5E7EB; border-radius:9999px; }
+</style>
+{% endblock %}
+
+{% load static i18n training_tags %}
+
+{% block training_content %}
+<div id="course-detail-container" class="h-full">
+  <div class="flex gap-6 h-full">
+
+    <!-- LEFT: Course list -->
+    <aside class="w-2/5 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+      <!-- Header + search + tabs -->
+      <div class="p-5 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-800">{% trans "Courses" %}</h2>
+          <label class="relative block">
+            <input type="text" placeholder="{% trans 'Search…' %}" class="pl-8 pr-3 py-2 text-sm border rounded-lg border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-300">
+            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">
+              <i class="fas fa-search text-xs"></i>
+            </span>
+          </label>
+        </div>
+
+        <div id="course-tabs" class="mt-4 flex items-center gap-2 text-sm">
+          <button data-tab="all" class="px-3 py-1.5 rounded-lg font-medium bg-gray-100 text-gray-900">{% trans "All" %}</button>
+          <button data-tab="active" class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800">{% trans "Active" %}</button>
+          <button data-tab="completed" class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800">{% trans "Completed" %}</button>
+        </div>
+      </div>
+
+      <!-- Language chips -->
+      <div class="px-5 py-3 border-b border-gray-100 flex gap-2 overflow-x-auto thin-scrollbar">
+        {% language_chips %}
+        <button class="ml-auto px-2 text-xs" aria-label="{% trans 'Filters' %}">
+          <i class="fas fa-sliders-h"></i>
+        </button>
+      </div>
+
+      <!-- List -->
+      <div class="p-4 space-y-3 overflow-y-auto thin-scrollbar" style="max-height: calc(100vh - 280px)">
+        {% for course in courses %}
+        {# --- Detect the GAP Swahili course by slug; change to your identifier if needed --- #}
+        {% with is_gap=course.slug|default:''|lower|equals:'gap-tz' %}
+        <article
+          class="course-item group rounded-xl border border-gray-200 hover:border-amber-200 hover:bg-amber-50/40 transition p-3 cursor-pointer {% if forloop.first %}!border-amber-300 bg-amber-50/50{% endif %}"
+          data-course-id="{{ course.id }}"
+          data-title="{% if is_gap %}Mazoezi Bora ya Kilimo (Tanzania){% else %}{{ course.title|escapejs }}{% endif %}"
+          data-description="{% if is_gap %}Kozi ya vitendo ya GAP kwa wakulima wadogo Tanzania: udongo, maji, upandaji, IPM, uvunaji, baada ya mavuno, kumbukumbu, masoko, usalama, na mbinu za tabianchi — bila kutegemea mbolea za viwandani.{% else %}{{ course.description|escapejs }}{% endif %}"
+          data-short-description="{% if is_gap %}Mafunzo yote muhimu ya kilimo bora Tanzania.{% else %}{{ course.short_description|default:course.description|escapejs }}{% endif %}"
+          data-image-url="{{ course.image.url|default:'https://placehold.co/1280x720' }}"
+          data-level="{% if is_gap %}{% trans 'Beginner' %}{% else %}{{ course.get_level_display }}{% endif %}"
+          data-lesson-count="{% if is_gap %}28{% else %}{{ course.lesson_count }}{% endif %}"
+          data-estimated-duration="{% if is_gap %}4{% else %}{{ course.estimated_duration }}{% endif %}"
+          data-instructor-name="{% if is_gap %}Wataalamu wa Mkulima Smart{% else %}JULIUS NDEEGE{% endif %}"
+          data-instructor-title="{% if is_gap %}Kilimo cha Shamba na Baada ya Mavuno{% else %}Professional Agriculture{% endif %}"
+          data-lessons='{% if is_gap %}[
+            {"title":"Maandalizi ya Shamba na Afya ya Udongo","lessons":[
+              {"title":"Kufyekua mapema na kudhibiti mmomonyoko wa udongo","duration":"Dakika 10"},
+              {"title":"Kutengeneza mboji na mbolea ya kijani","duration":"Dakika 12"},
+              {"title":"Faida za kutandika majani badala ya kuchoma masalia ya mazao","duration":"Dakika 8"}
+            ]},
+            {"title":"Mbegu na Upandaji","lessons":[
+              {"title":"Kuchagua mbegu za kienyeji zinazostahimili ukame","duration":"Dakika 10"},
+              {"title":"Kupima uwezo wa kuota wa mbegu na kuhifadhi vizuri","duration":"Dakika 7"},
+              {"title":"Umbali na kina sahihi cha kupanda mahindi, maharage na mihogo","duration":"Dakika 12"}
+            ]},
+            {"title":"Usimamizi wa Maji","lessons":[
+              {"title":"Kutandika majani ili kupunguza uvukizi","duration":"Dakika 9"},
+              {"title":"Matumizi ya umwagiliaji wa matone kwa gharama nafuu","duration":"Dakika 11"},
+              {"title":"Kupanga tarehe ya kupanda kulingana na utabiri wa mvua","duration":"Dakika 8"}
+            ]},
+            {"title":"Udhibiti wa Magugu","lessons":[
+              {"title":"Palizi ya mapema (ndani ya wiki 2–3 baada ya kuota)","duration":"Dakika 7"},
+              {"title":"Matumizi ya zana salama na sahihi za kupalilia","duration":"Dakika 10"},
+              {"title":"Matumizi ya mimea funika na mazao ya kifunikizi","duration":"Dakika 8"}
+            ]},
+            {"title":"Udhibiti wa Wadudu na Magonjwa (IPM bila kemikali)","lessons":[
+              {"title":"Ukaguzi wa shamba na utambuzi wa wadudu/magonjwa","duration":"Dakika 10"},
+              {"title":"Mbinu za kiutamaduni na kimwili kudhibiti wadudu","duration":"Dakika 9"},
+              {"title":"Matumizi ya teknolojia ya Push–Pull na majani ya mwarobaini","duration":"Dakika 12"}
+            ]},
+            {"title":"Uvunaji","lessons":[
+              {"title":"Dalili za ukomavu na matumizi ya vifaa safi","duration":"Dakika 8"},
+              {"title":"Kuhifadhi mazao kivulini ili kuepuka kujeruhi","duration":"Dakika 7"}
+            ]},
+            {"title":"Baada ya Kuvuna na Uhifadhi","lessons":[
+              {"title":"Kukausha mazao hadi kiwango salama cha unyevu","duration":"Dakika 10"},
+              {"title":"Kuchambua na kupakia kulingana na viwango vya soko","duration":"Dakika 9"},
+              {"title":"Matumizi ya magunia ya PICS na silos za chuma","duration":"Dakika 12"}
+            ]},
+            {"title":"Kumbukumbu za Shamba","lessons":[
+              {"title":"Kutunza daftari la mapato, matumizi na mavuno","duration":"Dakika 9"},
+              {"title":"Kulinganisha misimu ili kupanga vizuri","duration":"Dakika 8"}
+            ]},
+            {"title":"Masoko na Uuzaji wa Pamoja","lessons":[
+              {"title":"Viwango vya ubora na mbinu za kujadiliana bei","duration":"Dakika 11"},
+              {"title":"Uuzaji wa pamoja na majukwaa ya kidigitali (Kikapu/Mkulima Smart)","duration":"Dakika 9"}
+            ]},
+            {"title":"Afya, Usalama na Mazingira","lessons":[
+              {"title":"Matumizi ya vifaa kinga na usalama kazini","duration":"Dakika 8"},
+              {"title":"Utunzaji wa taka na vyanzo vya maji","duration":"Dakika 7"}
+            ]},
+            {"title":"Kilimo Kinachostahimili Mabadiliko ya Tabianchi","lessons":[
+              {"title":"Kupanda mazao yanayostahimili ukame na upandaji miti shambani","duration":"Dakika 10"},
+              {"title":"Mbinu za kupunguza madhara ya mafuriko na ukame","duration":"Dakika 8"}
+            ]}
+          ]{% else %}{{ course.modules.all|lessons_to_json|escapejs }}{% endif %}'
+          data-status="{% if forloop.first %}completed{% elif forloop.counter == 2 %}active{% else %}all{% endif %}">
+          <div class="flex gap-3">
+            <img src="{{ course.image.url|default:'https://placehold.co/84x84' }}" alt="{{ course.title }}" class="w-16 h-16 rounded-lg object-cover">
+            <div class="min-w-0 flex-1">
+              <h3 class="font-medium text-gray-900 text-sm truncate">
+                {% if is_gap %}Mazoezi Bora ya Kilimo (Tanzania){% else %}{{ course.title }}{% endif %}
+              </h3>
+              <p class="text-xs text-gray-600 line-clamp-2">
+                {% if is_gap %}Mafunzo yote muhimu ya kilimo bora Tanzania.{% else %}{{ course.short_description|default:course.description|truncatechars:100 }}{% endif %}
+              </p>
+              <div class="mt-2 flex items-center gap-2 text-[11px] text-gray-600">
+                <span class="text-amber-400">
+                  <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                </span>
+                <span>{{ course.avg_rating|default:'4.5' }}</span>
+                <span class="text-gray-300">•</span>
+                <span>{% if is_gap %}28{% else %}{{ course.lesson_count|default:'12' }}{% endif %} {% trans "lessons" %}</span>
+                <span class="ml-auto px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                  {% if is_gap %}{% trans "Beginner" %}{% else %}{{ course.get_level_display }}{% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+        </article>
+        {% endwith %}
+        {% endfor %}
+      </div>
+    </aside>
+
+    <!-- RIGHT: Detail -->
+    <section id="course-detail-view" class="w-3/5">
+      {% with course=courses.first %}
+      {% if course %}
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <!-- Video -->
+        <div class="relative bg-black">
+          <div class="aspect-[16/9]">
+            <img src="{{ course.image.url|default:'https://placehold.co/1280x720' }}" class="w-full h-full object-cover" alt="Course thumbnail">
+          </div>
+          <button class="absolute inset-0 m-auto w-16 h-16 grid place-items-center bg-white/30 rounded-full">
+            <i class="fas fa-play text-white text-xl"></i>
+          </button>
+          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-center gap-3">
+            <button class="text-white"><i class="fas fa-play text-sm"></i></button>
+            <div class="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+              <div class="h-full bg-white" style="width:35%"></div>
+            </div>
+            <span class="text-white text-xs">03:45 / 10:30</span>
+            <button class="text-white"><i class="fas fa-expand text-sm"></i></button>
+          </div>
+        </div>
+
+        <!-- Meta -->
+        <div class="p-6 flex-1 flex flex-col">
+          <h2 class="text-xl font-bold text-gray-900 mb-3">{{ course.title }}</h2>
+          <p class="text-sm text-gray-600 mb-6">{{ course.description }}</p>
+
+          <div class="flex items-center gap-3 mb-6">
+            <img src="{% static 'images/avatar-placeholder.jpg' %}" class="w-10 h-10 rounded-full" alt="">
+            <div>
+              <p class="font-semibold text-gray-800">JULIUS NDEEGE</p>
+              <p class="text-xs text-gray-500">Professional Agriculture</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold text-gray-800">{% trans "Course’s content" %}</h3>
+            <span class="text-xs text-gray-500">{{ course.lesson_count|default:'12' }} {% trans "lectures" %} • {{ course.estimated_duration|default:'2' }} {% trans "hours" %}</span>
+          </div>
+
+          <!-- Lessons -->
+          <div class="space-y-2 overflow-y-auto thin-scrollbar" style="max-height: 260px">
+            <!-- Intro -->
+            <div class="flex items-center justify-between p-3 rounded-lg bg-amber-50">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-amber-200 text-amber-800 grid place-items-center mr-3 text-xs font-medium">Intro</div>
+                <div>
+                  <p class="font-medium text-sm">{% trans "Meet your teacher and see what you are going to learn" %}</p>
+                  <p class="text-xs text-gray-500">5 mins</p>
+                </div>
+              </div>
+              <button class="w-8 h-8 rounded-full bg-white shadow text-amber-600 grid place-items-center">
+                <i class="fas fa-play text-xs"></i>
+              </button>
+            </div>
+
+            {% for module in course.modules.all %}
+              {% for lesson in module.lessons.all %}
+              <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-700 grid place-items-center mr-3 text-xs font-medium">
+                    {{ forloop.parentloop.counter }}.{{ forloop.counter }}
+                  </div>
+                  <div>
+                    <p class="font-medium text-sm">{{ lesson.title }}</p>
+                    <p class="text-xs text-gray-500">{{ lesson.duration|default:'10 mins' }}</p>
+                  </div>
+                </div>
+                <button class="w-8 h-8 rounded-full bg-white shadow grid place-items-center"><i class="fas fa-play text-xs"></i></button>
+              </div>
+              {% endfor %}
+            {% empty %}
+              <div class="p-3 rounded-lg bg-gray-50">{% trans "No lessons yet." %}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+        <div class="bg-white rounded-2xl shadow-sm p-10 text-center">{% trans "No courses available." %}</div>
+      {% endif %}
+      {% endwith %}
+    </section>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block training_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const list = document.querySelectorAll('.course-item');
+  const view = document.getElementById('course-detail-view');
+
+  // tabs (client-side filter by data-status)
+  const tabs = document.querySelectorAll('#course-tabs button');
+  tabs.forEach(btn => btn.addEventListener('click', () => {
+    tabs.forEach(b => b.classList.remove('bg-gray-100','text-gray-900','font-medium'));
+    btn.classList.add('bg-gray-100','text-gray-900','font-medium');
+    const tab = btn.dataset.tab;
+    list.forEach(li => {
+      const s = li.dataset.status || 'all';
+      li.classList.toggle('hidden', tab !== 'all' && s !== tab);
+    });
+  }));
+
+  // item click -> populate detail
+  list.forEach(item => {
+    item.addEventListener('click', () => {
+      list.forEach(i => i.classList.remove('!border-amber-300','bg-amber-50/50'));
+      item.classList.add('!border-amber-300','bg-amber-50/50');
+
+      const d = item.dataset;
+      const lessons = JSON.parse(d.lessons || '[]');
+      let lessonsHtml = `
+        <div class="flex items-center justify-between p-3 rounded-lg bg-amber-50">
+          <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full bg-amber-200 text-amber-800 grid place-items-center mr-3 text-xs font-medium">Intro</div>
+            <div>
+              <p class="font-medium text-sm">{% trans "Meet your teacher and see what you are going to learn" %}</p>
+              <p class="text-xs text-gray-500">5 mins</p>
+            </div>
+          </div>
+          <button class="w-8 h-8 rounded-full bg-white shadow text-amber-600 grid place-items-center">
+            <i class="fas fa-play text-xs"></i>
+          </button>
+        </div>`;
+
+      lessons.forEach((m, mi) => {
+        (m.lessons || []).forEach((l, li) => {
+          lessonsHtml += `
+          <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100">
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-700 grid place-items-center mr-3 text-xs font-medium">${mi+1}.${li+1}</div>
+              <div>
+                <p class="font-medium text-sm">${l.title}</p>
+                <p class="text-xs text-gray-500">${l.duration || '10 mins'}</p>
+              </div>
+            </div>
+            <button class="w-8 h-8 rounded-full bg-white shadow grid place-items-center"><i class="fas fa-play text-xs"></i></button>
+          </div>`;
+        });
+      });
+
+      view.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="relative bg-black">
+            <div class="aspect-[16/9]">
+              <img src="${d.imageUrl}" class="w-full h-full object-cover" alt="Course thumbnail">
+            </div>
+            <button class="absolute inset-0 m-auto w-16 h-16 grid place-items-center bg-white/30 rounded-full">
+              <i class="fas fa-play text-white text-xl"></i>
+            </button>
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-center gap-3">
+              <button class="text-white"><i class="fas fa-play text-sm"></i></button>
+              <div class="flex-1 h-1 bg-white/30 rounded-full overflow-hidden"><div class="h-full bg-white" style="width:35%"></div></div>
+              <span class="text-white text-xs">03:45 / 10:30</span>
+              <button class="text-white"><i class="fas fa-expand text-sm"></i></button>
+            </div>
+          </div>
+
+          <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-3">${d.title}</h2>
+            <p class="text-sm text-gray-600 mb-6">${d.description || d.shortDescription || ''}</p>
+
+            <div class="flex items-center gap-3 mb-6">
+              <img src="{% static 'images/avatar-placeholder.jpg' %}" class="w-10 h-10 rounded-full" alt="">
+              <div>
+                <p class="font-semibold text-gray-800">${d.instructorName || "Mkulima Smart"}</p>
+                <p class="text-xs text-gray-500">${d.instructorTitle || "Kilimo na Baada ya Mavuno"}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-lg font-semibold text-gray-800">{% trans "Course’s content" %}</h3>
+              <span class="text-xs text-gray-500">${d.lessonCount || 0} {% trans "lectures" %} • ${d.estimatedDuration || 0} {% trans "hours" %}</span>
+            </div>
+
+            <div class="space-y-2 overflow-y-auto thin-scrollbar" style="max-height:260px">${lessonsHtml}</div>
+          </div>
+        </div>`;
+    });
+  });
+});
+</script>
+{% endblock %}

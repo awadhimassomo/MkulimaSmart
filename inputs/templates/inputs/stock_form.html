@@ -1,0 +1,102 @@
+{% extends "inputs/base.html" %}
+
+{% block page_title %}{% if item %}{{ item.name }}{% else %}Add stock item{% endif %}{% endblock %}
+{% block supplier_title %}{% if item %}{{ item.name }}{% else %}Add stock item{% endif %}{% endblock %}
+{% block supplier_subtitle %}{% if item and item.is_expired %}Expired on {{ item.expiry_date|date:"M j, Y" }}. Remove it from sale. {% endif %}{% if item %}Currently {{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display|lower }} in stock.{% else %}Add a product you already have on your shelves so you can sell it in the POS.{% endif %}{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="in-grid-2">
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <h2 class="in-panel-title" style="margin-bottom:1rem">Product details</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+          <div class="in-form-grid">
+            {% include "inputs/_field.html" with field=form.name extra_class="in-field-wide" %}
+            {% include "inputs/_field.html" with field=form.brand %}
+            {% include "inputs/_field.html" with field=form.category %}
+            {% include "inputs/_field.html" with field=form.unit %}
+            {% include "inputs/_field.html" with field=form.sku %}
+            {% if form.quantity %}{% include "inputs/_field.html" with field=form.quantity %}{% endif %}
+            {% include "inputs/_field.html" with field=form.cost_price %}
+            {% include "inputs/_field.html" with field=form.selling_price %}
+            {% include "inputs/_field.html" with field=form.reorder_level %}
+            {% include "inputs/_field.html" with field=form.batch_number %}
+            {% include "inputs/_field.html" with field=form.expiry_date %}
+            <div class="in-field in-field-wide">
+              <label for="{{ form.image.id_for_label }}">Product photo</label>
+              <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+                {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.name }}" class="in-image-preview" id="img-preview">{% else %}<img alt="" class="in-image-preview" id="img-preview" hidden>{% endif %}
+                <div style="flex:1;min-width:220px">{{ form.image }}{{ form.image.errors }}<span class="helptext">Shown on POS tiles. JPG, PNG or WebP up to 5 MB.</span></div>
+              </div>
+            </div>
+            {% include "inputs/_field.html" with field=form.is_active extra_class="in-field-wide" %}
+          </div>
+          <div class="supplier-actions" style="margin-top:1.25rem">
+            <button type="submit" class="in-btn in-btn-primary">{% if item %}Save changes{% else %}Add to stock{% endif %}</button>
+            <a href="{% url 'inputs:stock_list' %}" class="in-btn in-btn-secondary">Back to stock</a>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    {% if item %}
+      <div class="in-stack" style="margin-top:0">
+        <section class="in-panel">
+          <div class="in-panel-body">
+            <h2 class="in-panel-title">Adjust quantity</h2>
+            <p class="in-muted">For stock counts, damage, or goods received outside the platform.</p>
+            <form method="post" action="{% url 'inputs:stock_adjust' item.pk %}" class="in-form-grid" style="margin-top:0.75rem">
+              {% csrf_token %}
+              {% include "inputs/_field.html" with field=adjust_form.change %}
+              {% include "inputs/_field.html" with field=adjust_form.note %}
+              <div><button type="submit" class="in-btn in-btn-primary">Apply</button></div>
+            </form>
+          </div>
+        </section>
+        <section class="in-panel">
+          <div class="in-panel-body">
+            <h2 class="in-panel-title" style="margin-bottom:0.75rem">Stock history</h2>
+            {% if movements %}
+              <div class="in-list">
+                {% for m in movements %}
+                  <div class="in-list-row">
+                    <div>
+                      <strong>{{ m.get_reason_display }}</strong>{% if m.reference %} · {{ m.reference }}{% endif %}
+                      <div class="in-muted">{{ m.created_at|date:"M j, H:i" }}{% if m.note %} · {{ m.note }}{% endif %}</div>
+                    </div>
+                    <div class="in-money" style="text-align:right">
+                      <strong style="color:{% if m.change < 0 %}#b42318{% else %}#047857{% endif %}">{% if m.change > 0 %}+{% endif %}{{ m.change|floatformat:"-2" }}</strong>
+                      <div class="in-muted">→ {{ m.balance_after|floatformat:"-2" }}</div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="in-empty">No movements yet.</div>
+            {% endif %}
+          </div>
+        </section>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const input = document.getElementById("{{ form.image.id_for_label }}");
+    const preview = document.getElementById("img-preview");
+    if (!input || !preview) return;
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      preview.src = URL.createObjectURL(file);
+      preview.hidden = false;
+    });
+  })();
+</script>
+{% endblock %}

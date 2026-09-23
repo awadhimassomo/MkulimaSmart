@@ -1,0 +1,255 @@
+{% extends "inputs/base.html" %}
+
+{% block page_title %}POS{% endblock %}
+{% block supplier_title %}Point of Sale{% endblock %}
+{% block supplier_subtitle %}Tap products to add them to the sale. Stock updates as soon as you complete the sale.{% endblock %}
+
+{% block inputs_css %}
+<style>
+  .pos-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 1.25rem; align-items: start; margin-top: 1.75rem; }
+  .pos-search { display: flex; gap: 0.6rem; margin-bottom: 1rem; }
+  .pos-search input { flex: 1; }
+  .pos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+  .pos-tile { text-align: left; background: #fff; border: 1px solid #e3e9e0; border-radius: 1rem; overflow: hidden; cursor: pointer; padding: 0; display: flex; flex-direction: column; transition: transform .12s ease, box-shadow .12s ease; }
+  .pos-tile:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08); }
+  .pos-tile:focus-visible { outline: 3px solid #8dc572; outline-offset: 2px; }
+  .pos-tile[disabled] { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+  .pos-tile-media { aspect-ratio: 4 / 3; background: #eef4e6; display: flex; align-items: center; justify-content: center; color: #9bb596; font-size: 1.6rem; }
+  .pos-tile-media img { width: 100%; height: 100%; object-fit: cover; }
+  .pos-tile-body { padding: 0.6rem 0.7rem 0.75rem; }
+  .pos-tile-name { font-weight: 800; color: #173019; font-size: 0.92rem; line-height: 1.2; }
+  .pos-tile-price { font-weight: 800; color: #1e5b34; margin-top: 0.25rem; }
+  .pos-tile-stock { font-size: 0.78rem; color: #6b7a70; }
+  .pos-cart { position: sticky; top: 1rem; }
+  .pos-lines { display: grid; gap: 0.5rem; max-height: 42vh; overflow-y: auto; margin-bottom: 1rem; }
+  .pos-line { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 0.75rem; padding: 0.65rem 0.75rem; border-radius: 0.8rem; background: #f7faf5; border: 1px solid #e8eee5; }
+  .pos-line-name { font-weight: 700; color: #173019; font-size: 0.92rem; }
+  .pos-line-controls { display: flex; align-items: center; gap: 0.35rem; }
+  .pos-line-controls input { width: 4.5rem; text-align: center; padding: 0.3rem; }
+  .pos-step { width: 30px; height: 30px; border-radius: 0.5rem; border: 0; background: #e3ecdd; color: #173019; font-weight: 800; cursor: pointer; }
+  .pos-remove { background: none; border: 0; color: #b42318; cursor: pointer; font-size: 0.85rem; }
+  .pos-totals { display: grid; gap: 0.35rem; padding: 0.85rem 0; border-top: 1px dashed #d6e0d2; }
+  .pos-totals div { display: flex; justify-content: space-between; }
+  .pos-grand { font-size: 1.35rem; font-weight: 800; color: #153116; }
+  .pos-fields { display: grid; gap: 0.6rem; }
+  .pos-fields label { font-size: 0.8rem; font-weight: 700; color: #5d6d63; display: block; margin-bottom: 0.2rem; }
+  .pos-pay { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+  .pos-pay input { position: absolute; opacity: 0; }
+  .pos-pay label { display: block; text-align: center; padding: 0.55rem; border-radius: 0.7rem; background: #f1f5ee; border: 2px solid transparent; font-weight: 700; color: #294a2d; cursor: pointer; margin: 0; font-size: 0.88rem; }
+  .pos-pay input:checked + label { border-color: #2f6b3c; background: #e5f1dd; }
+  .pos-pay input:focus-visible + label { outline: 3px solid #8dc572; }
+  .pos-error { background: #fdecea; color: #b42318; padding: 0.6rem 0.8rem; border-radius: 0.7rem; font-weight: 600; font-size: 0.9rem; }
+  .pos-checkout { width: 100%; padding: 0.95rem; font-size: 1.05rem; margin-top: 0.75rem; }
+  @media (max-width: 1024px) { .pos-layout { grid-template-columns: 1fr; } .pos-cart { position: static; } }
+</style>
+{% endblock %}
+
+{% block supplier_content %}
+<div class="pos-layout">
+  <section class="in-panel">
+    <div class="in-panel-body">
+      <div class="pos-search">
+        <input type="search" id="pos-search" class="form-input" placeholder="Search by name or scan barcode…" autocomplete="off" autofocus>
+      </div>
+      <div class="pos-grid" id="pos-grid"></div>
+      <div class="in-empty" id="pos-empty" hidden>
+        <i class="fa-solid fa-box-open"></i>
+        {% if catalog %}No products match your search.{% else %}You have no products in stock yet. <a href="{% url 'inputs:stock_create' %}" class="in-link">Add stock</a> or <a href="{% url 'inputs:catalog' %}" class="in-link">order from a manufacturer</a>.{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <aside class="in-panel pos-cart">
+    <div class="in-panel-body">
+      <div class="in-panel-head">
+        <h2 class="in-panel-title">Current sale</h2>
+        <button type="button" class="in-btn in-btn-secondary in-btn-sm" id="pos-clear">Clear</button>
+      </div>
+      <div class="pos-lines" id="pos-lines"></div>
+      <div class="in-empty" id="pos-cart-empty" style="padding:1rem">Cart is empty</div>
+
+      <div class="pos-totals">
+        <div><span>Subtotal</span><span class="in-money" id="pos-subtotal">TZS 0</span></div>
+        <div style="align-items:center"><label for="pos-discount" style="margin:0">Discount</label><input type="number" min="0" step="1" id="pos-discount" class="form-input" style="width:8rem;text-align:right" value="0"></div>
+        <div class="pos-grand"><span>Total</span><span class="in-money" id="pos-total">TZS 0</span></div>
+      </div>
+
+      <div class="pos-fields">
+        <div>
+          <label>Payment</label>
+          <div class="pos-pay">
+            {% for value, label in payment_choices %}
+              <div>
+                <input type="radio" name="payment_method" id="pay-{{ value }}" value="{{ value }}" {% if forloop.first %}checked{% endif %}>
+                <label for="pay-{{ value }}">{{ label }}</label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <label for="pos-paid">Amount received</label>
+          <input type="number" min="0" step="1" id="pos-paid" class="form-input" placeholder="Leave blank for exact amount">
+          <div class="in-muted" id="pos-change" style="margin-top:0.25rem"></div>
+        </div>
+        <div class="in-form-grid" style="grid-template-columns:1fr 1fr;gap:0.5rem">
+          <div><label for="pos-customer">Customer</label><input type="text" id="pos-customer" class="form-input" placeholder="Optional"></div>
+          <div><label for="pos-phone">Phone</label><input type="tel" id="pos-phone" class="form-input" placeholder="Optional"></div>
+        </div>
+        <div class="pos-error" id="pos-error" role="alert" hidden></div>
+        <button type="button" class="in-btn in-btn-primary pos-checkout" id="pos-checkout" disabled>
+          <i class="fa-solid fa-check"></i> Complete sale
+        </button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+{{ catalog|json_script:"pos-catalog" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const catalog = JSON.parse(document.getElementById("pos-catalog").textContent);
+  const byId = new Map(catalog.map(p => [p.id, p]));
+  const cart = new Map(); // id -> quantity (number)
+  const checkoutUrl = "{% url 'inputs:pos_checkout' %}";
+  const csrfToken = "{{ csrf_token }}";
+  const fmt = n => "TZS " + Math.round(n).toLocaleString();
+  const $ = id => document.getElementById(id);
+
+  function esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  function renderGrid() {
+    const q = $("pos-search").value.trim().toLowerCase();
+    const matches = catalog.filter(p => !q || p.name.toLowerCase().includes(q) || (p.sku || "").toLowerCase() === q || (p.sku || "").toLowerCase().includes(q));
+    $("pos-grid").innerHTML = matches.map(p => {
+      const available = parseFloat(p.qty) - (cart.get(p.id) || 0);
+      const media = p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : `<i class="fa-solid fa-seedling"></i>`;
+      return `<button type="button" class="pos-tile" data-id="${p.id}" ${available <= 0 ? "disabled" : ""}>
+        <div class="pos-tile-media">${media}</div>
+        <div class="pos-tile-body">
+          <div class="pos-tile-name">${esc(p.name)}</div>
+          <div class="pos-tile-price">${fmt(parseFloat(p.price))}</div>
+          <div class="pos-tile-stock">${available > 0 ? available.toLocaleString() + " " + esc(p.unit.toLowerCase()) + " left" : "Out of stock"}</div>
+        </div>
+      </button>`;
+    }).join("");
+    $("pos-empty").hidden = matches.length > 0;
+  }
+
+  function totals() {
+    let subtotal = 0;
+    cart.forEach((qty, id) => { subtotal += parseFloat(byId.get(id).price) * qty; });
+    const discount = Math.min(Math.max(parseFloat($("pos-discount").value) || 0, 0), subtotal);
+    return { subtotal, discount, total: subtotal - discount };
+  }
+
+  function renderCart() {
+    $("pos-lines").innerHTML = Array.from(cart.entries()).map(([id, qty]) => {
+      const p = byId.get(id);
+      return `<div class="pos-line" data-id="${id}">
+        <div class="pos-line-name">${esc(p.name)}</div>
+        <div class="in-money"><strong>${fmt(parseFloat(p.price) * qty)}</strong></div>
+        <div class="pos-line-controls">
+          <button type="button" class="pos-step" data-step="-1" aria-label="Decrease">−</button>
+          <input type="number" class="form-input" min="0.01" step="any" value="${qty}" max="${p.qty}" aria-label="Quantity">
+          <button type="button" class="pos-step" data-step="1" aria-label="Increase">+</button>
+        </div>
+        <button type="button" class="pos-remove">Remove</button>
+      </div>`;
+    }).join("");
+    $("pos-cart-empty").hidden = cart.size > 0;
+
+    const t = totals();
+    $("pos-subtotal").textContent = fmt(t.subtotal);
+    $("pos-total").textContent = fmt(t.total);
+    const paid = parseFloat($("pos-paid").value);
+    $("pos-change").textContent = !isNaN(paid) && cart.size ? (paid >= t.total ? "Change: " + fmt(paid - t.total) : "Short by " + fmt(t.total - paid)) : "";
+    $("pos-checkout").disabled = cart.size === 0;
+    renderGrid();
+  }
+
+  function setQty(id, qty) {
+    const max = parseFloat(byId.get(id).qty);
+    if (!(qty > 0)) { cart.delete(id); }
+    else { cart.set(id, Math.min(qty, max)); }
+    $("pos-error").hidden = true;
+    renderCart();
+  }
+
+  $("pos-grid").addEventListener("click", e => {
+    const tile = e.target.closest(".pos-tile");
+    if (!tile || tile.disabled) return;
+    const id = parseInt(tile.dataset.id, 10);
+    setQty(id, (cart.get(id) || 0) + 1);
+  });
+
+  $("pos-lines").addEventListener("click", e => {
+    const line = e.target.closest(".pos-line");
+    if (!line) return;
+    const id = parseInt(line.dataset.id, 10);
+    if (e.target.matches(".pos-step")) setQty(id, (cart.get(id) || 0) + parseInt(e.target.dataset.step, 10));
+    if (e.target.matches(".pos-remove")) setQty(id, 0);
+  });
+
+  $("pos-lines").addEventListener("change", e => {
+    if (!e.target.matches("input")) return;
+    setQty(parseInt(e.target.closest(".pos-line").dataset.id, 10), parseFloat(e.target.value));
+  });
+
+  $("pos-search").addEventListener("input", renderGrid);
+  $("pos-search").addEventListener("keydown", e => {
+    // Barcode scanners type the code then press Enter: add an exact SKU match directly.
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const code = e.target.value.trim().toLowerCase();
+    const hit = catalog.find(p => (p.sku || "").toLowerCase() === code) ||
+      (catalog.filter(p => p.name.toLowerCase().includes(code)).length === 1 ? catalog.find(p => p.name.toLowerCase().includes(code)) : null);
+    if (hit && parseFloat(hit.qty) > (cart.get(hit.id) || 0)) {
+      setQty(hit.id, (cart.get(hit.id) || 0) + 1);
+      e.target.value = "";
+      renderGrid();
+    }
+  });
+  $("pos-discount").addEventListener("input", renderCart);
+  $("pos-paid").addEventListener("input", renderCart);
+  $("pos-clear").addEventListener("click", () => { cart.clear(); renderCart(); });
+
+  $("pos-checkout").addEventListener("click", async () => {
+    const btn = $("pos-checkout");
+    btn.disabled = true;
+    $("pos-error").hidden = true;
+    const t = totals();
+    const paidRaw = $("pos-paid").value;
+    try {
+      const res = await fetch(checkoutUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        body: JSON.stringify({
+          lines: Array.from(cart.entries()).map(([id, qty]) => ({ stock_item: id, quantity: qty })),
+          discount: t.discount,
+          amount_paid: paidRaw === "" ? null : paidRaw,
+          payment_method: document.querySelector("input[name=payment_method]:checked").value,
+          customer_name: $("pos-customer").value,
+          customer_phone: $("pos-phone").value,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Could not complete the sale.");
+      window.location.href = data.receipt_url + "?new=1";
+    } catch (err) {
+      $("pos-error").textContent = err.message;
+      $("pos-error").hidden = false;
+      btn.disabled = false;
+    }
+  });
+
+  renderCart();
+})();
+</script>
+{% endblock %}

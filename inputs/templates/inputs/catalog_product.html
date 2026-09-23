@@ -1,0 +1,81 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}{{ product.name }}{% endblock %}
+{% block supplier_title %}{{ product.name }}{% endblock %}
+{% block supplier_subtitle %}From {{ product.manufacturer }}{% if product.manufacturer.location %} · {{ product.manufacturer.location }}{% endif %}{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="in-grid-2">
+    <section class="in-panel">
+      <div class="in-panel-body">
+        {% with images=product.images.all %}
+          {% if images %}
+            <div class="supplier-media" style="min-height:320px;margin-bottom:0.75rem">
+              <img src="{{ product.primary_image.image.url }}" alt="{{ product.name }}" id="main-photo" style="max-height:460px;object-fit:contain">
+            </div>
+            {% if images|length > 1 %}
+              <div class="in-gallery" style="grid-template-columns:repeat(auto-fill,minmax(80px,1fr))">
+                {% for img in images %}
+                  <button type="button" class="in-gallery-item {% if img.is_primary %}is-primary{% endif %}" style="padding:0;cursor:pointer" data-src="{{ img.image.url }}" aria-label="Show photo {{ forloop.counter }}">
+                    <img src="{{ img.image.url }}" alt="">
+                  </button>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="supplier-media"><i class="fa-solid fa-seedling" style="font-size:3rem;color:#9bb596"></i></div>
+          {% endif %}
+        {% endwith %}
+      </div>
+    </section>
+
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-muted">{% if product.brand %}<strong>{{ product.brand }}</strong> · {% endif %}{{ product.get_category_display }}{% if product.pack_size %} · {{ product.pack_size }}{% endif %}</div>
+        <div style="font-size:1.8rem;font-weight:800;color:#153116;margin:0.4rem 0" class="in-money">TZS {{ product.wholesale_price|floatformat:0|intcomma }} <span class="in-muted" style="font-size:1rem">/ {{ product.get_unit_display|lower }}</span></div>
+        {% if product.suggested_retail_price %}
+          <p class="in-muted">Suggested retail price: TZS {{ product.suggested_retail_price|floatformat:0|intcomma }} / {{ product.get_unit_display|lower }}</p>
+        {% endif %}
+        <div class="in-list" style="margin:1rem 0">
+          {% if product.composition %}<div class="in-list-row"><span>Composition</span><strong>{{ product.composition }}</strong></div>{% endif %}
+          {% if product.registration_number %}<div class="in-list-row"><span>Registration</span><strong>{{ product.get_registration_authority_display|default:"" }} {{ product.registration_number }}</strong></div>{% endif %}
+          {% if product.seed_variety %}<div class="in-list-row"><span>Variety</span><strong>{{ product.seed_variety }}</strong></div>{% endif %}
+          {% if product.maturity_days %}<div class="in-list-row"><span>Days to maturity</span><strong>{{ product.maturity_days }}</strong></div>{% endif %}
+          {% if product.germination_rate is not None %}<div class="in-list-row"><span>Germination</span><strong>{{ product.germination_rate|floatformat:"-1" }}%</strong></div>{% endif %}
+          {% if product.toxicity_class %}<div class="in-list-row"><span>WHO toxicity class</span><strong>{{ product.get_toxicity_class_display }}</strong></div>{% endif %}
+          {% if product.target_crops %}<div class="in-list-row"><span>For crops</span><strong>{{ product.target_crops_display }}</strong></div>{% endif %}
+          {% if product.shelf_life_months %}<div class="in-list-row"><span>Shelf life</span><strong>{{ product.shelf_life_months }} months</strong></div>{% endif %}
+          <div class="in-list-row"><span>Minimum order</span><strong>{{ product.min_order_quantity }} {{ product.get_unit_display|lower }}</strong></div>
+          <div class="in-list-row"><span>Available to ship</span><strong>{{ product.stock_available|intcomma }}</strong></div>
+          <div class="in-list-row"><span>Manufacturer phone</span><strong>{{ product.manufacturer.phone_number }}</strong></div>
+        </div>
+        {% if product.usage_instructions %}<h3 class="in-panel-title" style="font-size:1rem">How to use</h3><p style="white-space:pre-line">{{ product.usage_instructions }}</p>{% endif %}
+        {% if product.safety_precautions %}<h3 class="in-panel-title" style="font-size:1rem;color:#b45309"><i class="fa-solid fa-triangle-exclamation"></i> Safety</h3><p style="white-space:pre-line">{{ product.safety_precautions }}</p>{% endif %}
+        {% if product.description %}<h3 class="in-panel-title" style="font-size:1rem">About</h3><p style="white-space:pre-line">{{ product.description }}</p>{% endif %}
+
+        <form method="post" action="{% url 'inputs:order_cart_update' %}" class="in-qty-form" style="margin-top:1rem">
+          {% csrf_token %}
+          <input type="hidden" name="product" value="{{ product.pk }}">
+          <input type="number" name="quantity" class="form-input" min="{{ product.min_order_quantity }}" step="1" value="{{ in_cart|default:product.min_order_quantity }}" aria-label="Quantity" style="width:7rem">
+          <button type="submit" class="in-btn in-btn-primary"><i class="fa-solid fa-cart-plus"></i> {% if in_cart %}Update order list{% else %}Add to order list{% endif %}</button>
+        </form>
+        <div class="supplier-actions" style="margin-top:1rem">
+          <a href="{% url 'inputs:catalog' %}" class="in-btn in-btn-secondary">← Back to catalog</a>
+          <a href="{% url 'inputs:order_cart' %}" class="in-btn in-btn-secondary">Order list ({{ cart_count }})</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll("[data-src]").forEach(btn => btn.addEventListener("click", () => {
+    document.getElementById("main-photo").src = btn.dataset.src;
+    document.querySelectorAll("[data-src]").forEach(b => b.classList.toggle("is-primary", b === btn));
+  }));
+</script>
+{% endblock %}

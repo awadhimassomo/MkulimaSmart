@@ -1,0 +1,64 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Receipt {{ sale.receipt_number }}{% endblock %}
+{% block supplier_title %}Receipt {{ sale.receipt_number }}{% endblock %}
+{% block supplier_subtitle %}{{ sale.created_at|date:"l, M j, Y H:i" }}{% endblock %}
+
+{% block inputs_css %}
+<style>
+  .receipt { max-width: 440px; margin: 0 auto; font-variant-numeric: tabular-nums; }
+  .receipt-head { text-align: center; border-bottom: 1px dashed #cfd9cb; padding-bottom: 0.9rem; margin-bottom: 0.9rem; }
+  .receipt-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.3rem 0; }
+  .receipt-sep { border-top: 1px dashed #cfd9cb; margin: 0.6rem 0; }
+  .receipt-grand { font-size: 1.25rem; font-weight: 800; }
+  @media print {
+    body * { visibility: hidden; }
+    .receipt, .receipt * { visibility: visible; }
+    .receipt { position: absolute; left: 0; top: 0; width: 80mm; max-width: none; box-shadow: none; border: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="supplier-actions" style="justify-content:center">
+    <a href="{% url 'inputs:pos' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-cash-register"></i> New sale</a>
+    <button type="button" onclick="window.print()" class="in-btn in-btn-secondary"><i class="fa-solid fa-print"></i> Print receipt</button>
+    <a href="{% url 'inputs:sale_list' %}" class="in-btn in-btn-secondary">All sales</a>
+  </div>
+
+  <section class="in-panel receipt">
+    <div class="in-panel-body">
+      <div class="receipt-head">
+        <div style="font-weight:800;font-size:1.15rem">{{ seller }}</div>
+        <div class="in-muted">{{ seller.location }} · {{ seller.phone_number }}</div>
+        <div style="margin-top:0.5rem"><strong>{{ sale.receipt_number }}</strong></div>
+        <div class="in-muted">{{ sale.created_at|date:"d/m/Y H:i" }}{% if sale.sold_by %} · Served by {{ sale.sold_by.get_short_name }}{% endif %}</div>
+      </div>
+
+      {% for item in sale.items.all %}
+        <div class="receipt-row">
+          <div>{{ item.product_name }}<div class="in-muted">{{ item.quantity|floatformat:"-2" }} × {{ item.unit_price|floatformat:0|intcomma }}</div></div>
+          <div>{{ item.line_total|floatformat:0|intcomma }}</div>
+        </div>
+      {% endfor %}
+
+      <div class="receipt-sep"></div>
+      <div class="receipt-row"><span>Subtotal</span><span>{{ sale.subtotal|floatformat:0|intcomma }}</span></div>
+      {% if sale.discount %}<div class="receipt-row"><span>Discount</span><span>−{{ sale.discount|floatformat:0|intcomma }}</span></div>{% endif %}
+      <div class="receipt-row receipt-grand"><span>Total (TZS)</span><span>{{ sale.total|floatformat:0|intcomma }}</span></div>
+      <div class="receipt-sep"></div>
+      <div class="receipt-row"><span>Paid ({{ sale.get_payment_method_display }})</span><span>{{ sale.amount_paid|floatformat:0|intcomma }}</span></div>
+      {% if sale.change_due %}<div class="receipt-row"><span>Change</span><span>{{ sale.change_due|floatformat:0|intcomma }}</span></div>{% endif %}
+      {% if sale.balance_due %}<div class="receipt-row" style="color:#b45309;font-weight:700"><span>Balance owed</span><span>{{ sale.balance_due|floatformat:0|intcomma }}</span></div>{% endif %}
+      {% if sale.customer_name or sale.customer_phone %}
+        <div class="receipt-sep"></div>
+        <div class="in-muted">Customer: {{ sale.customer_name|default:"—" }} {{ sale.customer_phone }}</div>
+      {% endif %}
+      <div class="receipt-sep"></div>
+      <div class="in-muted" style="text-align:center">Asante kwa kununua! · Thank you</div>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "marketplace/supplier_base.html" %}
+
+{% block title %}{% block page_title %}Input Business{% endblock %} | Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+  .supplier-nav a.is-active { background: #c5d86d; color: #163016; border-color: transparent; }
+  .in-stack { display: grid; gap: 1.25rem; margin-top: 1.75rem; }
+  .in-grid-2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  .in-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; }
+  .in-kpi { padding: 1.1rem 1.2rem; border-radius: 1.25rem; background: #fff; border: 1px solid #e3e9e0; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05); }
+  .in-kpi-primary { background: linear-gradient(135deg, #1e5b34, #153f24); color: #fff; border-color: transparent; }
+  .in-kpi-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #66756b; }
+  .in-kpi-primary .in-kpi-label { color: rgba(255, 255, 255, 0.75); }
+  .in-kpi-value { margin-top: 0.45rem; font-size: 1.65rem; font-weight: 800; color: #153116; font-variant-numeric: tabular-nums; }
+  .in-kpi-primary .in-kpi-value { color: #fff; }
+  .in-kpi-note { margin-top: 0.3rem; font-size: 0.85rem; color: #6b7d70; }
+  .in-kpi-primary .in-kpi-note { color: rgba(255, 255, 255, 0.8); }
+  .in-kpi-warn .in-kpi-value { color: #b45309; }
+  .in-panel { background: #fff; border: 1px solid #e3e9e0; border-radius: 1.4rem; box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05); overflow: hidden; }
+  .in-panel-body { padding: 1.3rem; }
+  .in-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .in-panel-title { margin: 0; font-size: 1.1rem; font-weight: 800; color: #173019; }
+  .in-muted { color: #68776c; font-size: 0.92rem; }
+  .in-money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .in-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1rem; border-radius: 0.8rem; font-weight: 700; font-size: 0.92rem; border: 0; cursor: pointer; text-decoration: none; }
+  .in-btn-primary { background: var(--brand-primary, #2d5a27); color: #fff; }
+  .in-btn-primary:hover { filter: brightness(1.08); color: #fff; }
+  .in-btn-secondary { background: #eef4e6; color: #173019; }
+  .in-btn-danger { background: #fdecea; color: #b42318; }
+  .in-btn-sm { padding: 0.4rem 0.7rem; font-size: 0.82rem; border-radius: 0.65rem; }
+  .in-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+  .in-thumb { width: 44px; height: 44px; border-radius: 0.7rem; object-fit: cover; background: #eef4e6; display: inline-flex; align-items: center; justify-content: center; color: #7c9a7f; flex-shrink: 0; }
+  .in-name-cell { display: flex; align-items: center; gap: 0.75rem; }
+  .in-link { color: #173019; font-weight: 700; text-decoration: none; }
+  .in-link:hover { color: #2d5a27; text-decoration: underline; }
+  .in-pill { display: inline-flex; align-items: center; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; background: #eef2ec; color: #3b4c40; }
+  .in-pill-pending { background: #fef3c7; color: #92400e; }
+  .in-pill-confirmed { background: #dbeafe; color: #1e40af; }
+  .in-pill-dispatched { background: #ede9fe; color: #5b21b6; }
+  .in-pill-received, .in-pill-ok { background: #d1fae5; color: #065f46; }
+  .in-pill-cancelled, .in-pill-low { background: #fee2e2; color: #991b1b; }
+  .in-toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
+  .in-toolbar .form-input, .in-toolbar .form-select { min-width: 150px; }
+  .in-toolbar label { display: block; font-size: 0.78rem; font-weight: 700; color: #5d6d63; margin-bottom: 0.25rem; }
+  .in-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .in-tabs a { padding: 0.45rem 0.85rem; border-radius: 999px; background: #f1f5ee; color: #294a2d; font-weight: 700; font-size: 0.85rem; text-decoration: none; }
+  .in-tabs a.is-active { background: #173019; color: #fff; }
+  .in-empty { padding: 2rem 1rem; text-align: center; color: #6b7a70; }
+  .in-empty i { font-size: 1.8rem; color: #a9c0a4; display: block; margin-bottom: 0.6rem; }
+  .in-list { display: grid; gap: 0.6rem; }
+  .in-list-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem; border-radius: 0.9rem; background: #f7faf5; border: 1px solid #e8eee5; }
+  .in-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; align-items: end; height: 140px; }
+  .in-bar { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 0.35rem; font-size: 0.75rem; color: #66756b; }
+  .in-bar-fill { width: 100%; max-width: 36px; border-radius: 0.5rem 0.5rem 0.2rem 0.2rem; background: linear-gradient(180deg, #8dc572, #2f6b3c); min-height: 3px; }
+  .in-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; }
+  .in-product-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e3e9e0; border-radius: 1.1rem; overflow: hidden; }
+  .in-product-media { aspect-ratio: 4 / 3; background: #eef4e6; display: flex; align-items: center; justify-content: center; color: #9bb596; font-size: 2rem; }
+  .in-product-media img { width: 100%; height: 100%; object-fit: cover; }
+  .in-product-body { padding: 0.85rem 0.95rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
+  .in-product-name { font-weight: 800; color: #173019; line-height: 1.25; }
+  .in-qty-form { display: flex; gap: 0.4rem; margin-top: auto; padding-top: 0.5rem; }
+  .in-qty-form input { width: 5rem; }
+  .in-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+  .in-gallery-item { border: 1px solid #e3e9e0; border-radius: 0.9rem; overflow: hidden; background: #fff; }
+  .in-gallery-item.is-primary { border: 2px solid #2f6b3c; }
+  .in-gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  .in-gallery-actions { display: flex; gap: 0.3rem; padding: 0.4rem; flex-wrap: wrap; }
+  .in-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+  .in-field label { display: block; font-weight: 700; color: #1a3316; margin-bottom: 0.35rem; font-size: 0.92rem; }
+  .in-field .helptext { display: block; margin-top: 0.3rem; color: #6b7280; font-size: 0.83rem; }
+  .in-field .errorlist { margin: 0.3rem 0 0; padding: 0; list-style: none; color: #b42318; font-size: 0.85rem; }
+  .in-field-wide { grid-column: 1 / -1; }
+  .in-check { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; color: #1a3316; }
+  .in-image-preview { width: 120px; height: 120px; border-radius: 1rem; object-fit: cover; border: 1px solid #e3e9e0; }
+  .in-table-wrap { overflow-x: auto; }
+  .in-badge { display: inline-flex; min-width: 1.4rem; height: 1.4rem; padding: 0 0.4rem; border-radius: 999px; background: #dc2626; color: #fff; font-size: 0.75rem; font-weight: 800; align-items: center; justify-content: center; margin-left: 0.3rem; }
+  .in-pill-delivered { background: #d1fae5; color: #065f46; }
+  .in-table-wrap .supplier-table td, .in-table-wrap .supplier-table th { padding: 0.8rem 1rem; }
+  @media (max-width: 960px) { .in-grid-2 { grid-template-columns: 1fr; } }
+</style>
+{% block inputs_css %}{% endblock %}
+{% endblock %}
+
+{% block supplier_kicker %}{% if seller.seller_type == "manufacturer" %}Manufacturer Portal{% else %}Input Shop{% endif %} · {{ seller }}{% endblock %}
+
+{% block supplier_nav %}
+  {% if seller.seller_type == "manufacturer" %}
+    <a href="{% url 'inputs:manufacturer_dashboard' %}" class="supplier-nav-secondary {% if active_nav == 'dashboard' %}is-active{% endif %}"><i class="fa-solid fa-chart-line"></i>&nbsp;Dashboard</a>
+    <a href="{% url 'inputs:manufacturer_products' %}" class="supplier-nav-secondary {% if active_nav == 'products' %}is-active{% endif %}"><i class="fa-solid fa-boxes-stacked"></i>&nbsp;Catalog</a>
+    <a href="{% url 'inputs:manufacturer_orders' %}" class="supplier-nav-secondary {% if active_nav == 'orders' %}is-active{% endif %}"><i class="fa-solid fa-truck"></i>&nbsp;Shop Orders</a>
+  {% else %}
+    <a href="{% url 'inputs:shop_dashboard' %}" class="supplier-nav-secondary {% if active_nav == 'dashboard' %}is-active{% endif %}"><i class="fa-solid fa-chart-line"></i>&nbsp;Dashboard</a>
+    <a href="{% url 'inputs:pos' %}" class="supplier-nav-secondary {% if active_nav == 'pos' %}is-active{% endif %}"><i class="fa-solid fa-cash-register"></i>&nbsp;POS</a>
+    <a href="{% url 'inputs:farmer_order_list' %}" class="supplier-nav-secondary {% if active_nav == 'farmer_orders' %}is-active{% endif %}"><i class="fa-brands fa-whatsapp"></i>&nbsp;Farmer Orders{% if farmer_orders_badge %} <span class="in-badge">{{ farmer_orders_badge }}</span>{% endif %}</a>
+    <a href="{% url 'inputs:stock_list' %}" class="supplier-nav-secondary {% if active_nav == 'stock' %}is-active{% endif %}"><i class="fa-solid fa-warehouse"></i>&nbsp;Stock</a>
+    <a href="{% url 'inputs:sale_list' %}" class="supplier-nav-secondary {% if active_nav == 'sales' %}is-active{% endif %}"><i class="fa-solid fa-receipt"></i>&nbsp;Sales</a>
+    <a href="{% url 'inputs:catalog' %}" class="supplier-nav-secondary {% if active_nav == 'catalog' %}is-active{% endif %}"><i class="fa-solid fa-store"></i>&nbsp;Order Stock</a>
+    <a href="{% url 'inputs:order_list' %}" class="supplier-nav-secondary {% if active_nav == 'orders' %}is-active{% endif %}"><i class="fa-solid fa-truck"></i>&nbsp;My Orders</a>
+    <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-nav-secondary"><i class="fa-solid fa-shop"></i>&nbsp;Marketplace Listings</a>
+  {% endif %}
+  <a href="{% url 'marketplace:supplier_onboarding' %}" class="supplier-nav-secondary"><i class="fa-solid fa-id-card"></i>&nbsp;Profile</a>
+{% endblock %}

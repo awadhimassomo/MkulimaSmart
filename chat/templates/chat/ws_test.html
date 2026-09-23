@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #log { height: 300px; border: 1px solid #ccc; margin-bottom: 10px; padding: 10px; overflow-y: scroll; }
+        input { padding: 5px; width: 80%; }
+        button { padding: 5px 10px; }
+    </style>
+    <script src="{% static 'js/crypto-utils.js' %}"></script>
+</head>
+<body>
+    <h2>WebSocket Test</h2>
+    <p>Status: <span id="status">Disconnected</span></p>
+    
+    <div id="log"></div>
+    
+    <div>
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+    </div>
+    
+    <script>
+        let socket;
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+        
+        function appendLog(message) {
+            const item = document.createElement('div');
+            item.textContent = message;
+            log.appendChild(item);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function connect() {
+            if (socket && socket.readyState !== WebSocket.CLOSED) {
+                appendLog('WebSocket is already open');
+                return;
+            }
+            
+            // Create WebSocket connection
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = "127.0.0.1:8001";
+            const wsUrl = `${protocol}//${host}/ws/test/`;
+            
+            appendLog(`Connecting to ${wsUrl}...`);
+            appendLog(`Browser WebSocket support: ${typeof WebSocket !== 'undefined' ? 'Yes' : 'No'}`);
+            appendLog(`Current protocol: ${protocol}`);
+            appendLog(`Current host: ${host}`);
+            
+            // Test HTTP connection
+            const testXhr = new XMLHttpRequest();
+            testXhr.open('GET', window.location.href, true);
+            testXhr.onreadystatechange = function() {
+                if (testXhr.readyState === 4) {
+                    appendLog(`HTTP connection test: ${testXhr.status === 200 ? 'Successful' : 'Failed with status ' + testXhr.status}`);
+                }
+            };
+            testXhr.send();
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(e) {
+                status.textContent = 'Connected';
+                status.style.color = 'green';
+                appendLog('Connection established');
+            };
+            
+            socket.onmessage = function(event) {
+                appendLog(`Received: ${event.data}`);
+            };
+            
+            socket.onclose = function(event) {
+                if (event.wasClean) {
+                    appendLog(`Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+                } else {
+                    appendLog('Connection died');
+                }
+                status.textContent = 'Disconnected';
+                status.style.color = 'red';
+            };
+            
+            socket.onerror = function(error) {
+                appendLog(`WebSocket error: ${JSON.stringify(error)}`);
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function disconnect() {
+            if (!socket || socket.readyState === WebSocket.CLOSED) {
+                appendLog('WebSocket is not connected');
+                return;
+            }
+            
+            socket.close();
+            appendLog('Disconnected');
+        }
+        
+        function sendMessage() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                appendLog('WebSocket is not connected');
+                return;
+            }
+            
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+            
+            if (message) {
+                socket.send(message);
+                appendLog(`Sent: ${message}`);
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>

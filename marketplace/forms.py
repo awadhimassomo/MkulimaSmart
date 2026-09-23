@@ -1,0 +1,203 @@
+from django import forms
+from django.utils.text import slugify
+
+from operations.models import InputSeller, SeedlingBatch
+from website.models import Category, Product, ProductImage
+
+
+def generate_unique_slug(name, instance=None):
+    base_slug = slugify(name) or "product"
+    slug = base_slug
+    counter = 2
+
+    queryset = Product.objects.all()
+    if instance and instance.pk:
+        queryset = queryset.exclude(pk=instance.pk)
+
+    while queryset.filter(slug=slug).exists():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    return slug
+
+
+class SupplierProductForm(forms.ModelForm):
+    primary_image = forms.ImageField(required=False)
+
+    class Meta:
+        model = Product
+        fields = [
+            "category",
+            "name",
+            "description",
+            "price",
+            "discount_price",
+            "stock",
+            "is_hydroponics",
+            "requires_quote",
+            "is_active",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 5}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
+        self.fields["category"].empty_label = "Select a category"
+        self.fields["category"].help_text = "Choose the best fit for what you are selling."
+        self.fields["primary_image"].help_text = "Optional cover image for the listing."
+
+        for _, field in self.fields.items():
+            widget = field.widget
+            existing = widget.attrs.get("class", "")
+
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = (
+                    f"h-4 w-4 rounded border-gray-300 text-[var(--brand-primary)] "
+                    f"focus:ring-[var(--brand-accent)] {existing}"
+                ).strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = f"form-select {existing}".strip()
+            elif isinstance(widget, forms.ClearableFileInput):
+                widget.attrs["class"] = (
+                    "block w-full text-sm text-gray-600 "
+                    "file:mr-4 file:rounded-xl file:border-0 "
+                    "file:bg-[var(--brand-primary)] file:px-4 file:py-2 file:text-white "
+                    f"{existing}"
+                ).strip()
+            else:
+                widget.attrs["class"] = f"form-input {existing}".strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        price = cleaned_data.get("price")
+        discount_price = cleaned_data.get("discount_price")
+
+        if price is not None and discount_price is not None and discount_price > price:
+            self.add_error("discount_price", "Discount price cannot be higher than the main price.")
+
+        return cleaned_data
+
+    def save(self, supplier, commit=True):
+        product = super().save(commit=False)
+        product.supplier = supplier
+
+        if not product.slug or "name" in self.changed_data:
+            product.slug = generate_unique_slug(product.name, instance=product)
+
+        if commit:
+            product.save()
+            self.save_m2m()
+
+            image = self.cleaned_data.get("primary_image")
+            if image:
+                primary = product.images.filter(is_primary=True).first()
+                if primary:
+                    primary.image = image
+                    primary.save(update_fields=["image"])
+                else:
+                    ProductImage.objects.create(product=product, image=image, is_primary=True)
+
+        return product
+
+
+class SupplierSeedlingBatchForm(forms.ModelForm):
+    class Meta:
+        model = SeedlingBatch
+        fields = [
+            "seedling_type",
+            "variety",
+            "source_name",
+            "quantity_available",
+            "unit",
+            "batch_date",
+            "recommended_planting_until",
+            "notes",
+        ]
+        widgets = {
+            "batch_date": forms.DateInput(attrs={"type": "date"}),
+            "recommended_planting_until": forms.DateInput(attrs={"type": "date"}),
+            "notes": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for _, field in self.fields.items():
+            widget = field.widget
+            existing = widget.attrs.get("class", "")
+            if isinstance(widget, forms.Textarea):
+                widget.attrs["class"] = f"form-input min-h-32 {existing}".strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = f"form-select {existing}".strip()
+            else:
+                widget.attrs["class"] = f"form-input {existing}".strip()
+
+
+class SupplierOnboardingForm(forms.ModelForm):
+    products_offered = forms.MultipleChoiceField(
+        choices=InputSeller.PRODUCT_CATEGORY_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+    )
+
+    class Meta:
+        model = InputSeller
+        fields = [
+            "business_name",
+            "location",
+            "region",
+            "district",
+            "latitude",
+            "longitude",
+            "seller_type",
+            "products_offered",
+            "certification_details",
+            "certificate_file",
+            "list_on_kikapu",
+        ]
+        widgets = {
+            "certification_details": forms.Textarea(attrs={"rows": 4}),
+            "latitude": forms.NumberInput(attrs={"step": "any", "placeholder": "e.g. -3.3869"}),
+            "longitude": forms.NumberInput(attrs={"step": "any", "placeholder": "e.g. 36.6830"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Kikapu shows farmers only shops in their region, so region is required from now on.
+        self.fields["region"].required = True
+        self.fields["region"].help_text = "Farmers on Kikapu see shops in their region."
+        self.fields["location"].help_text = "Town or street, e.g. Moshi town, near the bus stand."
+        self.fields["latitude"].help_text = "Optional. Lets farmers find the nearest shop."
+        for _, field in self.fields.items():
+            widget = field.widget
+            existing = widget.attrs.get("class", "")
+            if isinstance(widget, forms.CheckboxSelectMultiple):
+                continue
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = f"h-5 w-5 rounded border-gray-300 {existing}".strip()
+                continue
+            if isinstance(widget, forms.Textarea):
+                widget.attrs["class"] = f"form-input min-h-32 {existing}".strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = f"form-select {existing}".strip()
+            elif isinstance(widget, forms.ClearableFileInput):
+                widget.attrs["class"] = (
+                    "block w-full text-sm text-gray-600 "
+                    "file:mr-4 file:rounded-xl file:border-0 "
+                    "file:bg-[var(--brand-primary)] file:px-4 file:py-2 file:text-white "
+                    f"{existing}"
+                ).strip()
+            else:
+                widget.attrs["class"] = f"form-input {existing}".strip()
+
+    def clean(self):
+        cleaned = super().clean()
+        lat, lng = cleaned.get("latitude"), cleaned.get("longitude")
+        if (lat is None) != (lng is None):
+            self.add_error("longitude" if lat is not None else "latitude", "Enter both latitude and longitude, or neither.")
+        if lat is not None and not -90 <= lat <= 90:
+            self.add_error("latitude", "Latitude must be between -90 and 90.")
+        if lng is not None and not -180 <= lng <= 180:
+            self.add_error("longitude", "Longitude must be between -180 and 180.")
+        return cleaned

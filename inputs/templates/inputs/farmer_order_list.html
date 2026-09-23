@@ -1,0 +1,46 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Farmer orders{% endblock %}
+{% block supplier_title %}Farmer orders{% endblock %}
+{% block supplier_subtitle %}Orders farmers place with your shop through Kikapu's WhatsApp number. The stock is set aside as soon as an order arrives, and the farmer gets a WhatsApp message each time you update it.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <section class="in-panel">
+    <div class="in-panel-body">
+      <div class="in-tabs">
+        <a href="?status=open" class="{% if status == 'open' %}is-active{% endif %}">To handle</a>
+        {% for value, label in status_choices %}<a href="?status={{ value }}" class="{% if status == value %}is-active{% endif %}">{{ label }}</a>{% endfor %}
+        <a href="?status=" class="{% if not status %}is-active{% endif %}">All</a>
+      </div>
+    </div>
+    {% if page_obj.object_list %}
+      <div class="in-table-wrap">
+        <table class="supplier-table">
+          <thead><tr><th>Order</th><th>Farmer</th><th>Items</th><th>Total</th><th>Status</th><th>Received</th></tr></thead>
+          <tbody>
+            {% for order in page_obj %}
+              <tr>
+                <td><a href="{% url 'inputs:farmer_order_detail' order.pk %}" class="in-link">{{ order.order_number }}</a><div class="in-muted">Kikapu {{ order.external_order_id }}</div></td>
+                <td>{{ order.farmer_name }}<div class="in-muted">{{ order.farmer_phone }}{% if order.delivery_region %} · {{ order.delivery_region }}{% endif %}</div></td>
+                <td>{% for line in order.items.all %}{{ line.quantity|floatformat:"-2" }} × {{ line.product_name }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+                <td class="in-money"><strong>TZS {{ order.total|floatformat:0|intcomma }}</strong></td>
+                <td><span class="in-pill in-pill-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                <td class="in-muted">{{ order.created_at|naturaltime }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "inputs/_pagination.html" %}
+    {% else %}
+      <div class="in-empty">
+        <i class="fa-brands fa-whatsapp"></i>
+        {% if status == "open" %}No farmer orders waiting.{% else %}No orders here.{% endif %}
+        {% if not seller.list_on_kikapu %}<br>Your shop is not listed on Kikapu. Turn on "Accept farmer orders via Kikapu WhatsApp" in your <a href="{% url 'marketplace:supplier_onboarding' %}" class="in-link">profile</a>.{% endif %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% if page_obj.has_other_pages %}
+<div class="in-panel-body" style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
+  <span class="in-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  <div class="supplier-actions">
+    {% if page_obj.has_previous %}<a class="in-btn in-btn-secondary in-btn-sm" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&amp;{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
+    {% if page_obj.has_next %}<a class="in-btn in-btn-secondary in-btn-sm" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&amp;{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
+  </div>
+</div>
+{% endif %}

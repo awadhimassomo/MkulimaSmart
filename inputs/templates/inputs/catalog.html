@@ -1,0 +1,78 @@
+{% extends "inputs/base.html" %}
+{% load humanize inputs_extras %}
+
+{% block page_title %}Order Stock{% endblock %}
+{% block supplier_title %}Order stock from manufacturers{% endblock %}
+{% block supplier_subtitle %}Browse inputs at wholesale prices, add them to your order list, and send one order per manufacturer.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <section class="in-panel">
+    <div class="in-panel-body">
+      <form method="get" class="in-toolbar">
+        <div style="flex:1"><label for="c-q">Search</label><input type="search" id="c-q" name="q" value="{{ filters.q }}" class="form-input" placeholder="Fertilizer, seed variety, brand…"></div>
+        <div>
+          <label for="c-cat">Category</label>
+          <select id="c-cat" name="category" class="form-select">
+            <option value="">All categories</option>
+            {% for value, label in categories %}<option value="{{ value }}" {% if filters.category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="c-mfr">Manufacturer</label>
+          <select id="c-mfr" name="manufacturer" class="form-select">
+            <option value="">All manufacturers</option>
+            {% for m in manufacturers %}<option value="{{ m.pk }}" {% if filters.manufacturer == m.pk|stringformat:"s" %}selected{% endif %}>{{ m }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="c-crop">Crop</label>
+          <input type="text" id="c-crop" name="crop" value="{{ filters.crop }}" class="form-input" list="crop-suggestions" placeholder="Any crop" style="min-width:130px">
+          <datalist id="crop-suggestions">{% for crop in crop_suggestions %}<option value="{{ crop }}">{% endfor %}</datalist>
+        </div>
+        <button type="submit" class="in-btn in-btn-primary">Search</button>
+        <a href="{% url 'inputs:order_cart' %}" class="in-btn in-btn-secondary"><i class="fa-solid fa-clipboard-list"></i> Order list ({{ cart_count }})</a>
+      </form>
+    </div>
+  </section>
+
+  {% if page_obj.object_list %}
+    <div class="in-product-grid">
+      {% for product in page_obj %}
+        {% with image=product.primary_image %}
+        <article class="in-product-card">
+          <a href="{% url 'inputs:catalog_product' product.pk %}" class="in-product-media">
+            {% if image %}<img src="{{ image.image.url }}" alt="{{ product.name }}" loading="lazy">{% else %}<i class="fa-solid fa-seedling"></i>{% endif %}
+          </a>
+          <div class="in-product-body">
+            <div class="in-muted">{% if product.brand %}<strong>{{ product.brand }}</strong> · {% endif %}{{ product.manufacturer }}</div>
+            <a href="{% url 'inputs:catalog_product' product.pk %}" class="in-product-name in-link">{{ product.name }}</a>
+            <div class="in-muted">{% if product.pack_size %}{{ product.pack_size }} · {% endif %}{{ product.get_category_display }}{% if product.composition %} · {{ product.composition }}{% endif %}</div>
+            <div><strong class="in-money">TZS {{ product.wholesale_price|floatformat:0|intcomma }}</strong> <span class="in-muted">/ {{ product.get_unit_display|lower }}</span></div>
+            {% if product.suggested_retail_price %}<div class="in-muted">Sell at ~TZS {{ product.suggested_retail_price|floatformat:0|intcomma }}</div>{% endif %}
+            <div>
+              {% if product.registration_number %}<span class="in-pill in-pill-confirmed" title="{{ product.get_registration_authority_display }} {{ product.registration_number }}"><i class="fa-solid fa-shield-halved"></i>&nbsp;Registered</span>{% endif %}
+              {% if product.pk in stocked_ids %}<span class="in-pill in-pill-ok">In your stock</span>{% endif %}
+              {% if product.stock_available < product.min_order_quantity %}<span class="in-pill in-pill-low">Out of stock</span>{% endif %}
+            </div>
+            <form method="post" action="{% url 'inputs:order_cart_update' %}" class="in-qty-form">
+              {% csrf_token %}
+              <input type="hidden" name="product" value="{{ product.pk }}">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <input type="number" name="quantity" class="form-input" min="{{ product.min_order_quantity }}" step="1"
+                     value="{{ cart|get_item:product.pk }}"
+                     placeholder="{{ product.min_order_quantity }}" aria-label="Quantity">
+              <button type="submit" class="in-btn in-btn-primary in-btn-sm" style="flex:1"><i class="fa-solid fa-cart-plus"></i> Add</button>
+            </form>
+            {% if product.min_order_quantity > 1 %}<div class="in-muted" style="font-size:0.78rem">Min. order {{ product.min_order_quantity }}</div>{% endif %}
+          </div>
+        </article>
+        {% endwith %}
+      {% endfor %}
+    </div>
+    <section class="in-panel">{% include "inputs/_pagination.html" %}</section>
+  {% else %}
+    <section class="in-panel"><div class="in-empty"><i class="fa-solid fa-industry"></i>No manufacturer products match. Manufacturers will appear here as they list their inputs.</div></section>
+  {% endif %}
+</div>
+{% endblock %}

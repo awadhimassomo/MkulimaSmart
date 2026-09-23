@@ -1,0 +1,85 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Order {{ order.order_number }}{% endblock %}
+{% block supplier_title %}Order {{ order.order_number }}{% endblock %}
+{% block supplier_subtitle %}From {{ order.farmer_name }} via Kikapu WhatsApp · {{ order.created_at|date:"M j, Y H:i" }}{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <div class="in-grid-2">
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <div class="in-panel-head">
+          <h2 class="in-panel-title">Items</h2>
+          <span class="in-pill in-pill-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
+      </div>
+      <div class="in-table-wrap">
+        <table class="supplier-table">
+          <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for line in order.items.all %}
+              <tr>
+                <td>{% if line.stock_item_id %}<a href="{% url 'inputs:stock_edit' line.stock_item_id %}" class="in-link">{{ line.product_name }}</a>{% else %}{{ line.product_name }}{% endif %}</td>
+                <td>{{ line.quantity|floatformat:"-2" }}</td>
+                <td class="in-money">{{ line.unit_price|floatformat:0|intcomma }}</td>
+                <td class="in-money"><strong>{{ line.line_total|floatformat:0|intcomma }}</strong></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr><th colspan="3">Total</th><th class="in-money">TZS {{ order.total|floatformat:0|intcomma }}</th></tr></tfoot>
+        </table>
+      </div>
+      <div class="in-panel-body">
+        <p class="in-muted">{% if order.status == "cancelled" %}The reserved stock went back to your shelves.{% elif order.status == "delivered" %}Recorded as a sale{% if order.sale %} (<a href="{% url 'inputs:sale_detail' order.sale_id %}" class="in-link">{{ order.sale.receipt_number }}</a>){% endif %}.{% else %}This stock is set aside for the farmer and is not sold in the POS.{% endif %}</p>
+      </div>
+    </section>
+
+    <div class="in-stack" style="margin-top:0">
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <h2 class="in-panel-title" style="margin-bottom:0.75rem">Farmer</h2>
+          <div class="in-list">
+            <div class="in-list-row"><span>Name</span><strong>{{ order.farmer_name }}</strong></div>
+            <div class="in-list-row"><span>Phone</span><a href="tel:{{ order.farmer_phone }}" class="in-link">{{ order.farmer_phone }}</a></div>
+            {% if order.delivery_region %}<div class="in-list-row"><span>Region</span><strong>{{ order.delivery_region }}</strong></div>{% endif %}
+            <div class="in-list-row"><span>Kikapu order</span><strong>{{ order.external_order_id }}</strong></div>
+          </div>
+          {% if order.delivery_notes %}<div style="margin-top:0.75rem"><strong>Delivery notes</strong><p class="in-muted" style="white-space:pre-line">{{ order.delivery_notes }}</p></div>{% endif %}
+          {% if last_webhook %}
+            <p class="in-muted" style="margin-top:0.75rem">
+              <i class="fa-brands fa-whatsapp"></i>
+              {% if last_webhook.state == "delivered" %}Farmer notified: {{ last_webhook.status }} ({{ last_webhook.delivered_at|naturaltime }}).
+              {% elif last_webhook.state == "failed" %}Couldn't notify the farmer about "{{ last_webhook.status }}". Please call them.
+              {% else %}Notification about "{{ last_webhook.status }}" is queued and will be retried.{% endif %}
+            </p>
+          {% endif %}
+        </div>
+      </section>
+
+      {% if order.allowed_next_statuses %}
+        <section class="in-panel">
+          <div class="in-panel-body">
+            <h2 class="in-panel-title">Update the farmer</h2>
+            <form method="post" style="margin-top:0.75rem">
+              {% csrf_token %}
+              <div class="in-field">
+                <label for="note">Message to the farmer (optional)</label>
+                <input type="text" name="note" id="note" maxlength="255" class="form-input" placeholder="e.g. On its way, expect delivery within 2 days">
+              </div>
+              <div class="supplier-actions" style="margin-top:0.75rem">
+                {% if "confirmed" in order.allowed_next_statuses %}<button name="status" value="confirmed" class="in-btn in-btn-primary"><i class="fa-solid fa-check"></i> Confirm order</button>{% endif %}
+                {% if "dispatched" in order.allowed_next_statuses %}<button name="status" value="dispatched" class="in-btn in-btn-primary"><i class="fa-solid fa-truck-fast"></i> Mark dispatched</button>{% endif %}
+                {% if "delivered" in order.allowed_next_statuses %}<button name="status" value="delivered" class="in-btn in-btn-primary"><i class="fa-solid fa-box-open"></i> Mark delivered</button>{% endif %}
+                {% if "cancelled" in order.allowed_next_statuses %}<button name="status" value="cancelled" class="in-btn in-btn-danger" onclick="return confirm('Cancel this order? The stock goes back on sale and the farmer is told.')">Cancel order</button>{% endif %}
+              </div>
+            </form>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+  </div>
+  <div><a href="{% url 'inputs:farmer_order_list' %}" class="in-btn in-btn-secondary">← All farmer orders</a></div>
+</div>
+{% endblock %}

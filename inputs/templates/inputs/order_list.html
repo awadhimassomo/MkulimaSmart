@@ -1,0 +1,41 @@
+{% extends "inputs/base.html" %}
+{% load humanize %}
+
+{% block page_title %}{% if seller.seller_type == "manufacturer" %}Shop orders{% else %}My orders{% endif %}{% endblock %}
+{% block supplier_title %}{% if seller.seller_type == "manufacturer" %}Orders from shops{% else %}My orders{% endif %}{% endblock %}
+{% block supplier_subtitle %}{% if seller.seller_type == "manufacturer" %}Confirm, dispatch or decline orders placed by input shops.{% else %}Track purchase orders you've sent to manufacturers. Mark them received to add the stock to your shop.{% endif %}{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <section class="in-panel">
+    <div class="in-panel-body">
+      <div class="in-tabs">
+        <a href="?" class="{% if not status %}is-active{% endif %}">All</a>
+        {% for value, label in status_choices %}<a href="?status={{ value }}" class="{% if status == value %}is-active{% endif %}">{{ label }}</a>{% endfor %}
+      </div>
+    </div>
+    {% if page_obj.object_list %}
+      <div class="in-table-wrap">
+        <table class="supplier-table">
+          <thead><tr><th>Order</th><th>{% if seller.seller_type == "manufacturer" %}Shop{% else %}Manufacturer{% endif %}</th><th>Items</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
+          <tbody>
+            {% for order in page_obj %}
+              <tr>
+                <td><a href="{% if seller.seller_type == 'manufacturer' %}{% url 'inputs:manufacturer_order_detail' order.pk %}{% else %}{% url 'inputs:order_detail' order.pk %}{% endif %}" class="in-link">{{ order.order_number }}</a></td>
+                <td>{% if seller.seller_type == "manufacturer" %}{{ order.shop }}<div class="in-muted">{{ order.shop.location }}</div>{% else %}{{ order.manufacturer }}{% endif %}</td>
+                <td>{{ order.item_count }}</td>
+                <td class="in-money"><strong>TZS {{ order.total|floatformat:0|intcomma }}</strong></td>
+                <td><span class="in-pill in-pill-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                <td class="in-muted">{{ order.created_at|date:"M j, Y" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "inputs/_pagination.html" %}
+    {% else %}
+      <div class="in-empty"><i class="fa-solid fa-truck"></i>No orders{% if status %} with this status{% endif %}.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

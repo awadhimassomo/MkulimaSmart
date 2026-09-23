@@ -1,0 +1,176 @@
+{% extends "inputs/base.html" %}
+
+{% block page_title %}{% if product %}{{ product.name }}{% else %}List a product{% endif %}{% endblock %}
+{% block supplier_title %}{% if product %}{{ product.name }}{% else %}List a product{% endif %}{% endblock %}
+{% block supplier_subtitle %}Shops order from what they see here. Clear photos, the registration number and usage details build trust.{% endblock %}
+
+{% block inputs_css %}
+<style>
+  .pf-section + .pf-section { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #edf1ea; }
+  .pf-section-title { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #5d6d63; margin: 0 0 0.85rem; }
+  .pf-section[hidden] { display: none; }
+</style>
+{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <form method="post" enctype="multipart/form-data" id="product-form" novalidate>
+    {% csrf_token %}
+    {% if form.errors %}<div class="pos-error" style="background:#fdecea;color:#b42318;padding:0.75rem 1rem;border-radius:0.8rem;font-weight:600;margin-bottom:1rem">Please fix the highlighted fields below.</div>{% endif %}
+    {{ form.non_field_errors }}
+    <div class="in-grid-2">
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <div class="pf-section">
+            <h2 class="pf-section-title">Basic details</h2>
+            <div class="in-form-grid">
+              {% include "inputs/_field.html" with field=form.name extra_class="in-field-wide" %}
+              {% include "inputs/_field.html" with field=form.brand %}
+              {% include "inputs/_field.html" with field=form.category %}
+              {% include "inputs/_field.html" with field=form.pack_size %}
+              {% include "inputs/_field.html" with field=form.unit %}
+            </div>
+          </div>
+
+          <div class="pf-section">
+            <h2 class="pf-section-title">Price and availability</h2>
+            <div class="in-form-grid">
+              {% include "inputs/_field.html" with field=form.wholesale_price %}
+              {% include "inputs/_field.html" with field=form.suggested_retail_price %}
+              {% include "inputs/_field.html" with field=form.min_order_quantity %}
+              {% include "inputs/_field.html" with field=form.stock_available %}
+            </div>
+          </div>
+
+          <div class="pf-section" data-show-for="fertilizer pesticides seeds seedlings compost feed">
+            <h2 class="pf-section-title">Composition and registration</h2>
+            <div class="in-form-grid">
+              {% include "inputs/_field.html" with field=form.composition extra_class="in-field-wide" %}
+              {% include "inputs/_field.html" with field=form.registration_authority %}
+              {% include "inputs/_field.html" with field=form.registration_number %}
+            </div>
+          </div>
+
+          <div class="pf-section" data-show-for="pesticides">
+            <h2 class="pf-section-title">Pesticide safety</h2>
+            <div class="in-form-grid">
+              {% include "inputs/_field.html" with field=form.toxicity_class %}
+              {% include "inputs/_field.html" with field=form.safety_precautions extra_class="in-field-wide" %}
+            </div>
+          </div>
+
+          <div class="pf-section" data-show-for="seeds seedlings">
+            <h2 class="pf-section-title">Seed details</h2>
+            <div class="in-form-grid">
+              {% include "inputs/_field.html" with field=form.seed_variety %}
+              {% include "inputs/_field.html" with field=form.maturity_days %}
+              {% include "inputs/_field.html" with field=form.germination_rate %}
+            </div>
+          </div>
+
+          <div class="pf-section">
+            <h2 class="pf-section-title">How to use</h2>
+            <div class="in-form-grid">
+              {% include "inputs/_field.html" with field=form.target_crops extra_class="in-field-wide" %}
+              {% include "inputs/_field.html" with field=form.usage_instructions extra_class="in-field-wide" %}
+              {% include "inputs/_field.html" with field=form.shelf_life_months %}
+              {% include "inputs/_field.html" with field=form.description extra_class="in-field-wide" %}
+              {% include "inputs/_field.html" with field=form.is_active extra_class="in-field-wide" %}
+            </div>
+            <datalist id="crop-suggestions">{% for crop in crop_suggestions %}<option value="{{ crop }}">{% endfor %}</datalist>
+          </div>
+        </div>
+      </section>
+
+      <section class="in-panel">
+        <div class="in-panel-body">
+          <h2 class="in-panel-title">Photos *</h2>
+          <p class="in-muted">At least one photo is required. Add the front of the pack, the label with the registration number, and the product itself.</p>
+          <div class="in-field" style="margin-top:0.75rem">
+            {{ form.new_images }}
+            {% if form.new_images.help_text %}<span class="helptext">{{ form.new_images.help_text }}</span>{% endif %}
+            {{ form.new_images.errors }}
+          </div>
+          <div class="in-gallery" id="new-previews" style="margin-top:0.75rem"></div>
+        </div>
+      </section>
+    </div>
+    <div class="supplier-actions" style="margin-top:1.25rem">
+      <button type="submit" class="in-btn in-btn-primary">{% if product %}Save changes{% else %}Publish product{% endif %}</button>
+      <a href="{% url 'inputs:manufacturer_products' %}" class="in-btn in-btn-secondary">Back to catalog</a>
+    </div>
+  </form>
+
+  {% if images %}
+    <section class="in-panel">
+      <div class="in-panel-body">
+        <h2 class="in-panel-title" style="margin-bottom:0.75rem">Current photos</h2>
+        <div class="in-gallery">
+          {% for img in images %}
+            <div class="in-gallery-item {% if img.is_primary %}is-primary{% endif %}">
+              <img src="{{ img.image.url }}" alt="{{ product.name }} photo {{ forloop.counter }}">
+              <div class="in-gallery-actions">
+                {% if img.is_primary %}
+                  <span class="in-pill in-pill-ok">Cover</span>
+                {% else %}
+                  <form method="post" action="{% url 'inputs:manufacturer_image_action' img.pk %}">{% csrf_token %}<button name="action" value="primary" class="in-btn in-btn-secondary in-btn-sm">Make cover</button></form>
+                {% endif %}
+                {% if images|length > 1 %}
+                  <form method="post" action="{% url 'inputs:manufacturer_image_action' img.pk %}" onsubmit="return confirm('Remove this photo?')">{% csrf_token %}<button name="action" value="delete" class="in-btn in-btn-danger in-btn-sm" aria-label="Remove photo"><i class="fa-solid fa-trash"></i></button></form>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        {% if images|length == 1 %}<p class="in-muted" style="margin-top:0.5rem">Add another photo before removing this one. Every product needs at least one.</p>{% endif %}
+      </div>
+    </section>
+  {% endif %}
+</div>
+{{ category_rules|json_script:"category-rules" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    // Show category-specific sections and mark the fields that category requires.
+    const rules = JSON.parse(document.getElementById("category-rules").textContent);
+    const category = document.getElementById("{{ form.category.id_for_label }}");
+
+    function refresh() {
+      const value = category.value;
+      document.querySelectorAll("[data-show-for]").forEach(section => {
+        section.hidden = !section.dataset.showFor.split(" ").includes(value);
+      });
+      const extra = new Set(rules[value] || []);
+      document.querySelectorAll("#product-form [name]").forEach(input => {
+        const label = document.querySelector('label[for="' + input.id + '"]');
+        if (!label || input.type === "checkbox") return;
+        // Always-required fields already carry a server-rendered "*"; only toggle category extras.
+        if (input.required) return;
+        const star = label.querySelector(".req-star");
+        const needed = extra.has(input.name);
+        if (needed && !star) label.insertAdjacentHTML("beforeend", '<span class="req-star"> *</span>');
+        if (!needed && star) star.remove();
+      });
+    }
+    category.addEventListener("change", refresh);
+    refresh();
+
+    const input = document.getElementById("{{ form.new_images.id_for_label }}");
+    const box = document.getElementById("new-previews");
+    input.addEventListener("change", () => {
+      box.innerHTML = "";
+      Array.from(input.files || []).forEach(file => {
+        const wrap = document.createElement("div");
+        wrap.className = "in-gallery-item";
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.alt = "";
+        wrap.appendChild(img);
+        box.appendChild(wrap);
+      });
+    });
+  })();
+</script>
+{% endblock %}

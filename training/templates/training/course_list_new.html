@@ -1,0 +1,321 @@
+{% extends "training/base.html" %}
+
+{% block extra_css %}
+<style>
+    .aspect-video-16-9 {
+        padding-bottom: 56.25%;
+    }
+    .lesson-list-container {
+        max-height: 260px;
+        overflow-y: auto;
+    }
+    .video-container {
+        height: 400px;
+    }
+</style>
+{% endblock %}
+{% load static %}
+{% load i18n %}
+{% load training_tags %}
+
+{% block training_content %}
+<div id="course-detail-container" class="h-full">
+<div class="flex space-x-6 h-full">
+
+    <!-- Left Column: Course List -->
+    <div class="w-2/5 bg-white rounded-lg shadow overflow-hidden flex flex-col">
+        <!-- Course Header and Search -->
+        <div class="p-5 border-b">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Courses</h2>
+                <div class="relative">
+                    <input type="text" placeholder="{% trans 'Search...' %}" class="pl-8 pr-4 py-1 border border-gray-200 rounded-md text-sm w-full">
+                    <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i class="fas fa-search text-xs"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="flex space-x-2 text-sm">
+                <button type="button" class="font-medium" title="Show all courses">All</button>
+                <button type="button" class="text-gray-500" title="Show active courses">Active</button>
+                <button type="button" class="text-gray-500" title="Show completed courses">Completed</button>
+            </div>
+        </div>
+
+        <!-- Language Filters -->
+        <div class="px-5 py-3 flex space-x-2 overflow-x-auto border-b">
+            <button type="button" class="flex items-center space-x-1 px-2 py-1 text-xs rounded" title="Filter by English">
+                <img src="https://flagcdn.com/gb.svg" class="w-4 h-4 rounded-full" alt="English">
+                <span>English</span>
+            </button>
+            <button type="button" class="flex items-center space-x-1 px-2 py-1 text-xs rounded" title="Filter by Spanish">
+                <img src="https://flagcdn.com/es.svg" class="w-4 h-4 rounded-full" alt="Spanish">
+                <span>Spanish</span>
+            </button>
+            <button type="button" class="flex items-center space-x-1 px-2 py-1 text-xs rounded bg-gray-100" title="Filter by French">
+                <img src="https://flagcdn.com/fr.svg" class="w-4 h-4 rounded-full" alt="French">
+                <span>French</span>
+            </button>
+            <button type="button" class="flex items-center space-x-1 px-2 py-1 text-xs rounded" title="Filter by Chinese">
+                <img src="https://flagcdn.com/cn.svg" class="w-4 h-4 rounded-full" alt="Chinese">
+                <span>Chinese</span>
+            </button>
+            <button type="button" class="px-2 py-1 text-xs" aria-label="{% trans 'Filters' %}">
+                <i class="fas fa-sliders-h" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <!-- Course List Items -->
+        <div class="overflow-y-auto flex-1 p-5 space-y-3">
+            {% for course in courses %}
+            <div class="course-item p-4 rounded-lg border border-gray-100 {% if forloop.first %}bg-white shadow-sm{% else %}hover:bg-gray-50 cursor-pointer{% endif %}"
+                 data-course-id="{{ course.id }}"
+                 data-title="{{ course.title }}"
+                 data-description="{{ course.description }}"
+                 data-short-description="{{ course.short_description|default:course.description }}"
+                 data-image-url="{{ course.image.url|default:'https://placehold.co/1280x720' }}"
+                 data-level="{{ course.get_level_display }}"
+                 data-lesson-count="{{ course.lesson_count }}"
+                 data-estimated-duration="{{ course.estimated_duration }}"
+                 data-instructor-name="JULIUS NDEEGE" {# Placeholder #}
+                 data-instructor-title="Professional Agriculture" {# Placeholder #}
+                 data-lessons='{{ course.modules.all|lessons_to_json }}'>
+                <div class="flex space-x-3">
+                    <img src="{{ course.image.url|default:'https://placehold.co/80x80' }}" alt="{{ course.title }}" class="w-20 h-20 rounded-lg object-cover flex-shrink-0">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 text-sm">{{ course.title }}</h3>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ course.short_description|default:course.description }}</p>
+                        <div class="flex items-center justify-between mt-2">
+                            <div class="flex items-center text-yellow-500 text-xs">
+                                <i class="fas fa-star" aria-hidden="true"></i>
+                                <i class="fas fa-star" aria-hidden="true"></i>
+                                <i class="fas fa-star" aria-hidden="true"></i>
+                                <i class="fas fa-star" aria-hidden="true"></i>
+                                <i class="far fa-star" aria-hidden="true"></i>
+                                <span class="text-gray-500 ml-1 text-xs">(294)</span>
+                            </div>
+                            <span class="text-gray-500 capitalize bg-gray-100 px-2 py-0.5 rounded text-xs">{{ course.get_level_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Column: Course Detail -->
+    <div class="w-3/5" id="course-detail-view">
+        {% with course=courses.first %}
+        {% if course %}
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Video Player Placeholder -->
+            <div class="relative bg-black video-container">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <button class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center" title="Pause video">
+                        <i class="fas fa-pause text-white text-xl" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <img src="{{ course.image.url|default:'https://placehold.co/1280x720' }}" class="absolute inset-0 w-full h-full object-cover" alt="Course thumbnail">
+            </div>
+            
+            <div class="p-6 flex-1 flex flex-col overflow-hidden">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">English for career development</h2>
+                
+                <p class="text-sm text-gray-600 mb-6">In this course, you will learn about the job search, application, and interview process in the United States, while improving your English language skills. This course will also give you the opportunity to explore your global career path, while building your vocabulary and improving your language skills to achieve your professional goals.</p>
+                
+                <div class="flex items-center mb-6">
+                    <img src="{% static 'images/avatar-placeholder.jpg'|default:'https://placehold.co/40x40' %}" alt="Instructor" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p class="font-semibold text-gray-800">JULIUS NDEEGE</p>
+                        <p class="text-xs text-gray-500">Professional Agriculture</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Course's content</h3>
+                    <span class="text-xs text-gray-500">{{ course.lesson_count|default:'12' }} lectures • {{ course.estimated_duration|default:'2' }} hours</span>
+                </div>
+
+                <div class="space-y-2 lesson-list-container">
+                    <!-- Intro lesson -->                    
+                    <div class="flex items-center justify-between p-3 rounded-md bg-orange-100 hover:bg-orange-50">
+                        <div class="flex items-center">
+                            <div class="bg-orange-200 text-orange-700 w-8 h-8 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
+                                <i class="fas fa-play text-xs" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-sm">Intro</p>
+                                <p class="text-xs text-gray-500">3 mins</p>
+                            </div>
+                        </div>
+                        <button class="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm text-orange-500 flex-shrink-0" title="Play intro lesson">
+                            <i class="fas fa-play text-xs" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    
+                    {% for module in course.modules.all %}
+                        {% for lesson in module.lessons.all %}
+                        <div class="flex items-center justify-between p-3 rounded-md {% if forloop.first and forloop.parentloop.first %}bg-orange-100 hover:bg-orange-50{% else %}bg-gray-50 hover:bg-gray-100{% endif %}">
+                            <div class="flex items-center">
+                                <div class="{% if forloop.first and forloop.parentloop.first %}bg-orange-200 text-orange-700{% else %}bg-gray-200 text-gray-700{% endif %} w-8 h-8 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-xs">{{ forloop.parentloop.counter }}.{{ forloop.counter }}</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">{{ lesson.title }}</p>
+                                    <p class="text-xs text-gray-500">{{ lesson.duration|default:10 }} mins</p>
+                                </div>
+                            </div>
+                            <button class="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm {% if forloop.first and forloop.parentloop.first %}text-orange-500{% endif %} flex-shrink-0" title="Play lesson: {{ lesson.title }}">
+                                <i class="fas fa-play text-xs" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% empty %}
+                        <!-- If no modules/lessons exist, show demo items -->                        
+                        <div class="flex items-center justify-between p-3 rounded-md bg-gray-50 hover:bg-gray-100">
+                            <div class="flex items-center">
+                                <div class="bg-gray-200 text-gray-700 w-8 h-8 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-xs">1.1</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">Lesson topic one</p>
+                                    <p class="text-xs text-gray-500">8 mins</p>
+                                </div>
+                            </div>
+                            <button class="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm flex-shrink-0" title="Play lesson: Lesson topic one">
+                                <i class="fas fa-play text-xs" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 rounded-md bg-gray-50 hover:bg-gray-100">
+                            <div class="flex items-center">
+                                <div class="bg-gray-200 text-gray-700 w-8 h-8 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-xs">1.2</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">Writing a resume</p>
+                                    <p class="text-xs text-gray-500">12 mins</p>
+                                </div>
+                            </div>
+                            <button class="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm flex-shrink-0" title="Play lesson: Writing a resume">
+                                <i class="fas fa-play text-xs" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 rounded-md bg-gray-50 hover:bg-gray-100">
+                            <div class="flex items-center">
+                                <div class="bg-gray-200 text-gray-700 w-8 h-8 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-xs">1.3</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">Interview preparation</p>
+                                    <p class="text-xs text-gray-500">15 mins</p>
+                                </div>
+                            </div>
+                            <button class="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm flex-shrink-0" title="Play lesson: Interview preparation">
+                                <i class="fas fa-play text-xs" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                    
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center justify-center h-full">
+            <img src="{% static 'images/no-courses.svg'|default:'https://placehold.co/200x200?text=No+Courses' %}" alt="No courses available" class="w-32 h-32 mb-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">No courses available</h2>
+            <p class="text-gray-600 text-center mb-6">There are no courses available at the moment. Please check back later.</p>
+            <a href="{% url 'training:home' %}" class="px-4 py-2 bg-kikapu-dark text-white rounded-lg">Back to Training Home</a>
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</div>
+</div>
+{% endblock training_content %}
+
+{% block training_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const courseItems = document.querySelectorAll('.course-item');
+    const courseDetailView = document.getElementById('course-detail-view');
+    
+    courseItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove active state from all items
+            courseItems.forEach(courseItem => {
+                courseItem.classList.remove('bg-white', 'shadow-sm', 'border-gray-200');
+                courseItem.classList.add('hover:bg-gray-50', 'cursor-pointer');
+            });
+            
+            // Add active state to clicked item
+            this.classList.add('bg-white', 'shadow-sm', 'border-gray-200');
+            this.classList.remove('hover:bg-gray-50', 'cursor-pointer');
+
+            // Update the right column
+            const courseData = this.dataset;
+            const lessons = JSON.parse(courseData.lessons);
+
+            let lessonsHtml = '';
+            let lessonCounter = 0;
+            lessons.forEach((module, moduleIndex) => {
+                module.lessons.forEach((lesson, lessonIndex) => {
+                    lessonCounter++;
+                    const isFirst = lessonCounter === 1;
+                    lessonsHtml += `
+                        <div class="flex items-center justify-between p-3 rounded-md ${isFirst ? 'bg-orange-100 hover:bg-orange-50' : 'bg-gray-50 hover:bg-gray-100'}">
+                            <div class="flex items-center">
+                                <div class="${isFirst ? 'bg-orange-200 text-orange-700' : 'bg-gray-200 text-gray-700'} w-8 h-8 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-xs">${moduleIndex + 1}.${lessonIndex + 1}</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">${lesson.title}</p>
+                                    <p class="text-xs text-gray-500">${lesson.duration || 10} mins</p>
+                                </div>
+                            </div>
+                            <button class="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm ${isFirst ? 'text-orange-500' : ''} flex-shrink-0" title="Play lesson: ${lesson.title}">
+                                <i class="fas fa-play text-xs" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+            });
+
+            courseDetailView.innerHTML = `
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="relative bg-black video-container">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <button class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center" title="Play video">
+                                <i class="fas fa-play text-white text-xl" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <img src="${courseData.imageUrl}" class="absolute inset-0 w-full h-full object-cover" alt="Course thumbnail">
+                    </div>
+                    <div class="p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">${courseData.title}</h2>
+                        
+                        <p class="text-sm text-gray-600 mb-6">${courseData.description}</p>
+                        
+                        <div class="flex items-center mb-6">
+                            <img src="https://placehold.co/40x40" alt="Instructor" class="w-10 h-10 rounded-full mr-3">
+                            <div>
+                                <p class="font-semibold text-gray-800">${courseData.instructorName}</p>
+                                <p class="text-xs text-gray-500">${courseData.instructorTitle}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Course's content</h3>
+                            <span class="text-xs text-gray-500">${courseData.lessonCount} lectures • ${courseData.estimatedDuration} hours</span>
+                        </div>
+                        
+                        <div class="space-y-2 lesson-list-container">${lessonsHtml}</div>
+                    </div>
+                </div>
+            `;
+        });
+    });
+});
+</script>
+{% endblock training_extra_js %}

@@ -1,0 +1,555 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block title %}Complete Your Profile - Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --brand-primary: #2D5A27;
+    --brand-primary-medium: #4A7C3A;
+    --brand-primary-dark: #1A3316;
+    --brand-accent: #C5D86D;
+    --brand-accent-light: #D4E89A;
+    --brand-accent-dark: #B5C95A;
+    --gradient-primary: linear-gradient(135deg, var(--brand-primary-dark) 0%, var(--brand-primary) 50%, var(--brand-primary-medium) 100%);
+  }
+
+  .completion-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem 1rem;
+  }
+
+  .completion-card {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(45, 90, 39, 0.15);
+    overflow: hidden;
+  }
+
+  .completion-header {
+    background: var(--gradient-primary);
+    padding: 2rem;
+    color: white;
+    text-align: center;
+  }
+
+  .completion-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .completion-header p {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-bar-container {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    height: 12px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--brand-accent);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.5rem;
+  }
+
+  .progress-text {
+    font-size: 0.75rem;
+    color: var(--brand-primary-dark);
+    font-weight: 700;
+  }
+
+  .completion-body {
+    padding: 2rem;
+  }
+
+  .welcome-message {
+    background: linear-gradient(135deg, #fff9e6 0%, #f0f8e8 100%);
+    border-left: 4px solid var(--brand-accent);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+
+  .welcome-message h2 {
+    color: var(--brand-primary-dark);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .welcome-message p {
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--brand-primary-dark);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--brand-accent-light);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-field.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .field-label {
+    font-weight: 600;
+    color: var(--brand-primary-dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .field-hint {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 0.25rem;
+  }
+
+  .field-input {
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background: #f8f9fa;
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(45, 90, 39, 0.1);
+  }
+
+  .field-input.pre-filled {
+    background: linear-gradient(135deg, #e8f5e0 0%, #f0f8e8 100%);
+    border-color: var(--brand-accent-dark);
+  }
+
+  .pre-filled-badge {
+    background: var(--brand-accent);
+    color: var(--brand-primary-dark);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+
+  .crop-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .crop-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .crop-checkbox:hover {
+    background: #e9ecef;
+  }
+
+  .crop-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .crop-checkbox input[type="checkbox"]:checked + label {
+    color: var(--brand-primary);
+    font-weight: 600;
+  }
+
+  .crop-checkbox.pre-selected {
+    background: linear-gradient(135deg, #e8f5e0 0%, #f0f8e8 100%);
+    border-color: var(--brand-accent);
+  }
+
+  .crop-checkbox label {
+    cursor: pointer;
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  .benefit-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+
+  .benefit-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #555;
+    font-size: 0.9rem;
+  }
+
+  .benefit-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--brand-accent-dark);
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+  }
+
+  .btn {
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    flex: 1;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(45, 90, 39, 0.3);
+  }
+
+  .btn-secondary {
+    background: white;
+    color: var(--brand-primary);
+    border: 2px solid var(--brand-primary);
+  }
+
+  .btn-secondary:hover {
+    background: var(--brand-primary);
+    color: white;
+  }
+
+  .info-box {
+    background: #e7f3ff;
+    border-left: 4px solid #2196F3;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+  }
+
+  .info-box p {
+    margin: 0;
+    color: #1565C0;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .crop-selector {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+  }
+
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .spinner {
+    border: 4px solid rgba(45, 90, 39, 0.1);
+    border-radius: 50%;
+    border-top: 4px solid var(--brand-primary);
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="completion-container">
+  <div class="completion-card">
+    <!-- Header with Progress -->
+    <div class="completion-header">
+      <h1>🌱 Welcome to Mkulima Smart!</h1>
+      <p>Your account is ready. Help us serve you better by completing your farm profile.</p>
+      <div class="progress-bar-container">
+        <div class="progress-bar" style="width: {{ completion_percentage }}%;">
+          <span class="progress-text">{{ completion_percentage }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="completion-body">
+      <!-- Welcome Message -->
+      <div class="welcome-message">
+        <h2>
+          👋 Hello, {{ user.get_full_name }}!
+        </h2>
+        <p>
+          We've already set up your basic account based on your Kikapu registration. 
+          Below, we've pre-filled some information based on smart predictions. 
+          Please confirm or update these details to get the most out of Mkulima Smart.
+        </p>
+      </div>
+
+      <form id="completionForm">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" value="{{ user.id }}">
+        <input type="hidden" name="token" value="{{ token }}">
+
+        <!-- Personal Information Section -->
+        <div class="section-title">📋 Personal Information</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label">
+              Phone Number
+              <span class="pre-filled-badge">Verified</span>
+            </label>
+            <input type="text" class="field-input pre-filled" value="{{ user.phone_number }}" disabled>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Email Address (Optional)</label>
+            <input type="email" name="email" class="field-input" value="{{ user.email }}" 
+                   placeholder="your.email@example.com">
+            <span class="field-hint">Get important updates and notifications</span>
+          </div>
+        </div>
+
+        <!-- Farm Details Section -->
+        <div class="section-title">🚜 Farm Details</div>
+        
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label">
+              Location
+              {% if farm.location != 'Tanzania' %}
+              <span class="pre-filled-badge">Auto-detected</span>
+              {% endif %}
+            </label>
+            <input type="text" name="location" class="field-input {% if farm.location != 'Tanzania' %}pre-filled{% endif %}" 
+                   value="{{ user_data.location }}" placeholder="e.g., Arusha, Mbeya">
+            <span class="field-hint">
+              {% if farm.location != 'Tanzania' %}
+                We detected "{{ farm.location }}" from your phone number. Confirm or update.
+              {% else %}
+                Enter your farm's location for better service
+              {% endif %}
+            </span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Farm Size (Hectares)</label>
+            <input type="number" name="farm_size" class="field-input" step="0.1" min="0" 
+                   value="{{ user_data.farm_size }}" placeholder="e.g., 2.5">
+            <span class="field-hint">Enter your farm size for accurate recommendations</span>
+          </div>
+
+          <div class="form-field full-width">
+            <label class="field-label">Soil Type (Optional)</label>
+            <select name="soil_type" class="field-input">
+              <option value="">Select soil type</option>
+              {% for soil in soil_types %}
+              <option value="{{ soil }}" {% if user_data.soil_type == soil %}selected{% endif %}>{{ soil }}</option>
+              {% endfor %}
+            </select>
+            <span class="field-hint">Helps us provide better crop advice</span>
+          </div>
+        </div>
+
+        <!-- Crops Section -->
+        <div class="section-title">🌾 Your Crops</div>
+        {% if user_data.crops %}
+        <div class="info-box">
+          <p>
+            <strong>Smart Prediction:</strong> Based on your location and farm name, 
+            we think you grow: <strong>{{ user_data.crops|join:", " }}</strong>. 
+            Confirm or select your actual crops below.
+          </p>
+        </div>
+        {% endif %}
+
+        <div class="crop-selector">
+          {% for crop in available_crops %}
+          <div class="crop-checkbox {% if crop in user_data.crops %}pre-selected{% endif %}">
+            <input type="checkbox" name="crops" value="{{ crop }}" id="crop_{{ crop }}"
+                   {% if crop in user_data.crops %}checked{% endif %}>
+            <label for="crop_{{ crop }}">{{ crop }}</label>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Why This Matters Section -->
+        <div class="section-title">💡 Why Complete Your Profile?</div>
+        <ul class="benefit-list">
+          <li>Get personalized weather alerts for your specific location</li>
+          <li>Receive crop-specific advice and disease warnings</li>
+          <li>Access relevant market prices and buyers</li>
+          <li>Connect with nearby suppliers and services</li>
+          <li>Apply for financing and insurance programs</li>
+        </ul>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button type="button" class="btn btn-secondary" onclick="skipForNow()">
+            Skip for Now
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Complete Profile & Continue
+            →
+          </button>
+        </div>
+      </form>
+
+      <!-- Loading State -->
+      <div class="loading" id="loadingState">
+        <div class="spinner"></div>
+        <p>Saving your profile...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('completionForm');
+  const loadingState = document.getElementById('loadingState');
+  const completionBody = document.querySelector('.completion-body');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Show loading state
+    form.style.display = 'none';
+    loadingState.style.display = 'block';
+
+    // Gather form data
+    const formData = new FormData(form);
+    const data = {
+      user_id: formData.get('user_id'),
+      token: formData.get('token'),
+      email: formData.get('email'),
+      location: formData.get('location'),
+      farm_size: parseFloat(formData.get('farm_size')),
+      soil_type: formData.get('soil_type'),
+      crops: formData.getAll('crops'),
+    };
+
+    try {
+      const response = await fetch('/api/auth/farmer/complete-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        // Show success message
+        completionBody.innerHTML = `
+          <div style="text-align: center; padding: 3rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+            <h2 style="color: var(--brand-primary); margin-bottom: 1rem;">Profile Completed!</h2>
+            <p style="font-size: 1.1rem; color: #555; margin-bottom: 2rem;">
+              Your Mkulima Smart profile is now <strong>${result.completion_percentage}%</strong> complete.
+            </p>
+            <a href="/dashboard" class="btn btn-primary">
+              Go to Dashboard
+            </a>
+          </div>
+        `;
+      } else {
+        alert('Error: ' + result.message);
+        form.style.display = 'block';
+        loadingState.style.display = 'none';
+      }
+    } catch (error) {
+      alert('Network error. Please try again.');
+      form.style.display = 'block';
+      loadingState.style.display = 'none';
+    }
+  });
+
+  function skipForNow() {
+    if (confirm('You can complete your profile later from your dashboard. Continue?')) {
+      window.location.href = '/dashboard';
+    }
+  }
+</script>
+{% endblock %}

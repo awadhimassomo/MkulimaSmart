@@ -1,0 +1,113 @@
+{% extends "marketplace/supplier_base.html" %}
+
+{% block supplier_title %}{{ page_title }}{% endblock %}
+{% block supplier_subtitle %}{{ page_subtitle }}{% endblock %}
+
+{% block supplier_content %}
+<div class="supplier-grid">
+  <section class="supplier-card">
+    <div class="supplier-card-body">
+      <form method="post" enctype="multipart/form-data" class="supplier-form-grid">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="supplier-errors">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="supplier-form-grid-2">
+          <div class="supplier-field">
+            <label for="{{ form.category.id_for_label }}">Category</label>
+            {{ form.category }}
+            {% if form.category.help_text %}
+              <span class="helptext">{{ form.category.help_text }}</span>
+            {% endif %}
+            {% if form.category.errors %}
+              <div class="supplier-errors">{{ form.category.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="supplier-field">
+            <label for="{{ form.name.id_for_label }}">Product Name</label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="supplier-errors">{{ form.name.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="supplier-field">
+          <label for="{{ form.description.id_for_label }}">Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="supplier-errors">{{ form.description.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="supplier-form-grid-2">
+          <div class="supplier-field">
+            <label for="{{ form.price.id_for_label }}">Price</label>
+            {{ form.price }}
+            {% if form.price.errors %}
+              <div class="supplier-errors">{{ form.price.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="supplier-field">
+            <label for="{{ form.discount_price.id_for_label }}">Discount Price</label>
+            {{ form.discount_price }}
+            {% if form.discount_price.errors %}
+              <div class="supplier-errors">{{ form.discount_price.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="supplier-form-grid-2">
+          <div class="supplier-field">
+            <label for="{{ form.stock.id_for_label }}">Available Stock</label>
+            {{ form.stock }}
+            {% if form.stock.errors %}
+              <div class="supplier-errors">{{ form.stock.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="supplier-field">
+            <label for="{{ form.primary_image.id_for_label }}">Cover Image</label>
+            {{ form.primary_image }}
+            {% if form.primary_image.help_text %}
+              <span class="helptext">{{ form.primary_image.help_text }}</span>
+            {% endif %}
+            {% if form.primary_image.errors %}
+              <div class="supplier-errors">{{ form.primary_image.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="supplier-form-grid-2">
+          <label class="supplier-field" style="display:flex;align-items:center;gap:0.75rem;margin:0;">
+            {{ form.is_hydroponics }}
+            <span>Hydroponics product</span>
+          </label>
+          <label class="supplier-field" style="display:flex;align-items:center;gap:0.75rem;margin:0;">
+            {{ form.requires_quote }}
+            <span>Requires custom quote</span>
+          </label>
+        </div>
+
+        <label class="supplier-field" style="display:flex;align-items:center;gap:0.75rem;margin:0;">
+          {{ form.is_active }}
+          <span>Publish this listing immediately</span>
+        </label>
+
+        <div class="supplier-actions" style="margin-top:0.5rem;">
+          <button type="submit" class="supplier-btn-primary">{{ submit_label }}</button>
+          <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-btn-secondary">Cancel</a>
+          {% if product %}
+            <a href="{% url 'marketplace:supplier_product_detail' product.pk %}" class="supplier-btn-secondary">View Listing</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+{% endblock %}

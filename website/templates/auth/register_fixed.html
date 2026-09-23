@@ -1,0 +1,145 @@
+{% extends 'auth/base_auth.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if requested_user_type == 'supplier' %}Seller Registration{% else %}Register{% endif %} - Mkulima Smart{% endblock %}
+{% block auth_heading %}{% if requested_user_type == 'supplier' %}Create Your Seller Account{% else %}Create Your Mkulima Smart Account{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" class="needs-validation" novalidate>
+    {% csrf_token %}
+
+    {% if requested_user_type == 'supplier' %}
+        <div class="alert alert-success">
+            Register as a supplier to access the seller dashboard and publish products in the marketplace.
+        </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="mb-3">
+        <label for="{{ form.user_type.id_for_label }}" class="form-label">Account Type <span class="text-danger">*</span></label>
+        {% render_field form.user_type class="form-select" %}
+        {% if form.user_type.errors %}
+            <div class="text-danger small mt-1">{{ form.user_type.errors|join:", " }}</div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+            {% render_field form.phone_number class="form-control" placeholder="e.g. +255XXXXXXXXX" %}
+        </div>
+        {% if form.phone_number.errors %}
+            <div class="text-danger small mt-1">{{ form.phone_number.errors|join:", " }}</div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name <span class="text-danger">*</span></label>
+            {% render_field form.first_name class="form-control" %}
+            {% if form.first_name.errors %}
+                <div class="text-danger small mt-1">{{ form.first_name.errors|join:", " }}</div>
+            {% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name <span class="text-danger">*</span></label>
+            {% render_field form.last_name class="form-control" %}
+            {% if form.last_name.errors %}
+                <div class="text-danger small mt-1">{{ form.last_name.errors|join:", " }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+        {% render_field form.email class="form-control" %}
+        {% if form.email.errors %}
+            <div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>
+        {% endif %}
+    </div>
+
+    <div id="farmer-fields">
+        <div class="alert alert-light border">
+            <div class="fw-semibold mb-2">Farmer profile extras</div>
+            <div class="small text-muted">These fields are only used when creating a farmer account.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="farm_name">Farm Name</label>
+            <input type="text" class="form-control" id="farm_name" name="farm_name" placeholder="Your farm or plot name">
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 mb-3">
+                <label class="form-label" for="location">Farm Location</label>
+                <input type="text" class="form-control" id="location" name="location" placeholder="District, ward, or village">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label" for="farm_size">Farm Size</label>
+                <input type="number" step="0.01" class="form-control" id="farm_size" name="farm_size" placeholder="Ha">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="soil_type">Soil Type</label>
+            <input type="text" class="form-control" id="soil_type" name="soil_type" placeholder="Loam, clay, sandy...">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="farm_description">Farm Description</label>
+            <textarea class="form-control" id="farm_description" name="farm_description" rows="3" placeholder="Tell us a little about the farm"></textarea>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.password1.id_for_label }}" class="form-label">Password <span class="text-danger">*</span></label>
+        {% render_field form.password1 class="form-control" %}
+        {% if form.password1.errors %}
+            <div class="text-danger small mt-1">{{ form.password1.errors|join:", " }}</div>
+        {% endif %}
+    </div>
+
+    <div class="mb-4">
+        <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+        {% render_field form.password2 class="form-control" %}
+        {% if form.password2.errors %}
+            <div class="text-danger small mt-1">{{ form.password2.errors|join:", " }}</div>
+        {% endif %}
+    </div>
+
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary btn-lg">Create Account</button>
+    </div>
+</form>
+
+<div class="auth-links mt-3">
+    Already have an account? <a href="{% if requested_user_type == 'supplier' %}{% url 'website:login' %}?user_type=supplier{% else %}{% url 'website:login' %}{% endif %}">Sign in</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const accountType = document.getElementById("id_user_type");
+        const farmerFields = document.getElementById("farmer-fields");
+
+        function syncFarmerFields() {
+            const show = !accountType || accountType.value === "farmer";
+            farmerFields.style.display = show ? "block" : "none";
+        }
+
+        if (accountType) {
+            accountType.addEventListener("change", syncFarmerFields);
+            syncFarmerFields();
+        }
+    })();
+</script>
+{% endblock %}
