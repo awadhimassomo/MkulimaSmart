@@ -72,8 +72,6 @@ INSTALLED_APPS = [
     'chat',  # Add the chat app so Django can find its templates
     'ecop',  # E-Cooperative module for farmer groups and commitments
     'traceability',
-    'inputs',  # Input manufacturers <-> input shops: catalog, orders, POS
-    'kikapu_bridge',  # Kikapu WhatsApp bridge: catalog pull, farmer orders, status webhooks
 
 ]
 
@@ -244,17 +242,6 @@ KIKAPU_OAUTH_BASE_URL = os.environ.get('KIKAPU_OAUTH_BASE_URL', 'http://localhos
 KIKAPU_OAUTH_CLIENT_ID = os.environ.get('KIKAPU_OAUTH_CLIENT_ID', 'mkulima_smart')  # OAuth client ID
 KIKAPU_OAUTH_CLIENT_SECRET = os.environ.get('KIKAPU_OAUTH_CLIENT_SECRET', 'mkulima_smart_secret_key_2024')  # OAuth client secret
 KIKAPU_OAUTH_REDIRECT_URI = os.environ.get('KIKAPU_OAUTH_REDIRECT_URI', 'http://localhost:8000/auth/kikapu/callback')  # OAuth callback URL
-
-# Kikapu <-> Mkulima Smart inputs bridge (docs/integrations/kikapu-bridge.md)
-# Kikapu calls /api/kikapu-bridge/ with a token from `manage.py issue_kikapu_token`.
-# Status webhooks are only sent once KIKAPU_BRIDGE_WEBHOOK_SECRET is set.
-KIKAPU_BRIDGE_WEBHOOK_URL = os.environ.get('KIKAPU_BRIDGE_WEBHOOK_URL', 'https://www.kikapu.co.tz/api/kikapu-bridge/orders/status/')
-KIKAPU_BRIDGE_WEBHOOK_SECRET = os.environ.get('KIKAPU_BRIDGE_WEBHOOK_SECRET', '')  # shared once, out of band
-KIKAPU_BRIDGE_OUTBOUND_TOKEN = os.environ.get('KIKAPU_BRIDGE_OUTBOUND_TOKEN', '')  # optional token Kikapu issues to us
-KIKAPU_BRIDGE_PARTNER_ID = os.environ.get('KIKAPU_BRIDGE_PARTNER_ID', 'mkulima-smart')
-KIKAPU_BRIDGE_WEBHOOK_TIMEOUT = int(os.environ.get('KIKAPU_BRIDGE_WEBHOOK_TIMEOUT', '5'))
-KIKAPU_BRIDGE_PUBLIC_BASE_URL = os.environ.get('KIKAPU_BRIDGE_PUBLIC_BASE_URL', SITE_BASE_URL)  # for image_url
-KIKAPU_BRIDGE_REQUIRE_HTTPS = os.environ.get('KIKAPU_BRIDGE_REQUIRE_HTTPS', str(not DEBUG)).lower() == 'true'
 
 TAILWIND_APP_NAME = 'theme'
 

@@ -17,7 +17,11 @@
           <div class="flex flex-wrap gap-3 mt-8">
             {% if user.is_authenticated %}
               {% if user.is_supplier or user.is_staff %}
+<<<<<<< HEAD
                 <a href="{% url 'inputs:home' %}" class="btn btn-accent">Open Supplier Dashboard</a>
+=======
+                <a href="{% url 'marketplace:supplier_dashboard' %}" class="btn btn-accent">Open Supplier Dashboard</a>
+>>>>>>> origin/main
               {% else %}
                 <a href="{% url 'marketplace:supplier_onboarding' %}" class="btn btn-accent">Complete Supplier Profile</a>
               {% endif %}

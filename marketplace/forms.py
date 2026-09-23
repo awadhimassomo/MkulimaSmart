@@ -146,37 +146,52 @@ class SupplierOnboardingForm(forms.ModelForm):
         fields = [
             "business_name",
             "location",
+<<<<<<< HEAD
             "region",
             "district",
             "latitude",
             "longitude",
+=======
+>>>>>>> origin/main
             "seller_type",
             "products_offered",
             "certification_details",
             "certificate_file",
+<<<<<<< HEAD
             "list_on_kikapu",
         ]
         widgets = {
             "certification_details": forms.Textarea(attrs={"rows": 4}),
             "latitude": forms.NumberInput(attrs={"step": "any", "placeholder": "e.g. -3.3869"}),
             "longitude": forms.NumberInput(attrs={"step": "any", "placeholder": "e.g. 36.6830"}),
+=======
+        ]
+        widgets = {
+            "certification_details": forms.Textarea(attrs={"rows": 4}),
+>>>>>>> origin/main
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+<<<<<<< HEAD
         # Kikapu shows farmers only shops in their region, so region is required from now on.
         self.fields["region"].required = True
         self.fields["region"].help_text = "Farmers on Kikapu see shops in their region."
         self.fields["location"].help_text = "Town or street, e.g. Moshi town, near the bus stand."
         self.fields["latitude"].help_text = "Optional. Lets farmers find the nearest shop."
+=======
+>>>>>>> origin/main
         for _, field in self.fields.items():
             widget = field.widget
             existing = widget.attrs.get("class", "")
             if isinstance(widget, forms.CheckboxSelectMultiple):
                 continue
+<<<<<<< HEAD
             if isinstance(widget, forms.CheckboxInput):
                 widget.attrs["class"] = f"h-5 w-5 rounded border-gray-300 {existing}".strip()
                 continue
+=======
+>>>>>>> origin/main
             if isinstance(widget, forms.Textarea):
                 widget.attrs["class"] = f"form-input min-h-32 {existing}".strip()
             elif isinstance(widget, forms.Select):
@@ -190,6 +205,7 @@ class SupplierOnboardingForm(forms.ModelForm):
                 ).strip()
             else:
                 widget.attrs["class"] = f"form-input {existing}".strip()
+<<<<<<< HEAD
 
     def clean(self):
         cleaned = super().clean()
@@ -201,3 +217,5 @@ class SupplierOnboardingForm(forms.ModelForm):
         if lng is not None and not -180 <= lng <= 180:
             self.add_error("longitude", "Longitude must be between -180 and 180.")
         return cleaned
+=======
+>>>>>>> origin/main

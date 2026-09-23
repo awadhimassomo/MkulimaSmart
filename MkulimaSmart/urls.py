@@ -31,12 +31,15 @@ urlpatterns = [
     path('api/', include('website.api_urls')),
     path('api/traceability/', include('traceability.urls')),
     
+<<<<<<< HEAD
     # Kikapu WhatsApp bridge (partner token auth)
     path('api/kikapu-bridge/', include('kikapu_bridge.urls', namespace='kikapu_bridge')),
 
     # Input supply chain API for the mobile app (manufacturers, shops, POS)
     path('api/inputs/', include('inputs.api_urls', namespace='inputs_api')),
 
+=======
+>>>>>>> origin/main
     # Ecop (E-Cooperative) API endpoints
     path('api/ecop/', include('ecop.urls')),
     
@@ -72,9 +75,12 @@ urlpatterns += i18n_patterns(
     # Include tradepoint URLs FIRST to avoid conflicts with website URLs
     path('marketplace/', include('marketplace.urls', namespace='marketplace')),
     
+<<<<<<< HEAD
     # Input supply chain: manufacturer portal and input shop dashboard / POS
     path('inputs/', include('inputs.urls', namespace='inputs')),
 
+=======
+>>>>>>> origin/main
     # Include website URLs
     path('', include('website.urls', namespace='website')),
     # Gov app App

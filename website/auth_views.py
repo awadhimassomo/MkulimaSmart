@@ -130,7 +130,11 @@ class FarmerRegistrationView(CreateView):
                 logger.error(f"Kikapu sync error (non-fatal): {str(e)}")
 
         if user.is_supplier:
+<<<<<<< HEAD
             return redirect('inputs:home')
+=======
+            return redirect('marketplace:supplier_dashboard')
+>>>>>>> origin/main
 
         return redirect(self.success_url)
 
@@ -183,7 +187,11 @@ class FarmerLoginView(FormView):
                 _('Successfully logged in as %(name)s') % {'name': user.get_full_name() or user.phone_number},
             )
             if user.is_supplier:
+<<<<<<< HEAD
                 return redirect('inputs:home')
+=======
+                return redirect('marketplace:supplier_dashboard')
+>>>>>>> origin/main
             return super().form_valid(form)
 
         messages.error(self.request, _('Invalid phone number or password.'))
