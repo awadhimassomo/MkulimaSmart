@@ -68,6 +68,30 @@
       </div>
     </section>
   </div>
+
+  <section class="in-panel">
+    <div class="in-panel-body">
+      <div class="in-panel-head">
+        <h2 class="in-panel-title">Farmer Talk</h2>
+        <a href="{% url 'community:discussion_create' %}?crop={{ discussion_crop_prefill|urlencode }}" class="in-link">Ask farmers who've used this</a>
+      </div>
+      {% if farmer_discussions %}
+        <div class="in-list">
+          {% for d in farmer_discussions %}
+            <div class="in-list-row">
+              <div>
+                <a href="{{ d.get_absolute_url }}" class="in-link">{{ d.title }}</a>
+                <div class="in-muted">{{ d.crop }}{% if d.seed_variety %} &middot; {{ d.seed_variety }}{% endif %} &middot; {{ d.reply_count }} repl{{ d.reply_count|pluralize:"y,ies" }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <a href="{% url 'community:discussion_list' %}?crop={{ discussion_crop_prefill|urlencode }}" class="in-link" style="margin-top:0.75rem;display:inline-block">See all discussions for this crop</a>
+      {% else %}
+        <div class="in-empty">No farmer discussions yet for this product.</div>
+      {% endif %}
+    </div>
+  </section>
 </div>
 {% endblock %}
 

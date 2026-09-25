@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from community.utils import discussions_for_names
 from operations.models import InputSeller
 
 from . import selectors, services
@@ -312,6 +313,8 @@ def catalog_product(request, pk):
         "product": product,
         "in_cart": _order_cart(request).get(product.pk, 0),
         "cart_count": len(_order_cart(request)),
+        "farmer_discussions": discussions_for_names(product.name, product.seed_variety, *product.target_crops),
+        "discussion_crop_prefill": product.seed_variety or product.name,
     }
     return render(request, "inputs/catalog_product.html", context)
 

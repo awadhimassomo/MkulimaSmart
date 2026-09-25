@@ -179,3 +179,42 @@ class DiscussionReportViewTests(LocalizedTestCase):
         self.client.force_login(self.reporter)
         response = self.client.post(reverse("community:discussion_report", kwargs={"pk": self.discussion.pk}))
         self.assertRedirects(response, self.discussion.get_absolute_url())
+
+
+class DiscussionsForNamesTests(TestCase):
+    def setUp(self):
+        self.farmer = make_user("0700000010")
+        self.maize = Discussion.objects.create(
+            author=self.farmer, crop="Maize", seed_variety="Zamseed 606",
+            title="Zamseed 606 on 1 acre", body="3 packets, 145 debe harvest.",
+        )
+        self.beans = Discussion.objects.create(author=self.farmer, crop="Beans", title="Beans season", body="x")
+        self.hidden = Discussion.objects.create(
+            author=self.farmer, crop="Maize", title="Hidden", body="spam", is_active=False,
+        )
+
+    def test_matches_product_name_containing_crop(self):
+        from community.utils import discussions_for_names
+        results = list(discussions_for_names("Hybrid Maize Seed H614"))
+        self.assertIn(self.maize, results)
+        self.assertNotIn(self.beans, results)
+
+    def test_matches_seed_variety(self):
+        from community.utils import discussions_for_names
+        results = list(discussions_for_names("Zamseed 606 (2kg packet)"))
+        self.assertIn(self.maize, results)
+
+    def test_excludes_inactive(self):
+        from community.utils import discussions_for_names
+        self.assertNotIn(self.hidden, list(discussions_for_names("Maize")))
+
+    def test_no_names_returns_empty(self):
+        from community.utils import discussions_for_names
+        self.assertEqual(list(discussions_for_names("", None)), [])
+
+    def test_short_words_are_not_used_for_exact_matching(self):
+        # "of" and "on" (<=2 chars) shouldn't cause unrelated crop-name matches.
+        from community.utils import discussions_for_names
+        results = list(discussions_for_names("Bag of NPK on sale"))
+        self.assertNotIn(self.maize, results)
+        self.assertNotIn(self.beans, results)

@@ -113,6 +113,7 @@
         border-bottom-right-radius: 5px;
     }
 </style>
+{% include "community/_styles.html" %}
 {% endblock %}
 
 {% block content %}
@@ -209,7 +210,7 @@
                         <tbody>
                             <tr>
                                 <th scope="row" style="width: 40%">Supplier</th>
-                                <td>{{ product.supplier.get_full_name|default:product.supplier.username }}</td>
+                                <td>{{ product.supplier.get_full_name|default:product.supplier.phone_number }}</td>
                             </tr>
                             <tr>
                                 <th scope="row">Category</th>
@@ -368,8 +369,39 @@
                 {% endfor %}
             </div>
         </section>
+
+        <!-- Farmer Talk: what other farmers say about this product -->
+        <section class="my-5">
+            <div class="comm-card" style="padding:1.5rem">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+                    <div>
+                        <h2 style="font-size:1.3rem;font-weight:800;color:#16301a;margin:0 0 0.25rem">Farmer Talk</h2>
+                        <p style="color:#5c6b61;margin:0">What other farmers say about this product, and what happened when they used it.</p>
+                    </div>
+                    <a href="{% url 'community:discussion_create' %}?crop={{ discussion_crop_prefill|urlencode }}" class="comm-new-btn">Share your experience</a>
+                </div>
+
+                {% if farmer_discussions %}
+                    {% for d in farmer_discussions %}
+                        <article class="comm-card" style="margin-bottom:0.75rem">
+                            <span class="comm-kind-pill comm-kind-{{ d.kind }}">{{ d.get_kind_display }}</span>
+                            <a href="{{ d.get_absolute_url }}" class="comm-card-title">{{ d.title }}</a>
+                            <div class="comm-card-meta">
+                                <span class="comm-crop-tag">{{ d.crop }}{% if d.seed_variety %} &middot; {{ d.seed_variety }}{% endif %}</span>
+                                <span>{{ d.author.get_full_name|default:d.author.phone_number }}</span>
+                                <span>{{ d.reply_count }} repl{{ d.reply_count|pluralize:"y,ies" }}</span>
+                            </div>
+                            <p class="comm-card-excerpt">{{ d.body|truncatewords:30 }}</p>
+                        </article>
+                    {% endfor %}
+                    <a href="{% url 'community:discussion_list' %}?crop={{ discussion_crop_prefill|urlencode }}">See all discussions for this crop</a>
+                {% else %}
+                    <p style="color:#6b7a70;margin:0">No discussions yet for this product. Be the first to share how it worked on your farm.</p>
+                {% endif %}
+            </div>
+        </section>
     </div>
-    
+
     <!-- Quote Modal -->
     {% if product.requires_quote %}
         <div class="modal fade" id="quoteModal" tabindex="-1" aria-labelledby="quoteModalLabel" aria-hidden="true">

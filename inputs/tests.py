@@ -387,3 +387,31 @@ class CatalogFilterTests(InputsTestBase):
         self.assertEqual([p.name for p in page], ["Urea 46%"])
         page = self.client.get(reverse("inputs:catalog") + "?q=yara").context["page_obj"]
         self.assertEqual([p.name for p in page], ["Urea 46%"])
+
+
+class CatalogProductFarmerTalkTests(InputsTestBase):
+    def setUp(self):
+        super().setUp()
+        from community.models import Discussion
+        self.farmer_user = User.objects.create_user(phone_number="0700000099", password="pass12345", is_farmer=True)
+        self.zamseed = WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="Zamseed 606 Maize Seed", category="seeds", pack_size="2 kg",
+            unit="packet", wholesale_price=Decimal("9000"), seed_variety="Zamseed 606", target_crops=["Maize"],
+        )
+        self.discussion = Discussion.objects.create(
+            author=self.farmer_user, crop="Maize", seed_variety="Zamseed 606",
+            title="Zamseed 606 on 1 acre, 145 debe", body="Planted 3 packets.",
+        )
+
+    def test_matching_discussion_shown_on_catalog_product_page(self):
+        self.client.force_login(self.shop_user)
+        response = self.client.get(reverse("inputs:catalog_product", args=[self.zamseed.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.discussion, list(response.context["farmer_discussions"]))
+        self.assertContains(response, "Farmer Talk")
+        self.assertContains(response, "145 debe")
+
+    def test_unrelated_product_shows_no_discussions(self):
+        self.client.force_login(self.shop_user)
+        response = self.client.get(reverse("inputs:catalog_product", args=[self.urea.pk]))
+        self.assertEqual(list(response.context["farmer_discussions"]), [])

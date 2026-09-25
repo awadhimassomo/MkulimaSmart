@@ -7,6 +7,8 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from decimal import Decimal
 
+from community.utils import discussions_for_names
+
 from .models import (User, Farm, Crop, Category, Product, ProductImage, Cart, CartItem, Order,
                       Warehouse, WarehouseBooking, Transport, TransportBooking, Course, Lesson, Testimonial)
 
@@ -299,6 +301,8 @@ def product_detail(request, slug):
     context = {
         'product': product,
         'related_products': related_products,
+        'farmer_discussions': discussions_for_names(product.name, product.category.name),
+        'discussion_crop_prefill': product.name,
     }
     return render(request, 'website/product_detail.html', context)
 
