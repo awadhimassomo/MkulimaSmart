@@ -1,0 +1,46 @@
+<style>
+  .comm-shell { padding: 2rem 0 4rem; }
+  .comm-hero {
+    background: linear-gradient(135deg, #17301a 0%, #234726 55%, #315d2f 100%);
+    border-radius: 1.5rem; color: white; padding: 2rem; margin-bottom: 1.75rem;
+  }
+  .comm-hero h1 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; margin: 0 0 0.5rem; }
+  .comm-hero p { color: rgba(255,255,255,0.85); max-width: 44rem; margin: 0; }
+  .comm-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+  .comm-toolbar input, .comm-toolbar select { border-radius: 0.75rem; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12); color: white; padding: 0.6rem 0.9rem; }
+  .comm-toolbar input::placeholder { color: rgba(255,255,255,0.7); }
+  .comm-toolbar button, .comm-new-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.65rem 1.1rem; border-radius: 999px;
+    background: #c5d86d; color: #163016; font-weight: 700; border: none; cursor: pointer; text-decoration: none;
+  }
+  .comm-layout { display: grid; grid-template-columns: minmax(0,1fr) 260px; gap: 1.5rem; align-items: start; }
+  @media (max-width: 900px) { .comm-layout { grid-template-columns: 1fr; } }
+  .comm-card {
+    background: white; border: 1px solid #e9eee7; border-radius: 1.25rem; padding: 1.25rem 1.4rem;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.05); margin-bottom: 1rem;
+  }
+  .comm-card:hover { border-color: #c9d9c3; }
+  .comm-kind-pill { display: inline-flex; align-items: center; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+  .comm-kind-experience { background: #e6f3ea; color: #1f6b3a; }
+  .comm-kind-question { background: #fef3e0; color: #b45309; }
+  .comm-kind-advice { background: #e5edfb; color: #1d4ed8; }
+  .comm-card-title { font-size: 1.1rem; font-weight: 700; color: #16301a; margin: 0.5rem 0 0.3rem; text-decoration: none; display: block; }
+  .comm-card-title:hover { color: #2d5a27; }
+  .comm-card-meta { color: #6b7a70; font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; align-items: center; }
+  .comm-card-excerpt { color: #3f4c44; margin-top: 0.5rem; }
+  .comm-crop-tag { display: inline-flex; align-items: center; gap: 0.3rem; background: #f0f5ec; color: #2d5a27; padding: 0.15rem 0.6rem; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
+  .comm-side-card { background: white; border: 1px solid #e9eee7; border-radius: 1.25rem; padding: 1.1rem 1.25rem; margin-bottom: 1rem; }
+  .comm-side-card h3 { margin: 0 0 0.75rem; font-size: 0.95rem; color: #16301a; }
+  .comm-crop-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.7rem; margin: 0.2rem; border-radius: 999px; background: #f4f7f1; color: #2d5a27; font-size: 0.82rem; text-decoration: none; font-weight: 600; }
+  .comm-crop-chip:hover { background: #e2ecd9; }
+  .comm-empty { text-align: center; padding: 3rem 1rem; color: #6b7a70; }
+  .comm-form-field { margin-bottom: 1.1rem; }
+  .comm-form-field label { display: block; font-weight: 700; color: #173019; margin-bottom: 0.4rem; }
+  .comm-form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; }
+  .comm-detail-header { background: white; border: 1px solid #e9eee7; border-radius: 1.25rem; padding: 1.6rem; margin-bottom: 1.5rem; }
+  .comm-reply { border-top: 1px solid #eef1ec; padding: 1rem 0; }
+  .comm-reply:first-child { border-top: none; }
+  .comm-avatar { width: 2.2rem; height: 2.2rem; border-radius: 999px; background: #e2ecd9; color: #2d5a27; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
+  .comm-btn-primary { background: var(--brand-primary, #2d5a27); color: white; border-radius: 0.85rem; padding: 0.7rem 1.3rem; font-weight: 700; border: none; cursor: pointer; }
+  .comm-btn-secondary { background: #eef4e6; color: #173019; border-radius: 0.85rem; padding: 0.7rem 1.3rem; font-weight: 700; border: none; cursor: pointer; text-decoration: none; display: inline-block; }
+</style>

@@ -549,6 +549,9 @@
           <a href="{% url 'website:training_home' %}" class="nav-link {% if url_name == 'training_home' %}active{% endif %}">
             Training
           </a>
+          <a href="{% url 'community:discussion_list' %}" class="nav-link {% if url_name == 'discussion_list' or url_name == 'discussion_detail' or url_name == 'discussion_create' %}active{% endif %}">
+            Farmer Talk
+          </a>
           <a href="{% url 'website:about' %}" class="nav-link {% if url_name == 'about' %}active{% endif %}">
             About
           </a>
@@ -629,6 +632,9 @@
           <a href="{% url 'website:training_home' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'training_home' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
             <i class="fas fa-graduation-cap w-6 text-center mr-3" aria-hidden="true"></i>
             Training
+          </a>
+          <a href="{% url 'community:discussion_list' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'discussion_list' or url_name == 'discussion_detail' or url_name == 'discussion_create' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
+            Farmer Talk
           </a>
           <a href="{% url 'website:about' %}" class="flex items-center w-full px-4 py-3 text-base font-medium rounded-xl transition-all {% if url_name == 'about' %}bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]{% else %}text-gray-700 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]{% endif %} focus-ring-inset">
             <i class="fas fa-info-circle w-6 text-center mr-3" aria-hidden="true"></i>

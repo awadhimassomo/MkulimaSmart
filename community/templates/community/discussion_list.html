@@ -1,0 +1,81 @@
+{% extends "website/base.html" %}
+{% load humanize %}
+
+{% block title %}Farmer Talk - Crop & Seed Experiences | Mkulima Smart{% endblock %}
+
+{% block extra_css %}
+{% include "community/_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="comm-shell">
+  <div class="container">
+    <div class="comm-hero">
+      <h1>🗣️ Farmer Talk</h1>
+      <p>Real results from real farms — what farmers planted, how much land, what they harvested, and what they'd do differently. Ask a question, share your own season, or learn from someone who tried it first.</p>
+      <form method="get" class="comm-toolbar">
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="Search by crop, variety or keyword (e.g. Zamseed 606)" style="flex:1;min-width:220px">
+        <select name="kind">
+          <option value="">All types</option>
+          {% for value, label in kind_choices %}<option value="{{ value }}" {% if filters.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <button type="submit">🔍 Search</button>
+        <a href="{% url 'community:discussion_create' %}" class="comm-new-btn">✏️ Share your experience</a>
+      </form>
+    </div>
+
+    <div class="comm-layout">
+      <div>
+        {% if filters.crop %}
+          <p style="margin-bottom:1rem">Showing discussions about <strong>{{ filters.crop }}</strong> &middot; <a href="{% url 'community:discussion_list' %}">clear filter</a></p>
+        {% endif %}
+
+        {% if discussions %}
+          {% for d in discussions %}
+            <article class="comm-card">
+              <span class="comm-kind-pill comm-kind-{{ d.kind }}">{{ d.get_kind_display }}</span>
+              <a href="{{ d.get_absolute_url }}" class="comm-card-title">{{ d.title }}</a>
+              <div class="comm-card-meta">
+                <span class="comm-crop-tag">🌱 {{ d.crop }}{% if d.seed_variety %} &middot; {{ d.seed_variety }}{% endif %}</span>
+                <span>{{ d.author.get_full_name|default:d.author.phone_number }}</span>
+                {% if d.region %}<span>📍 {{ d.region }}</span>{% endif %}
+                <span>{{ d.created_at|naturaltime }}</span>
+                <span>💬 {{ d.reply_count }} repl{{ d.reply_count|pluralize:"y,ies" }}</span>
+              </div>
+              <p class="comm-card-excerpt">{{ d.body|truncatewords:35 }}</p>
+            </article>
+          {% endfor %}
+
+          {% if page_obj.has_other_pages %}
+            <div style="display:flex;gap:0.6rem;justify-content:center;margin-top:1.5rem">
+              {% if page_obj.has_previous %}<a class="comm-btn-secondary" href="?page={{ page_obj.previous_page_number }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.crop %}&crop={{ filters.crop }}{% endif %}">&larr; Previous</a>{% endif %}
+              {% if page_obj.has_next %}<a class="comm-btn-secondary" href="?page={{ page_obj.next_page_number }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.crop %}&crop={{ filters.crop }}{% endif %}">Next &rarr;</a>{% endif %}
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="comm-empty">
+            <p style="font-size:1.1rem;font-weight:700">No discussions yet{% if filters.q or filters.crop %} for this search{% endif %}.</p>
+            <p>Be the first to share what happened on your farm this season.</p>
+            <a href="{% url 'community:discussion_create' %}" class="comm-new-btn" style="margin-top:0.75rem">✏️ Start a discussion</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <aside>
+        <div class="comm-side-card">
+          <h3>Popular crops</h3>
+          {% for row in top_crops %}
+            <a href="?crop={{ row.crop|urlencode }}" class="comm-crop-chip">{{ row.crop }} <span style="opacity:0.65">({{ row.total }})</span></a>
+          {% empty %}
+            <p style="color:#6b7a70;font-size:0.85rem">No discussions yet.</p>
+          {% endfor %}
+        </div>
+        <div class="comm-side-card">
+          <h3>Why share here?</h3>
+          <p style="color:#4b5a51;font-size:0.9rem;margin:0">Your notes stay searchable for every farmer, not lost in a WhatsApp thread. Mention the variety, land size and result so others can compare.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

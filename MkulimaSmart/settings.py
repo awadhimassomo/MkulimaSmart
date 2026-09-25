@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'traceability',
     'inputs',  # Input manufacturers <-> input shops: catalog, orders, POS
     'kikapu_bridge',  # Kikapu WhatsApp bridge: catalog pull, farmer orders, status webhooks
+    'community',  # Farmer Talk: crop/seed experience discussions
 
 ]
 

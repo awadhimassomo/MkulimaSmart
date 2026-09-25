@@ -1,0 +1,70 @@
+{% extends "website/base.html" %}
+
+{% block title %}Share your farming experience | Farmer Talk{% endblock %}
+
+{% block extra_css %}
+{% include "community/_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="comm-shell">
+  <div class="container" style="max-width:44rem">
+    <p style="margin-bottom:1rem"><a href="{% url 'community:discussion_list' %}">&larr; Back to Farmer Talk</a></p>
+    <div class="comm-card" style="padding:1.75rem">
+      <h1 style="font-size:1.4rem;font-weight:800;color:#16301a;margin:0 0 0.4rem">Share what happened on your farm</h1>
+      <p style="color:#5c6b61;margin:0 0 1.5rem">Other farmers learn most from specifics: the variety, how much land, what you did, and the result.</p>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <datalist id="crop-suggestions">
+          {% for crop in form.crop_suggestions %}<option value="{{ crop }}">{% endfor %}
+        </datalist>
+
+        <div class="comm-form-field">
+          <label for="{{ form.kind.id_for_label }}">What kind of post is this?</label>
+          {{ form.kind }}
+        </div>
+
+        <div class="comm-form-row">
+          <div class="comm-form-field">
+            <label for="{{ form.crop.id_for_label }}">Crop *</label>
+            {{ form.crop }}
+            {% if form.crop.errors %}<div style="color:#b42318;font-size:0.85rem">{{ form.crop.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="comm-form-field">
+            <label for="{{ form.seed_variety.id_for_label }}">Seed / variety (optional)</label>
+            {{ form.seed_variety }}
+          </div>
+        </div>
+
+        <div class="comm-form-field">
+          <label for="{{ form.title.id_for_label }}">Title *</label>
+          {{ form.title }}
+          {% if form.title.errors %}<div style="color:#b42318;font-size:0.85rem">{{ form.title.errors|join:", " }}</div>{% endif %}
+        </div>
+
+        <div class="comm-form-field">
+          <label for="{{ form.body.id_for_label }}">Details *</label>
+          {{ form.body }}
+          {% if form.body.errors %}<div style="color:#b42318;font-size:0.85rem">{{ form.body.errors|join:", " }}</div>{% endif %}
+        </div>
+
+        <div class="comm-form-row">
+          <div class="comm-form-field">
+            <label for="{{ form.region.id_for_label }}">Region (optional)</label>
+            {{ form.region }}
+          </div>
+          <div class="comm-form-field">
+            <label for="{{ form.photo.id_for_label }}">Photo (optional)</label>
+            {{ form.photo }}
+          </div>
+        </div>
+
+        <button type="submit" class="comm-btn-primary">Post to Farmer Talk</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -75,6 +75,9 @@ urlpatterns += i18n_patterns(
     # Input supply chain: manufacturer portal and input shop dashboard / POS
     path('inputs/', include('inputs.urls', namespace='inputs')),
 
+    # Farmer Talk: crop/seed experience discussions
+    path('community/', include('community.urls', namespace='community')),
+
     # Include website URLs
     path('', include('website.urls', namespace='website')),
     # Gov app App
