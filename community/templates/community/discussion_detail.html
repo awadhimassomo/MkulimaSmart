@@ -16,9 +16,9 @@
       <span class="comm-kind-pill comm-kind-{{ discussion.kind }}">{{ discussion.get_kind_display }}</span>
       <h1 style="font-size:1.6rem;font-weight:800;color:#16301a;margin:0.6rem 0 0.4rem">{{ discussion.title }}</h1>
       <div class="comm-card-meta" style="margin-bottom:0.9rem">
-        <span class="comm-crop-tag">🌱 {{ discussion.crop }}{% if discussion.seed_variety %} &middot; {{ discussion.seed_variety }}{% endif %}</span>
+        <span class="comm-crop-tag">{{ discussion.crop }}{% if discussion.seed_variety %} &middot; {{ discussion.seed_variety }}{% endif %}</span>
         <span>{{ discussion.author.get_full_name|default:discussion.author.phone_number }}</span>
-        {% if discussion.region %}<span>📍 {{ discussion.region }}</span>{% endif %}
+        {% if discussion.region %}<span>{{ discussion.region }}</span>{% endif %}
         <span>{{ discussion.created_at|date:"M j, Y" }}</span>
       </div>
       {% if discussion.photo %}
@@ -29,7 +29,7 @@
       {% if user.is_authenticated %}
         <form method="post" action="{% url 'community:discussion_report' discussion.pk %}" style="margin-top:1rem">
           {% csrf_token %}
-          <button type="submit" class="comm-btn-secondary" style="font-size:0.8rem;padding:0.4rem 0.8rem" onclick="return confirm('Report this post to the team for review?')">🚩 Report</button>
+          <button type="submit" class="comm-btn-secondary" style="font-size:0.8rem;padding:0.4rem 0.8rem" onclick="return confirm('Report this post to the team for review?')">Report</button>
         </form>
       {% endif %}
     </div>

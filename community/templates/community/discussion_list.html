@@ -11,7 +11,7 @@
 <section class="comm-shell">
   <div class="container">
     <div class="comm-hero">
-      <h1>🗣️ Farmer Talk</h1>
+      <h1>Farmer Talk</h1>
       <p>Real results from real farms — what farmers planted, how much land, what they harvested, and what they'd do differently. Ask a question, share your own season, or learn from someone who tried it first.</p>
       <form method="get" class="comm-toolbar">
         <input type="text" name="q" value="{{ filters.q }}" placeholder="Search by crop, variety or keyword (e.g. Zamseed 606)" style="flex:1;min-width:220px">
@@ -19,8 +19,8 @@
           <option value="">All types</option>
           {% for value, label in kind_choices %}<option value="{{ value }}" {% if filters.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
         </select>
-        <button type="submit">🔍 Search</button>
-        <a href="{% url 'community:discussion_create' %}" class="comm-new-btn">✏️ Share your experience</a>
+        <button type="submit">Search</button>
+        <a href="{% url 'community:discussion_create' %}" class="comm-new-btn">Share your experience</a>
       </form>
     </div>
 
@@ -36,11 +36,11 @@
               <span class="comm-kind-pill comm-kind-{{ d.kind }}">{{ d.get_kind_display }}</span>
               <a href="{{ d.get_absolute_url }}" class="comm-card-title">{{ d.title }}</a>
               <div class="comm-card-meta">
-                <span class="comm-crop-tag">🌱 {{ d.crop }}{% if d.seed_variety %} &middot; {{ d.seed_variety }}{% endif %}</span>
+                <span class="comm-crop-tag">{{ d.crop }}{% if d.seed_variety %} &middot; {{ d.seed_variety }}{% endif %}</span>
                 <span>{{ d.author.get_full_name|default:d.author.phone_number }}</span>
-                {% if d.region %}<span>📍 {{ d.region }}</span>{% endif %}
+                {% if d.region %}<span>{{ d.region }}</span>{% endif %}
                 <span>{{ d.created_at|naturaltime }}</span>
-                <span>💬 {{ d.reply_count }} repl{{ d.reply_count|pluralize:"y,ies" }}</span>
+                <span>{{ d.reply_count }} repl{{ d.reply_count|pluralize:"y,ies" }}</span>
               </div>
               <p class="comm-card-excerpt">{{ d.body|truncatewords:35 }}</p>
             </article>
@@ -56,7 +56,7 @@
           <div class="comm-empty">
             <p style="font-size:1.1rem;font-weight:700">No discussions yet{% if filters.q or filters.crop %} for this search{% endif %}.</p>
             <p>Be the first to share what happened on your farm this season.</p>
-            <a href="{% url 'community:discussion_create' %}" class="comm-new-btn" style="margin-top:0.75rem">✏️ Start a discussion</a>
+            <a href="{% url 'community:discussion_create' %}" class="comm-new-btn" style="margin-top:0.75rem">Start a discussion</a>
           </div>
         {% endif %}
       </div>
