@@ -173,6 +173,23 @@ class ViewTests(InputsTestBase):
         self.assertEqual(self.client.get(reverse("inputs:catalog_product", args=[self.urea.pk])).status_code, 200)
         self.assertEqual(self.client.get(reverse("inputs:stock_edit", args=[self.item.pk])).status_code, 200)
 
+    def test_catalog_product_page_shows_region_and_soil_suitability(self):
+        seed = WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="H614 Maize Seed", category="seeds", wholesale_price=9000,
+            suitable_regions=["Kilimanjaro", "Arusha"], soil_type=["loam", "volcanic"], stock_available=50,
+        )
+        self.client.force_login(self.shop_user)
+        response = self.client.get(reverse("inputs:catalog_product", args=[seed.pk]))
+        self.assertContains(response, "Kilimanjaro, Arusha")
+        self.assertContains(response, "Loam (well-balanced), Volcanic / black cotton soil")
+
+    def test_manufacturer_product_form_shows_region_and_soil_fields(self):
+        self.client.force_login(self.mfr_user)
+        response = self.client.get(reverse("inputs:manufacturer_product_create"))
+        self.assertContains(response, "Suitable regions")
+        self.assertContains(response, "Suitable soil type")
+        self.assertContains(response, "Kilimanjaro")
+
     def test_manufacturer_pages_render(self):
         self.client.force_login(self.mfr_user)
         order = services.create_purchase_order(self.shop, self.mfr, {self.urea.pk: 5})
@@ -328,6 +345,46 @@ class ProductFormRuleTests(InputsTestBase):
         self.assertFalse(form.is_valid())
         self.assertIn("seed_variety", form.errors)
         self.assertIn("registration_number", form.errors)
+        self.assertIn("suitable_regions", form.errors)
+        self.assertIn("soil_type", form.errors)
+
+    def test_seed_accepts_regions_and_soil_type_and_saves_them(self):
+        form = self.form(
+            "seeds", seed_variety="H614", registration_number="TOSCI/1",
+            suitable_regions=["Kilimanjaro", "Arusha"], soil_type=["loam", "volcanic"],
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        product = form.save(commit=False)
+        self.assertEqual(product.suitable_regions, ["Kilimanjaro", "Arusha"])
+        self.assertEqual(product.soil_type, ["loam", "volcanic"])
+        self.assertEqual(product.suitable_regions_display, "Kilimanjaro, Arusha")
+        self.assertEqual(product.soil_type_display, "Loam (well-balanced), Volcanic / black cotton soil")
+
+    def test_seedlings_also_require_regions_and_soil_type(self):
+        form = self.form("seedlings", seed_variety="Avocado grafted")
+        self.assertFalse(form.is_valid())
+        self.assertIn("suitable_regions", form.errors)
+        self.assertIn("soil_type", form.errors)
+
+    def test_unknown_region_value_rejected(self):
+        form = self.form(
+            "seeds", seed_variety="H614", registration_number="TOSCI/1",
+            suitable_regions=["Narnia"], soil_type=["loam"],
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("suitable_regions", form.errors)
+
+    def test_regions_and_soil_type_optional_but_kept_for_other_categories(self):
+        # Not required for fertilizer, but a manufacturer may still specify them
+        # (e.g. "this fertilizer suits acidic, volcanic soils"), and it is not cleared.
+        form = self.form(
+            "fertilizer", composition="18-46-0", registration_number="TFRA/1",
+            suitable_regions=["Mbeya"], soil_type=["volcanic"],
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        product = form.save(commit=False)
+        self.assertEqual(product.suitable_regions, ["Mbeya"])
+        self.assertEqual(product.soil_type, ["volcanic"])
 
     def test_tools_need_no_regulatory_fields_and_drop_irrelevant_values(self):
         form = self.form("tools", toxicity_class="II", seed_variety="H614", germination_rate="90")
@@ -387,6 +444,45 @@ class CatalogFilterTests(InputsTestBase):
         self.assertEqual([p.name for p in page], ["Urea 46%"])
         page = self.client.get(reverse("inputs:catalog") + "?q=yara").context["page_obj"]
         self.assertEqual([p.name for p in page], ["Urea 46%"])
+
+    def test_filter_by_region_also_includes_products_with_no_region_set(self):
+        # self.urea has no suitable_regions set: it should still show up for any region filter.
+        kilimanjaro_only = WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="H614 Maize Seed", category="seeds", wholesale_price=9000,
+            suitable_regions=["Kilimanjaro"], stock_available=50,
+        )
+        mbeya_only = WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="Highland Bean Seed", category="seeds", wholesale_price=6000,
+            suitable_regions=["Mbeya"], stock_available=50,
+        )
+        self.client.force_login(self.shop_user)
+        page = self.client.get(reverse("inputs:catalog") + "?region=Kilimanjaro").context["page_obj"]
+        names = {p.name for p in page}
+        self.assertIn("H614 Maize Seed", names)
+        self.assertIn("Urea 46%", names)  # no region restriction, matches any region search
+        self.assertNotIn("Highland Bean Seed", names)
+
+    def test_web_catalog_defaults_to_shops_own_region(self):
+        self.shop.region = "Kilimanjaro"
+        self.shop.save()
+        WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="H614 Maize Seed", category="seeds", wholesale_price=9000,
+            suitable_regions=["Kilimanjaro"], stock_available=50,
+        )
+        WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="Highland Bean Seed", category="seeds", wholesale_price=6000,
+            suitable_regions=["Mbeya"], stock_available=50,
+        )
+        self.client.force_login(self.shop_user)
+        response = self.client.get(reverse("inputs:catalog"))
+        self.assertEqual(response.context["filters"]["region"], "Kilimanjaro")
+        names = {p.name for p in response.context["page_obj"]}
+        self.assertNotIn("Highland Bean Seed", names)
+
+        # Explicitly clearing the region shows everything, overriding the default.
+        response = self.client.get(reverse("inputs:catalog") + "?region=")
+        names = {p.name for p in response.context["page_obj"]}
+        self.assertIn("Highland Bean Seed", names)
 
 
 class CatalogProductFarmerTalkTests(InputsTestBase):

@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from community.utils import discussions_for_names
-from operations.models import InputSeller
+from operations.models import TANZANIA_REGIONS, InputSeller
 
 from . import selectors, services
 from .forms import (
@@ -285,7 +285,11 @@ def catalog(request):
     category = request.GET.get("category") or ""
     manufacturer = request.GET.get("manufacturer") or ""
     crop = (request.GET.get("crop") or "").strip()
-    products = selectors.filter_catalog(q, category, manufacturer, crop)
+    # Defaults to the shop's own region so they see what actually suits them first;
+    # an explicit ?region= (including empty, "All regions") overrides that.
+    region = request.GET.get("region")
+    region = region.strip() if region is not None else request.seller.region_or_guess
+    products = selectors.filter_catalog(q, category, manufacturer, crop, region)
 
     stocked = set(
         ShopStockItem.objects.filter(shop=request.seller, wholesale_product__isnull=False).values_list("wholesale_product_id", flat=True)
@@ -299,8 +303,9 @@ def catalog(request):
         "cart_count": len(_order_cart(request)),
         "categories": InputSeller.PRODUCT_CATEGORY_CHOICES,
         "manufacturers": selectors.catalog_manufacturers(),
-        "filters": {"q": q, "category": category, "manufacturer": manufacturer, "crop": crop},
+        "filters": {"q": q, "category": category, "manufacturer": manufacturer, "crop": crop, "region": region},
         "crop_suggestions": CROP_SUGGESTIONS,
+        "region_choices": TANZANIA_REGIONS,
     }
     return render(request, "inputs/catalog.html", context)
 

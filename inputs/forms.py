@@ -1,6 +1,7 @@
 from django import forms
 
 from operations.forms import StyledModelForm
+from operations.models import TANZANIA_REGIONS
 
 from .models import IMAGE_VALIDATORS, ShopStockItem, WholesaleProduct
 
@@ -21,8 +22,8 @@ ALWAYS_REQUIRED_FIELDS = [
 CATEGORY_REQUIRED_FIELDS = {
     "fertilizer": ["composition", "registration_number"],
     "pesticides": ["composition", "registration_number", "toxicity_class", "safety_precautions"],
-    "seeds": ["seed_variety", "registration_number"],
-    "seedlings": ["seed_variety"],
+    "seeds": ["seed_variety", "registration_number", "suitable_regions", "soil_type"],
+    "seedlings": ["seed_variety", "suitable_regions", "soil_type"],
 }
 PESTICIDE_ONLY_FIELDS = ["toxicity_class"]
 SEED_ONLY_FIELDS = ["seed_variety", "maturity_days", "germination_rate"]
@@ -90,6 +91,16 @@ class WholesaleProductForm(StyledModelForm):
         help_text="Separate with commas, e.g. Maize, Beans, Sunflower.",
         widget=forms.TextInput(attrs={"list": "crop-suggestions", "autocomplete": "off"}),
     )
+    suitable_regions = forms.MultipleChoiceField(
+        required=False, choices=TANZANIA_REGIONS, widget=forms.CheckboxSelectMultiple,
+        label="Suitable regions",
+        help_text="Tick every region this performs well in, so farmers can tell it suits their area.",
+    )
+    soil_type = forms.MultipleChoiceField(
+        required=False, choices=WholesaleProduct.SOIL_TYPE_CHOICES, widget=forms.CheckboxSelectMultiple,
+        label="Suitable soil type",
+        help_text="Tick every soil type this performs well in.",
+    )
 
     class Meta:
         model = WholesaleProduct
@@ -107,6 +118,8 @@ class WholesaleProductForm(StyledModelForm):
             "registration_authority",
             "registration_number",
             "target_crops",
+            "suitable_regions",
+            "soil_type",
             "usage_instructions",
             "toxicity_class",
             "safety_precautions",

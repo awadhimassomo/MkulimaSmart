@@ -46,6 +46,8 @@
           {% if product.germination_rate is not None %}<div class="in-list-row"><span>Germination</span><strong>{{ product.germination_rate|floatformat:"-1" }}%</strong></div>{% endif %}
           {% if product.toxicity_class %}<div class="in-list-row"><span>WHO toxicity class</span><strong>{{ product.get_toxicity_class_display }}</strong></div>{% endif %}
           {% if product.target_crops %}<div class="in-list-row"><span>For crops</span><strong>{{ product.target_crops_display }}</strong></div>{% endif %}
+          {% if product.suitable_regions %}<div class="in-list-row"><span>Suitable regions</span><strong>{{ product.suitable_regions_display }}</strong></div>{% endif %}
+          {% if product.soil_type %}<div class="in-list-row"><span>Suitable soil</span><strong>{{ product.soil_type_display }}</strong></div>{% endif %}
           {% if product.shelf_life_months %}<div class="in-list-row"><span>Shelf life</span><strong>{{ product.shelf_life_months }} months</strong></div>{% endif %}
           <div class="in-list-row"><span>Minimum order</span><strong>{{ product.min_order_quantity }} {{ product.get_unit_display|lower }}</strong></div>
           <div class="in-list-row"><span>Available to ship</span><strong>{{ product.stock_available|intcomma }}</strong></div>

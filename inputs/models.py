@@ -14,7 +14,7 @@ from django.db import models
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.utils import timezone
 
-from operations.models import InputSeller
+from operations.models import TANZANIA_REGIONS, InputSeller
 
 IMAGE_VALIDATORS = [FileExtensionValidator(["jpg", "jpeg", "png", "webp"])]
 ZERO = Decimal("0")
@@ -46,6 +46,17 @@ class WholesaleProduct(models.Model):
     # Which regulator registers each category; drives the default and the required fields.
     CATEGORY_REGULATOR = {"fertilizer": "tfra", "pesticides": "tphpa", "seeds": "tosci"}
 
+    SOIL_TYPE_CHOICES = [
+        ("clay", "Clay"),
+        ("clay_loam", "Clay loam"),
+        ("sandy", "Sandy"),
+        ("sandy_loam", "Sandy loam"),
+        ("loam", "Loam (well-balanced)"),
+        ("volcanic", "Volcanic / black cotton soil"),
+        ("red_soil", "Red soil"),
+        ("well_drained", "Any well-drained soil"),
+    ]
+
     TOXICITY_CHOICES = [
         ("Ia", "Ia: Extremely hazardous"),
         ("Ib", "Ib: Highly hazardous"),
@@ -69,8 +80,17 @@ class WholesaleProduct(models.Model):
     registration_authority = models.CharField(max_length=10, choices=REGULATOR_CHOICES, blank=True)
     registration_number = models.CharField(max_length=60, blank=True)
 
-    # Agronomy
+    # Agronomy: where and on what soil this performs well, so a farmer or shop can tell
+    # at a glance whether it suits their area instead of having to ask in Farmer Talk.
     target_crops = models.JSONField(default=list, blank=True, help_text="List of crop names, e.g. [\"Maize\", \"Beans\"].")
+    suitable_regions = models.JSONField(
+        default=list, blank=True,
+        help_text="Tanzania regions this performs well in. Required for seeds and seedlings.",
+    )
+    soil_type = models.JSONField(
+        default=list, blank=True,
+        help_text="Soil types this suits, e.g. [\"clay_loam\", \"well_drained\"]. Required for seeds and seedlings.",
+    )
     usage_instructions = models.TextField(blank=True, help_text="Application rate and timing.")
 
     # Pesticide safety
@@ -106,6 +126,15 @@ class WholesaleProduct(models.Model):
     @property
     def target_crops_display(self):
         return ", ".join(self.target_crops or [])
+
+    @property
+    def suitable_regions_display(self):
+        return ", ".join(self.suitable_regions or [])
+
+    @property
+    def soil_type_display(self):
+        labels = dict(self.SOIL_TYPE_CHOICES)
+        return ", ".join(labels.get(v, v) for v in (self.soil_type or []))
 
     @property
     def primary_image(self):

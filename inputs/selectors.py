@@ -67,7 +67,7 @@ def active_catalog():
     ).select_related("manufacturer").prefetch_related("images")
 
 
-def filter_catalog(q="", category="", manufacturer="", crop=""):
+def filter_catalog(q="", category="", manufacturer="", crop="", region=""):
     products = active_catalog()
     if q:
         products = products.filter(
@@ -81,6 +81,9 @@ def filter_catalog(q="", category="", manufacturer="", crop=""):
     if crop:
         # target_crops is a JSON list; a text match on its serialised form works on SQLite and Postgres.
         products = products.filter(target_crops__icontains=crop)
+    if region:
+        # An empty suitable_regions list means "suitable everywhere", so it always matches too.
+        products = products.filter(Q(suitable_regions__icontains=region) | Q(suitable_regions=[]))
     return products.order_by("name")
 
 

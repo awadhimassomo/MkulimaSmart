@@ -90,6 +90,7 @@ class WholesaleProductSerializer(BaseSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     cover_image = serializers.SerializerMethodField()
     in_my_stock = serializers.SerializerMethodField()
+    soil_type_display = serializers.CharField(read_only=True)
 
     class Meta:
         model = WholesaleProduct
@@ -97,7 +98,8 @@ class WholesaleProductSerializer(BaseSerializer):
             "id", "manufacturer", "name", "brand", "category", "category_display", "pack_size", "unit", "unit_display",
             "wholesale_price", "suggested_retail_price", "min_order_quantity", "stock_available",
             "composition", "registration_authority", "registration_authority_display", "registration_number",
-            "target_crops", "usage_instructions", "toxicity_class", "toxicity_class_display", "safety_precautions",
+            "target_crops", "suitable_regions", "soil_type", "soil_type_display",
+            "usage_instructions", "toxicity_class", "toxicity_class_display", "safety_precautions",
             "seed_variety", "maturity_days", "germination_rate", "shelf_life_months", "description", "is_active",
             "cover_image", "images", "in_my_stock", "created_at", "updated_at",
         ]

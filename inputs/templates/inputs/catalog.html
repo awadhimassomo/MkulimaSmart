@@ -30,11 +30,22 @@
           <input type="text" id="c-crop" name="crop" value="{{ filters.crop }}" class="form-input" list="crop-suggestions" placeholder="Any crop" style="min-width:130px">
           <datalist id="crop-suggestions">{% for crop in crop_suggestions %}<option value="{{ crop }}">{% endfor %}</datalist>
         </div>
+        <div>
+          <label for="c-region">Region</label>
+          <select id="c-region" name="region" class="form-select">
+            <option value="" {% if not filters.region %}selected{% endif %}>All regions</option>
+            {% for value, label in region_choices %}<option value="{{ value }}" {% if filters.region == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
         <button type="submit" class="in-btn in-btn-primary">Search</button>
         <a href="{% url 'inputs:order_cart' %}" class="in-btn in-btn-secondary"><i class="fa-solid fa-clipboard-list"></i> Order list ({{ cart_count }})</a>
       </form>
     </div>
   </section>
+
+  {% if filters.region %}
+    <p class="in-muted">Showing products suitable for <strong>{{ filters.region }}</strong> (plus products with no region restriction). <a href="?{% for k, v in filters.items %}{% if k != 'region' and v %}{{ k }}={{ v|urlencode }}&amp;{% endif %}{% endfor %}region=" class="in-link">Show all regions</a></p>
+  {% endif %}
 
   {% if page_obj.object_list %}
     <div class="in-product-grid">
@@ -48,6 +59,13 @@
             <div class="in-muted">{% if product.brand %}<strong>{{ product.brand }}</strong> · {% endif %}{{ product.manufacturer }}</div>
             <a href="{% url 'inputs:catalog_product' product.pk %}" class="in-product-name in-link">{{ product.name }}</a>
             <div class="in-muted">{% if product.pack_size %}{{ product.pack_size }} · {% endif %}{{ product.get_category_display }}{% if product.composition %} · {{ product.composition }}{% endif %}</div>
+            {% if product.suitable_regions or product.soil_type %}
+              <div class="in-muted" style="font-size:0.78rem">
+                {% if product.suitable_regions %}<i class="fa-solid fa-map-location-dot"></i> {{ product.suitable_regions_display }}{% endif %}
+                {% if product.suitable_regions and product.soil_type %} · {% endif %}
+                {% if product.soil_type %}<i class="fa-solid fa-layer-group"></i> {{ product.soil_type_display }}{% endif %}
+              </div>
+            {% endif %}
             <div><strong class="in-money">TZS {{ product.wholesale_price|floatformat:0|intcomma }}</strong> <span class="in-muted">/ {{ product.get_unit_display|lower }}</span></div>
             {% if product.suggested_retail_price %}<div class="in-muted">Sell at ~TZS {{ product.suggested_retail_price|floatformat:0|intcomma }}</div>{% endif %}
             <div>

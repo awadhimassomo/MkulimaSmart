@@ -23,7 +23,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from marketplace.forms import SupplierOnboardingForm
-from operations.models import InputSeller
+from operations.models import TANZANIA_REGIONS, InputSeller
 
 from . import selectors, services
 from .forms import (
@@ -53,7 +53,7 @@ from .serializers import (
 
 # The web form calls the photo field "new_images"; the API calls it "images".
 API_FIELD_NAMES = {"new_images": "images", "__all__": "non_field_errors"}
-LIST_FIELDS = {"target_crops", "products_offered"}
+LIST_FIELDS = {"target_crops", "products_offered", "suitable_regions", "soil_type"}
 
 
 # ---------------------------------------------------------------------------
@@ -180,6 +180,8 @@ class OptionsView(APIView):
             "regulators": choices(WholesaleProduct.REGULATOR_CHOICES),
             "category_regulator": WholesaleProduct.CATEGORY_REGULATOR,
             "toxicity_classes": choices(WholesaleProduct.TOXICITY_CHOICES),
+            "regions": choices(TANZANIA_REGIONS),
+            "soil_types": choices(WholesaleProduct.SOIL_TYPE_CHOICES),
             "payment_methods": choices(Sale.POS_PAYMENT_CHOICES),
             "order_statuses": choices(PurchaseOrder.STATUS_CHOICES),
             "farmer_order_statuses": choices(FarmerOrder.STATUS_CHOICES),
@@ -386,12 +388,13 @@ def _stocked_ids(shop):
 
 
 class CatalogView(ShopAPIView):
-    """GET ?q=&category=&manufacturer=<id>&crop="""
+    """GET ?q=&category=&manufacturer=<id>&crop=&region= (region also matches products with no region restriction)"""
 
     def get(self, request):
         p = request.query_params
         products = selectors.filter_catalog(
-            (p.get("q") or "").strip(), p.get("category") or "", p.get("manufacturer") or "", (p.get("crop") or "").strip()
+            (p.get("q") or "").strip(), p.get("category") or "", p.get("manufacturer") or "",
+            (p.get("crop") or "").strip(), (p.get("region") or "").strip(),
         )
         return paginated(request, self, products, WholesaleProductSerializer, context={"stocked_ids": _stocked_ids(request.seller)})
 

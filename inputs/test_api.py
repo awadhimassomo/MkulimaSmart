@@ -43,7 +43,11 @@ class AuthAndProfileTests(ApiTestBase):
         self.assertIn({"value": "pesticides", "label": "Pesticides"}, data["categories"])
         self.assertEqual(data["product_form"]["required_by_category"]["pesticides"],
                          ["composition", "registration_number", "toxicity_class", "safety_precautions"])
+        self.assertEqual(data["product_form"]["required_by_category"]["seeds"],
+                         ["seed_variety", "registration_number", "suitable_regions", "soil_type"])
         self.assertEqual(data["category_regulator"]["seeds"], "tosci")
+        self.assertIn({"value": "Kilimanjaro", "label": "Kilimanjaro"}, data["regions"])
+        self.assertIn({"value": "loam", "label": "Loam (well-balanced)"}, data["soil_types"])
 
     def test_profile_required_then_created(self):
         user = User.objects.create_user(phone_number="0799000000", password="x" * 10)
@@ -113,6 +117,28 @@ class ManufacturerProductApiTests(ApiTestBase):
         )
         self.assertEqual(response.status_code, 201, response.content)
         self.assertEqual(response.json()["target_crops"], ["Maize", "Beans"])
+
+    def test_seed_requires_regions_and_soil_type_and_saves_them(self):
+        seed = {
+            "name": "Zamseed 606", "brand": "Zamseed", "category": "seeds", "pack_size": "2 kg", "unit": "packet",
+            "wholesale_price": "9000", "min_order_quantity": "1", "stock_available": "20",
+            "seed_variety": "606", "registration_number": "TOSCI/9",
+        }
+        response = self.mfr_api.post(f"{API}/manufacturer/products/", {**seed, "images": [png()]}, format="multipart")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("suitable_regions", response.json()["errors"])
+        self.assertIn("soil_type", response.json()["errors"])
+
+        response = self.mfr_api.post(
+            f"{API}/manufacturer/products/",
+            {**seed, "suitable_regions": ["Kilimanjaro", "Arusha"], "soil_type": ["loam", "volcanic"], "images": [png()]},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        data = response.json()
+        self.assertEqual(data["suitable_regions"], ["Kilimanjaro", "Arusha"])
+        self.assertEqual(data["soil_type"], ["loam", "volcanic"])
+        self.assertEqual(data["soil_type_display"], "Loam (well-balanced), Volcanic / black cotton soil")
 
     def test_pesticide_rules_apply_to_api(self):
         response = self.mfr_api.post(
@@ -216,6 +242,21 @@ class ShopStockAndSalesApiTests(ApiTestBase):
 
 
 class OrderApiTests(ApiTestBase):
+    def test_catalog_region_filter(self):
+        WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="H614 Maize Seed", category="seeds", wholesale_price=9000,
+            suitable_regions=["Kilimanjaro"], stock_available=50,
+        )
+        WholesaleProduct.objects.create(
+            manufacturer=self.mfr, name="Highland Bean Seed", category="seeds", wholesale_price=6000,
+            suitable_regions=["Mbeya"], stock_available=50,
+        )
+        results = self.shop_api.get(f"{API}/shop/catalog/?region=Kilimanjaro").json()["results"]
+        names = {p["name"] for p in results}
+        self.assertIn("H614 Maize Seed", names)
+        self.assertIn("Urea 46%", names)  # no region restriction set, matches any region
+        self.assertNotIn("Highland Bean Seed", names)
+
     def test_multi_manufacturer_order_through_to_receipt(self):
         rival_user, rival = make_seller("0700000009", "manufacturer", "Rival Seeds")
         seed = WholesaleProduct.objects.create(
