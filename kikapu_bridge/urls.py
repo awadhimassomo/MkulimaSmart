@@ -10,4 +10,5 @@ urlpatterns = [
     path("inputs/prices/", views.InputPricesView.as_view(), name="input_prices"),
     path("orders/", views.OrdersView.as_view(), name="orders"),
     path("orders/<str:order_id>/", views.OrderDetailView.as_view(), name="order_detail"),
+    path("assistant/messages/", views.AssistantMessageView.as_view(), name="assistant_messages"),
 ]

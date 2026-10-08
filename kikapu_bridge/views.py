@@ -6,6 +6,7 @@ Kikapu ⇄ Mkulima Smart inputs bridge (Mkulima Smart's side), mounted at /api/k
     GET  inputs/prices/         §5  light price/stock poll
     POST orders/                §6  farmer order from WhatsApp
     GET  orders/<id>/               order status (fallback if a webhook was missed)
+    POST assistant/messages/    farmer's WhatsApp message (text or photo) -> the assistant's reply
 
 Auth: Authorization: Bearer <token issued with `manage.py issue_kikapu_token`>.
 """
@@ -22,9 +23,12 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from assistant import engine as assistant_engine
+from gova_pp.diagnosis import DiagnosisError
 from inputs import services
 from inputs.models import FarmerOrder, ShopStockItem
 from operations.models import InputSeller
@@ -378,3 +382,67 @@ class OrderDetailView(BridgeView):
         pk = parse_prefixed_id(order_id, "MS")
         order = get_object_or_404(FarmerOrder.objects.prefetch_related("items"), pk=pk, channel="kikapu")
         return Response(order_json(order))
+
+
+class AssistantMessageView(BridgeView):
+    """
+    The crop-doctor chat. Kikapu forwards every message a farmer sends while in this chat and
+    sends our `reply.text` back on WhatsApp, so the conversation carries on with its history.
+
+    JSON or multipart fields (flat, so a photo can be uploaded in the same request):
+      phone_number (required, e.g. +255712345678), message_id (WhatsApp id, makes retries safe),
+      text, image (file) or image_url (a public https link), farmer_name, region, language (sw|en)
+    """
+
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def post(self, request):
+        data = request.data
+        phone = e164(str(data.get("phone_number") or ""))
+        if not phone:
+            return fail(400, "invalid_request", "phone_number is required, e.g. +255712345678.", {"phone_number": ["Required."]})
+
+        language = str(data.get("language") or "").strip().lower()
+        user = _user_for_phone(phone)
+        try:
+            result = assistant_engine.handle_message(
+                phone=phone,
+                name=str(data.get("farmer_name") or "").strip(),
+                language=language if language in ("sw", "en") else "",
+                region=str(data.get("region") or "").strip(),
+                text=str(data.get("text") or ""),
+                upload=request.FILES.get("image"),
+                image_url=str(data.get("image_url") or ""),
+                external_id=str(data.get("message_id") or "").strip(),
+                farmer_user=user,
+            )
+        except DiagnosisError as exc:
+            # Give Kikapu something sensible to tell the farmer, whatever went wrong.
+            lang = language if language in ("sw", "en") else "sw"
+            kind = "err_image" if exc.status in (400, 404) else "err_service"
+            if str(exc) == "Send text or a photo.":
+                kind = "err_empty"
+            body = {
+                "success": False, "code": "assistant_error", "reason": str(exc), "message": str(exc),
+                "reply": {"text": assistant_engine.fallback_text(kind, lang), "language": lang},
+            }
+            return Response(body, status=exc.status)
+
+        return Response({
+            "success": True,
+            "conversation_id": result["conversation_id"],
+            "message_id": result["message_id"],
+            "reply": {"text": result["reply_text"], "language": result["language"]},
+            "diagnosis": result["diagnosis"],
+            "products": result["products"],
+            "needs_expert": result["needs_expert"],
+            "duplicate": result["duplicate"],
+            "rate_limited": result["rate_limited"],
+        })
+
+
+def _user_for_phone(phone):
+    """The Mkulima Smart account for this phone number, if there is one (stored as 07..., 255... or +255...)."""
+    digits = re.sub(r"\D", "", phone)
+    candidates = [phone, digits, "0" + digits[3:]] if digits.startswith("255") else [phone, digits]
+    return get_user_model().objects.filter(phone_number__in=candidates).first()

@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'inputs',  # Input manufacturers <-> input shops: catalog, orders, POS
     'kikapu_bridge',  # Kikapu WhatsApp bridge: catalog pull, farmer orders, status webhooks
     'community',  # Farmer Talk: crop/seed experience discussions
+    'assistant',  # Crop-doctor chat bot (WhatsApp via Kikapu): photo diagnosis + product advice
 
 ]
 
