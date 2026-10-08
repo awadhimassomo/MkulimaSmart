@@ -30,6 +30,7 @@ def mobile_farmer_register(request):
 
     Request Body:
     {
+        "email": "farmer@example.com",
         "phone_number": "+255712345678",
         "password": "secure_password",
         "first_name": "John",
@@ -40,7 +41,7 @@ def mobile_farmer_register(request):
     try:
         data = json.loads(request.body)
 
-        required_fields = ['phone_number', 'password', 'first_name', 'last_name']
+        required_fields = ['email', 'password', 'first_name', 'last_name']
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
@@ -52,9 +53,11 @@ def mobile_farmer_register(request):
         # Reuse the existing sync service but keep the mobile contract clean.
         result = MkulimaSyncService.sync_from_kikapu({
             'phone_number': data.get('phone_number'),
+            'email': data.get('email'),
             'password': data.get('password'),
             'first_name': data.get('first_name'),
             'last_name': data.get('last_name'),
+            'email': data.get('email'),
             'farm_name': data.get('farm_name', ''),
         })
 

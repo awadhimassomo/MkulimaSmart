@@ -13,22 +13,29 @@ import math
 
 class CustomUserManager(BaseUserManager):
     """
-    Custom user manager that uses phone number as the unique identifier
-    instead of username
+    Custom user manager that uses email as the account identifier.
     """
-    def create_user(self, phone_number, password=None, **extra_fields):
-        if not phone_number:
-            raise ValueError('The Phone Number must be set')
-        
-        # Normalize the phone number by removing spaces and dashes
-        phone_number = ''.join(c for c in phone_number if c.isdigit() or c == '+')
-        
-        user = self.model(phone_number=phone_number, **extra_fields)
+    def create_user(self, phone_number=None, password=None, **extra_fields):
+        email = extra_fields.pop('email', None)
+        if email:
+            email = self.normalize_email(email).strip().lower()
+
+        if phone_number:
+            phone_number = ''.join(c for c in phone_number if c.isdigit() or c == '+')
+        else:
+            phone_number = None
+
+        user = self.model(phone_number=phone_number, email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone_number, password=None, **extra_fields):
+    def get_by_natural_key(self, username):
+        return self.get(email__iexact=self.normalize_email(username).strip().lower())
+
+    def create_superuser(self, phone_number=None, password=None, **extra_fields):
+        if not extra_fields.get('email'):
+            raise ValueError('Superuser must have an email address.')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -43,10 +50,10 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    Custom User model that uses phone number as the primary identifier
+    Custom User model that uses email as the primary identifier.
     """
-    phone_number = models.CharField(_("Phone Number"), max_length=15, unique=True)
-    email = models.EmailField(_("Email Address"), blank=True)
+    phone_number = models.CharField(_("Phone Number"), max_length=15, unique=True, blank=True, null=True)
+    email = models.EmailField(_("Email Address"), max_length=254, unique=True, blank=True, null=True)
     first_name = models.CharField(_("First Name"), max_length=30, blank=True)
     last_name = models.CharField(_("Last Name"), max_length=150, blank=True)
     is_farmer = models.BooleanField(_("Is Farmer"), default=False)
@@ -59,8 +66,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(_("Active"), default=True)
     is_staff = models.BooleanField(_("Staff Status"), default=False)
     
-    USERNAME_FIELD = 'phone_number'
-    REQUIRED_FIELDS = []  # No additional required fields for creating a superuser
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
     
     objects = CustomUserManager()
     
@@ -69,14 +76,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = _("Users")
     
     def __str__(self):
-        return self.phone_number
+        return self.email or self.phone_number or str(self.pk)
         
     def get_full_name(self):
         full_name = f"{self.first_name} {self.last_name}".strip()
-        return full_name if full_name else self.phone_number
+        return full_name if full_name else (self.email or self.phone_number or str(self.pk))
         
     def get_short_name(self):
-        return self.first_name or self.phone_number
+        return self.first_name or self.email or self.phone_number or str(self.pk)
 
 
 class Farm(models.Model):

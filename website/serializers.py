@@ -122,6 +122,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for user registration"""
+    email = serializers.EmailField(required=True, validators=[])
     password = serializers.CharField(
         write_only=True,
         required=True,
@@ -136,29 +137,34 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('phone_number', 'email', 'first_name', 'last_name', 'password', 'password2')
+        fields = ('email', 'phone_number', 'first_name', 'last_name', 'password', 'password2')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True},
-            'email': {'required': True}
+            'email': {'required': True},
+            'phone_number': {'required': False, 'allow_null': True, 'allow_blank': True},
         }
     
     def validate(self, attrs):
         if attrs['password'] != attrs.pop('password2'):
             raise serializers.ValidationError({"password": _("Password fields didn't match.")})
         
-        # Normalize phone number
-        phone_number = ''.join(c for c in attrs['phone_number'] if c.isdigit() or c == '+')
-        if User.objects.filter(phone_number=phone_number).exists():
-            raise serializers.ValidationError({"phone_number": _("A user with this phone number already exists.")})
-        
-        attrs['phone_number'] = phone_number
+        attrs['email'] = attrs['email'].strip().lower()
+        if User.objects.filter(email__iexact=attrs['email']).exists():
+            raise serializers.ValidationError({"email": _("A user with this email address already exists.")})
+
+        phone_number = attrs.get('phone_number')
+        if phone_number:
+            phone_number = ''.join(c for c in phone_number if c.isdigit() or c == '+')
+            if User.objects.filter(phone_number=phone_number).exists():
+                raise serializers.ValidationError({"phone_number": _("A user with this phone number already exists.")})
+        attrs['phone_number'] = phone_number or None
         return attrs
     
     def create(self, validated_data):
         user = User.objects.create_user(
-            phone_number=validated_data['phone_number'],
-            email=validated_data.get('email'),
+            email=validated_data['email'],
+            phone_number=validated_data.get('phone_number'),
             first_name=validated_data.get('first_name'),
             last_name=validated_data.get('last_name'),
             password=validated_data['password'],
@@ -169,7 +175,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class UserLoginSerializer(serializers.Serializer):
     """Serializer for user login"""
-    phone_number = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(
         write_only=True,
         required=True,
@@ -177,9 +183,7 @@ class UserLoginSerializer(serializers.Serializer):
     )
     
     def validate(self, attrs):
-        # Normalize phone number
-        phone_number = ''.join(c for c in attrs['phone_number'] if c.isdigit() or c == '+')
-        attrs['phone_number'] = phone_number
+        attrs['email'] = attrs['email'].strip().lower()
         return attrs
 
 

@@ -15,7 +15,7 @@ def obtain_token(request):
     Endpoint to obtain JWT token for mobile apps to use with WebSocket connections
     
     Required fields (accepts both snake_case and camelCase):
-    - phone_number/phoneNumber: The user's phone number
+    - email: The user's email address
     - password: The user's password
     
     Optional:
@@ -24,23 +24,21 @@ def obtain_token(request):
     # Handle both snake_case and camelCase
     data = {}
     for key, value in request.data.items():
-        if key == 'phoneNumber':
-            data['phone_number'] = value
-        elif key == 'threadId':
+        if key == 'threadId':
             data['thread_id'] = value
         else:
             data[key] = value
     
-    phone_number = data.get('phone_number')
+    email = data.get('email', '').strip().lower()
     password = data.get('password')
     thread_id = data.get('thread_id')
     
-    if not phone_number:
+    if not email:
         return Response(
             {
                 'error': 'Missing required field',
-                'missing_field': 'phone_number',
-                'note': 'Field can be either phone_number or phoneNumber',
+                'missing_field': 'email',
+                'note': 'Use the email address registered to the account.',
                 'received_data': dict(request.data)
             },
             status=status.HTTP_400_BAD_REQUEST
@@ -53,7 +51,7 @@ def obtain_token(request):
         )
     
     # Authenticate user
-    user = authenticate(request, phone_number=phone_number, password=password)
+    user = authenticate(request, email=email, password=password)
     
     if not user:
         return Response(
@@ -67,6 +65,7 @@ def obtain_token(request):
     expiration_hours = expiration_days * 24
     payload = {
         'uid': user.id,
+        'email': user.email,
         'phone_number': user.phone_number,
         'exp': datetime.utcnow() + timedelta(hours=expiration_hours),
     }

@@ -597,7 +597,7 @@
             <div class="register-feature-icon"><i class="fas fa-user-check"></i></div>
             <div>
               <strong>Direct account creation</strong>
-              <span>Phone-based signup stays simple and works for both farmer and supplier roles.</span>
+              <span>Email-based signup works for both farmer and supplier roles.</span>
             </div>
           </li>
           <li>
@@ -637,8 +637,8 @@
 
           {% if form.errors %}
             <div class="register-alert" data-form-error-summary>
-              {% if form.phone_number.errors %}
-                <div>This phone number is already registered. Please use a different number or sign in with the existing account.</div>
+              {% if form.email.errors %}
+                <div>This email address is already registered or invalid. Please use a different email or sign in.</div>
               {% else %}
                 <div>Please correct the highlighted fields and try again.</div>
               {% endif %}
@@ -725,22 +725,23 @@
                   </div>
 
                   <div class="form-field field-span">
-                    <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                    <label for="{{ form.email.id_for_label }}">Email Address *</label>
+                    {{ form.email }}
+                    <div class="field-help">Required. Use this email address to sign in and reset your password.</div>
+                    {% if form.email.errors %}
+                      <div class="error-text">{{ form.email.errors|join:", " }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="form-field field-span">
+                    <label for="{{ form.phone_number.id_for_label }}">Phone Number (optional)</label>
                     {{ form.phone_number }}
-                    <div class="field-help">Use the farmer login number, for example <span>+255712345678</span>.</div>
+                    <div class="field-help">Optional contact number, for example <span>+255712345678</span>.</div>
                     {% if form.phone_number.errors %}
                       <div class="error-text">{{ form.phone_number.errors|join:", " }}</div>
                     {% endif %}
                   </div>
 
-                  <div class="form-field field-span">
-                    <label for="{{ form.email.id_for_label }}">Email</label>
-                    {{ form.email }}
-                    <div class="field-help">Optional, but useful for password reset and notifications.</div>
-                    {% if form.email.errors %}
-                      <div class="error-text">{{ form.email.errors|join:", " }}</div>
-                    {% endif %}
-                  </div>
                 </div>
               </section>
             </div>
@@ -1060,7 +1061,7 @@
         const requiredIds = [
           '{{ form.first_name.id_for_label }}',
           '{{ form.last_name.id_for_label }}',
-          '{{ form.phone_number.id_for_label }}'
+          '{{ form.email.id_for_label }}'
         ];
         for (const id of requiredIds) {
           const field = document.getElementById(id);

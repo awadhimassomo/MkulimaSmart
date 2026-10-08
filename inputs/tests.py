@@ -290,7 +290,10 @@ class ViewTests(InputsTestBase):
 
 class EntryPointTests(InputsTestBase):
     def test_supplier_login_lands_on_input_dashboard(self):
-        response = self.client.post(reverse("website:login"), {"username": "0700000001", "password": "pass12345"})
+        # Accounts sign in with their email address.
+        self.shop_user.email = "shop@example.com"
+        self.shop_user.save()
+        response = self.client.post(reverse("website:login"), {"username": "shop@example.com", "password": "pass12345"})
         self.assertRedirects(response, reverse("inputs:home"), fetch_redirect_response=False)
         self.assertRedirects(self.client.get(reverse("inputs:home")), reverse("inputs:shop_dashboard"))
 

@@ -68,7 +68,7 @@ class UserLoginAPIView(APIView):
         if serializer.is_valid():
             user = authenticate(
                 request,
-                phone_number=serializer.validated_data['phone_number'],
+                email=serializer.validated_data['email'],
                 password=serializer.validated_data['password']
             )
             

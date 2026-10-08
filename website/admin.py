@@ -12,8 +12,8 @@ class CustomUserAdmin(admin.ModelAdmin):
     Custom admin interface for the User model
     """
     fieldsets = (
-        (None, {'fields': ('phone_number', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+        (None, {'fields': ('email', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'phone_number')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser',
                                        'groups', 'user_permissions')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
@@ -22,13 +22,13 @@ class CustomUserAdmin(admin.ModelAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('phone_number', 'password1', 'password2', 'email'),
+            'fields': ('email', 'phone_number', 'password1', 'password2'),
         }),
     )
     list_display = ('phone_number', 'email', 'first_name', 'last_name', 'is_farmer', 'is_staff')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups', 'is_farmer')
     search_fields = ('phone_number', 'first_name', 'last_name', 'email')
-    ordering = ('phone_number',)
+    ordering = ('email',)
 
 
 class FarmAdmin(admin.ModelAdmin):

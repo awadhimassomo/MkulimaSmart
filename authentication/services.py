@@ -11,6 +11,7 @@ from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -186,10 +187,16 @@ class MkulimaSyncService:
         Returns:
             Dictionary with sync result and user information
         """
-        phone_number = kikapu_data.get('phone_number')
+        phone_number = kikapu_data.get('phone_number') or ''
+        email = (kikapu_data.get('email') or '').strip().lower()
         
         # Check if user already exists
-        existing_user = User.objects.filter(phone_number=phone_number).first()
+        lookup = Q()
+        if phone_number:
+            lookup |= Q(phone_number=phone_number)
+        if email:
+            lookup |= Q(email__iexact=email)
+        existing_user = User.objects.filter(lookup).first() if lookup else None
         if existing_user:
             completion_pct = cls._get_user_completion_percentage(existing_user)
             
@@ -223,6 +230,7 @@ class MkulimaSyncService:
         # Create user with partial profile
         user = User.objects.create_user(
             phone_number=phone_number,
+            email=email or None,
             password=kikapu_data.get('password'),
             first_name=kikapu_data.get('first_name', ''),
             last_name=kikapu_data.get('last_name', ''),

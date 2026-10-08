@@ -172,21 +172,21 @@ class FarmerLoginView(FormView):
         return context
 
     def form_valid(self, form):
-        phone_number = form.cleaned_data.get('username')
+        email = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password')
-        user = authenticate(self.request, phone_number=phone_number, password=password)
+        user = authenticate(self.request, email=email, password=password)
 
         if user is not None and (user.is_farmer or user.is_supplier or user.is_staff):
             login(self.request, user)
             messages.success(
                 self.request,
-                _('Successfully logged in as %(name)s') % {'name': user.get_full_name() or user.phone_number},
+                _('Successfully logged in as %(name)s') % {'name': user.get_full_name() or user.email},
             )
             if user.is_supplier:
                 return redirect('inputs:home')
             return super().form_valid(form)
 
-        messages.error(self.request, _('Invalid phone number or password.'))
+        messages.error(self.request, _('Invalid email or password.'))
         return self.form_invalid(form)
 
 

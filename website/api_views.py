@@ -930,13 +930,13 @@ def register_farmer(request):
     API endpoint to register a new farmer user
     
     Required fields (accepts both snake_case and camelCase):
-    - phone_number/phoneNumber: The user's phone number
+    - email: The user's email address and account identifier
     - password: The user's password
     - first_name/firstName: The user's first name
     - last_name/lastName: The user's last name
     
     Optional fields:
-    - email: The user's email address
+    - phone_number/phoneNumber: The user's contact number
     - farm_name: Name of the farm (optional)
     - farm_size_unit: Unit of farm size (e.g., acres, hectares)
     """
@@ -968,8 +968,8 @@ def register_farmer(request):
             data[key] = value
     
     # Check required fields
-    required_fields = ['phone_number', 'password', 'first_name', 'last_name']
-    missing_fields = [field for field in required_fields if field not in data]
+    required_fields = ['email', 'password', 'first_name', 'last_name']
+    missing_fields = [field for field in required_fields if not data.get(field)]
     
     if missing_fields:
         return Response(
@@ -983,10 +983,17 @@ def register_farmer(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    phone_number = data['phone_number']
+    email = data['email'].strip().lower()
+    phone_number = data.get('phone_number') or None
+    if phone_number:
+        phone_number = ''.join(c for c in phone_number if c.isdigit() or c == '+')
     
-    # Check if user with this phone number already exists
-    if User.objects.filter(phone_number=phone_number).exists():
+    if User.objects.filter(email__iexact=email).exists():
+        return Response(
+            {'error': 'A user with this email address already exists'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    if phone_number and User.objects.filter(phone_number=phone_number).exists():
         return Response(
             {'error': 'A user with this phone number already exists'},
             status=status.HTTP_400_BAD_REQUEST
@@ -1000,7 +1007,7 @@ def register_farmer(request):
                 password=data['password'],
                 first_name=data['first_name'],
                 last_name=data['last_name'],
-                email=data.get('email', ''),
+                email=email,
                 is_farmer=True  # Set as farmer
             )
             

@@ -51,11 +51,11 @@ def government_login(request):
         return redirect('gova_pp:dashboard')
     
     if request.method == 'POST':
-        phone_number = request.POST.get('phone_number')
+        email = request.POST.get('email', '').strip().lower()
         password = request.POST.get('password')
         
-        if phone_number and password:
-            user = authenticate(request, phone_number=phone_number, password=password)
+        if email and password:
+            user = authenticate(request, email=email, password=password)
             if user is not None:
                 # Check if user has permission to access government dashboard
                 if user.is_staff or user.is_superuser:
@@ -65,9 +65,9 @@ def government_login(request):
                 else:
                     messages.error(request, 'You do not have permission to access the government dashboard.')
             else:
-                messages.error(request, 'Invalid phone number or password.')
+                messages.error(request, 'Invalid email or password.')
         else:
-            messages.error(request, 'Please enter both phone number and password.')
+            messages.error(request, 'Please enter both email and password.')
     
     return render(request, 'gova_pp/login.html')
 

@@ -17,6 +17,7 @@ class FarmerRegistrationForm(UserCreationForm):
     phone_number = forms.CharField(
         label=_("Phone Number"),
         max_length=15,
+        required=False,
         help_text=_("Enter your phone number (e.g., +255XXXXXXXXX)"),
     )
     
@@ -34,8 +35,8 @@ class FarmerRegistrationForm(UserCreationForm):
     
     email = forms.EmailField(
         label=_("Email"),
-        required=False,
-        help_text=_("Optional. Used for password resets and notifications.")
+        required=True,
+        help_text=_("Required. Use this email address to sign in and reset your password.")
     )
     supplier_business_name = forms.CharField(label=_("Business Name"), max_length=255, required=False)
     supplier_location = forms.CharField(label=_("Business Location"), max_length=255, required=False)
@@ -83,8 +84,16 @@ class FarmerRegistrationForm(UserCreationForm):
             elif not isinstance(widget, forms.CheckboxInput):
                 widget.attrs.setdefault("placeholder", field.label)
     
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(_("A user with this email address already exists."))
+        return email
+
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
+        if not phone_number:
+            return None
         # Normalize phone number
         phone_number = ''.join(c for c in phone_number if c.isdigit() or c == '+')
         if User.objects.filter(phone_number=phone_number).exists():
@@ -161,14 +170,12 @@ class FarmerRegistrationForm(UserCreationForm):
 
 class FarmerLoginForm(AuthenticationForm):
     """
-    Form for farmer login. Uses phone number instead of username.
+    Form for farmer login using email.
     """
-    username = forms.CharField(
-        label=_("Phone Number"),
-        widget=forms.TextInput(attrs={'autofocus': True})
+    username = forms.EmailField(
+        label=_("Email Address"),
+        widget=forms.EmailInput(attrs={'autofocus': True})
     )
     
     def clean_username(self):
-        phone_number = self.cleaned_data.get('username')
-        # Normalize phone number
-        return ''.join(c for c in phone_number if c.isdigit() or c == '+')
+        return self.cleaned_data.get('username', '').strip().lower()
