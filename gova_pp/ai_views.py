@@ -5,6 +5,17 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.utils.translation import get_language
+
+from .diagnosis import (
+    DiagnosisError,
+    diagnosis_to_markdown,
+    image_from_upload,
+    normalize_diagnosis,
+    recommend_products,
+    request_diagnosis,
+    resolve_image,
+)
 from .models import FarmerMessage, GovernmentReply
 import os
 from openai import OpenAI
@@ -308,40 +319,56 @@ def generate_recommended_actions(thread):
 @require_http_methods(["POST"])
 def analyze_image(request):
     """
-    Analyze an image using OpenAI's vision capabilities
-    Returns agricultural insights about the image
+    Diagnose a farmer's crop photo and recommend marketplace products for it.
+
+    Accepts either JSON {"image_url": "...", "thread_id": 1, "media_id": 2, "language": "sw"}
+    or multipart with an `image` file (plus the optional fields above).
+
+    Returns the markdown `analysis` the clients already show, plus a structured `diagnosis`
+    and `recommended_products` taken from items in stock in the marketplace.
     """
-    # Check if user is authenticated
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Authentication required'}, status=401)
-    
+
     try:
-        data = json.loads(request.body)
-        image_url = data.get('image_url', '').strip()
+        if (request.content_type or '').startswith('multipart/'):
+            data = request.POST
+            upload = request.FILES.get('image')
+        else:
+            data = json.loads(request.body or '{}')
+            upload = None
+
+        image_url = str(data.get('image_url') or '').strip()
+        if upload is None and not image_url:
+            return JsonResponse({'error': 'Send an image file or an image_url'}, status=400)
+
+        language = str(data.get('language') or '').strip().lower()
+        if language not in ('sw', 'en'):
+            language = 'sw' if (get_language() or '').startswith('sw') else 'en'
+
         thread_id = data.get('thread_id')
-        media_id = data.get('media_id')
-        
-        if not image_url:
-            return JsonResponse({'error': 'Image URL is required'}, status=400)
-        
-        # Get conversation context if thread_id provided
-        context = {}
-        if thread_id:
-            context = get_conversation_context(thread_id)
-        
-        # Analyze the image using OpenAI Vision
-        analysis = analyze_image_with_ai(image_url, context)
-        
+        context = get_conversation_context(thread_id) if thread_id else {}
+
+        image = image_from_upload(upload) if upload is not None else resolve_image(image_url)
+        diagnosis = normalize_diagnosis(request_diagnosis(image, context, language))
+        products = recommend_products(diagnosis, request=request)
+
         return JsonResponse({
             'success': True,
-            'analysis': analysis,
-            'media_id': media_id,
-            'timestamp': 'now'
+            'analysis': diagnosis_to_markdown(diagnosis),
+            'diagnosis': diagnosis,
+            'recommended_products': products,
+            'media_id': data.get('media_id'),
+            'timestamp': 'now',
         })
-        
-    except Exception as e:
-        logger.error(f"Error in image analysis: {str(e)}", exc_info=True)
-        return JsonResponse({'error': str(e)}, status=500)
+
+    except DiagnosisError as exc:
+        return JsonResponse({'success': False, 'error': str(exc), 'analysis': str(exc)}, status=exc.status)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as exc:
+        logger.error(f"Error in image analysis: {exc}", exc_info=True)
+        return JsonResponse({'error': 'Something went wrong analysing the image.'}, status=500)
 
 
 def analyze_image_with_ai(image_url, context=None):
