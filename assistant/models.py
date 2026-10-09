@@ -34,7 +34,7 @@ class Conversation(models.Model):
 
 
 class Message(models.Model):
-    ROLE_CHOICES = [("farmer", "Farmer"), ("assistant", "Assistant")]
+    ROLE_CHOICES = [("farmer", "Farmer"), ("assistant", "Assistant"), ("agronomist", "Agronomist")]
     KIND_CHOICES = [("text", "Text"), ("image", "Photo")]
 
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages")

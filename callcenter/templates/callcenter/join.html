@@ -1,0 +1,17 @@
+{% extends "callcenter/base.html" %}
+{% block title %}Join{% endblock %}
+{% block content %}
+<div class="panel" style="max-width:480px;margin:1rem auto">
+  <h1>Join {{ company.business_name|default:company.seller_name }}</h1>
+  <p class="muted">Create your agronomist login. Farmers who write to Mkulima Smart on WhatsApp will be offered to you while you are online.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {{ field.errors }}
+    {% endfor %}
+    <p><button class="btn" type="submit">Create my login</button></p>
+  </form>
+</div>
+{% endblock %}

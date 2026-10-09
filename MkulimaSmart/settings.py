@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'inputs',  # Input manufacturers <-> input shops: catalog, orders, POS
     'kikapu_bridge',  # Kikapu WhatsApp bridge: catalog pull, farmer orders, status webhooks
     'community',  # Farmer Talk: crop/seed experience discussions
+    'callcenter',  # Call center: company agronomists answer farmers' WhatsApp chats; the AI covers when none is free
     'assistant',  # Crop-doctor chat bot (WhatsApp via Kikapu): photo diagnosis + product advice
 
 ]
@@ -258,6 +259,7 @@ KIKAPU_OAUTH_REDIRECT_URI = os.environ.get('KIKAPU_OAUTH_REDIRECT_URI', 'http://
 KIKAPU_BRIDGE_WEBHOOK_URL = os.environ.get('KIKAPU_BRIDGE_WEBHOOK_URL', 'https://www.kikapu.co.tz/api/kikapu-bridge/orders/status/')
 KIKAPU_BRIDGE_WEBHOOK_SECRET = os.environ.get('KIKAPU_BRIDGE_WEBHOOK_SECRET', '')  # shared once, out of band
 KIKAPU_BRIDGE_OUTBOUND_TOKEN = os.environ.get('KIKAPU_BRIDGE_OUTBOUND_TOKEN', '')  # optional token Kikapu issues to us
+KIKAPU_BRIDGE_REPLY_URL = os.environ.get('KIKAPU_BRIDGE_REPLY_URL', 'https://www.kikapu.co.tz/api/kikapu-bridge/assistant/replies/')  # where agronomist/AI replies are sent
 KIKAPU_BRIDGE_PARTNER_ID = os.environ.get('KIKAPU_BRIDGE_PARTNER_ID', 'mkulima-smart')
 KIKAPU_BRIDGE_WEBHOOK_TIMEOUT = int(os.environ.get('KIKAPU_BRIDGE_WEBHOOK_TIMEOUT', '5'))
 KIKAPU_BRIDGE_PUBLIC_BASE_URL = os.environ.get('KIKAPU_BRIDGE_PUBLIC_BASE_URL', SITE_BASE_URL)  # for image_url
@@ -300,3 +302,13 @@ LOGGING = {
         },
     },
 }
+
+
+# Farmer call center (callcenter app). Off until the always-on worker is running:
+#   python manage.py run_callcenter --loop
+CALLCENTER_ENABLED = os.environ.get('CALLCENTER_ENABLED', 'False').lower() in ('true', '1', 'yes')
+CALLCENTER_ACCEPT_SECONDS = int(os.environ.get('CALLCENTER_ACCEPT_SECONDS', '120'))  # wait for someone to accept, then the AI answers
+CALLCENTER_REPLY_SECONDS = int(os.environ.get('CALLCENTER_REPLY_SECONDS', '600'))  # an agronomist who goes quiet loses the chat
+CALLCENTER_ONLINE_SECONDS = int(os.environ.get('CALLCENTER_ONLINE_SECONDS', '60'))  # console open in the last minute = online
+CALLCENTER_AI_STICKY_MINUTES = int(os.environ.get('CALLCENTER_AI_STICKY_MINUTES', '30'))  # after the AI answers, it keeps the chat this long
+CALLCENTER_INVITE_DAYS = int(os.environ.get('CALLCENTER_INVITE_DAYS', '7'))

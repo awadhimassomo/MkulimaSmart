@@ -45,6 +45,7 @@ STRINGS = {
         "err_image": "Samahani, sikuweza kusoma picha hiyo. Tafadhali tuma picha nyingine (JPG au PNG).",
         "err_service": "Samahani, huduma ina hitilafu kwa sasa. Tafadhali jaribu tena baada ya dakika chache.",
         "err_empty": "Tafadhali andika ujumbe au tuma picha ya zao lako.",
+        "connecting": "Asante. Tunakuunganisha na mtaalamu wa kilimo. Utajibiwa ndani ya dakika chache.",
     },
     "en": {
         "advice": "*What to do:*",
@@ -60,6 +61,7 @@ STRINGS = {
         "err_image": "Sorry, I could not read that photo. Please send another one (JPG or PNG).",
         "err_service": "Sorry, the service has a problem right now. Please try again in a few minutes.",
         "err_empty": "Please type a message or send a photo of your crop.",
+        "connecting": "Thank you. We are connecting you to an agronomist. You will get a reply within a few minutes.",
     },
 }
 
@@ -227,6 +229,7 @@ def _result(conversation, inbound, reply, **extra):
         "needs_expert": bool(reply.payload.get("needs_expert")),
         "duplicate": False,
         "rate_limited": False,
+        "queued": False,
         **extra,
     }
 
@@ -287,14 +290,32 @@ def handle_message(*, phone, name="", language="", region="", text="", upload=No
     conversation.last_message_at = timezone.now()
     conversation.save()
 
-    payload = {}
+    image = None
     if is_image:
         if upload is not None:
             upload.seek(0)
             image = image_from_upload(upload)
         else:
             image = resolve_image(image_url)
-        context = {"farmer_name": conversation.farmer_name or "unknown", "farmer_location": conversation.region or "unknown", "subject": text}
+
+    # The call center may keep this chat for an agronomist; otherwise the AI answers straight away.
+    from callcenter import services as callcenter
+
+    routed = callcenter.route_incoming(conversation, inbound, language)
+    if routed is not None:
+        return routed
+
+    reply = respond(conversation, inbound, language, image=image)
+    return _result(conversation, inbound, reply)
+
+
+def respond(conversation, inbound, language, image=None):
+    """Ask the model for the answer to one farmer message (a photo or text) and store it as the assistant's reply."""
+    payload = {}
+    if inbound.kind == "image":
+        if image is None:
+            image = resolve_image(inbound.photo.url if inbound.photo else inbound.image_url)
+        context = {"farmer_name": conversation.farmer_name or "unknown", "farmer_location": conversation.region or "unknown", "subject": inbound.text}
         diagnosis = normalize_diagnosis(request_diagnosis(image, context, language))
         with translation.override(language):  # links open the site in the farmer's language
             products = recommend_products(diagnosis, request=_SiteUrls())
@@ -309,7 +330,7 @@ def handle_message(*, phone, name="", language="", region="", text="", upload=No
     reply = Message.objects.create(conversation=conversation, role="assistant", kind="text", text=reply_text, in_reply_to=inbound, payload=payload)
     conversation.last_message_at = reply.created_at
     conversation.save()
-    return _result(conversation, inbound, reply)
+    return reply
 
 
 class _SiteUrls:

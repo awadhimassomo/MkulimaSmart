@@ -1,0 +1,65 @@
+{% extends "callcenter/base.html" %}
+{% block title %}Console{% endblock %}
+{% block bar_right %}{{ agronomist.full_name }}{% endblock %}
+{% block content %}
+<div class="panel-head">
+  <div><h1>Farmer chats</h1><span class="muted">Switch on to be offered farmers. Keep this page open while you are available.</span></div>
+  <button class="btn" id="toggle" type="button"></button>
+</div>
+
+<div class="panel"><div class="panel-head"><h2>Waiting for an agronomist <span class="pill wait" id="n-waiting">0</span></h2></div><div id="waiting"></div></div>
+<div class="panel"><div class="panel-head"><h2>Your chats <span class="pill" id="n-mine">0</span></h2></div><div id="mine"></div></div>
+<div class="panel"><div class="panel-head"><h2>Answered by the AI (last 24 hours)</h2><span class="muted">You can take any of these over.</span></div><div id="ai"></div></div>
+
+<script>
+  var CSRF = "{{ csrf_token }}";
+  var URLS = {state: "{% url 'callcenter:state' %}", availability: "{% url 'callcenter:availability' %}"};
+  var available = false;
+
+  function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+  function waited(sec) { return sec < 60 ? sec + "s" : Math.floor(sec / 60) + " min"; }
+
+  function rows(list, kind) {
+    if (!list.length) return '<p class="empty">Nothing here.</p>';
+    return list.map(function (c) {
+      var meta = (c.region ? esc(c.region) + ". " : "") + (c.has_photo ? "Photo. " : "") + (kind === "waiting" ? "Waiting " + waited(c.waited) : "");
+      var action = kind === "mine"
+        ? '<a class="btn" href="' + c.url + '">Open</a>'
+        : '<button class="btn" data-accept="' + c.accept_url + '">' + (kind === "ai" ? "Take over" : "Accept") + '</button> <a class="btn secondary" href="' + c.url + '">Read</a>';
+      return '<div class="row"><div><b>' + esc(c.farmer) + '</b><span class="muted">' + esc(c.preview) + '</span><span class="muted">' + meta + '</span></div><div>' + action + '</div></div>';
+    }).join("");
+  }
+
+  function refresh() {
+    fetch(URLS.state, {credentials: "same-origin"}).then(function (r) { return r.json(); }).then(function (s) {
+      available = s.available;
+      var t = document.getElementById("toggle");
+      t.textContent = available ? "I am available (click to go offline)" : "I am offline (click to go online)";
+      t.className = "btn" + (available ? "" : " secondary");
+      document.getElementById("waiting").innerHTML = rows(s.waiting, "waiting");
+      document.getElementById("mine").innerHTML = rows(s.mine, "mine");
+      document.getElementById("ai").innerHTML = rows(s.ai, "ai");
+      document.getElementById("n-waiting").textContent = s.waiting.length;
+      document.getElementById("n-mine").textContent = s.mine.length;
+    });
+  }
+
+  function post(url, body) {
+    return fetch(url, {method: "POST", credentials: "same-origin", headers: {"X-CSRFToken": CSRF, "Content-Type": "application/x-www-form-urlencoded"}, body: body || ""});
+  }
+
+  document.getElementById("toggle").addEventListener("click", function () {
+    post(URLS.availability, "available=" + (available ? "0" : "1")).then(refresh);
+  });
+  document.addEventListener("click", function (e) {
+    var url = e.target.getAttribute && e.target.getAttribute("data-accept");
+    if (!url) return;
+    e.target.disabled = true;
+    post(url).then(function (r) { return r.json().then(function (j) { return [r.ok, j]; }); }).then(function (res) {
+      if (res[0]) { window.location = res[1].url; } else { alert(res[1].error); refresh(); }
+    });
+  });
+  refresh();
+  setInterval(refresh, 5000);
+</script>
+{% endblock %}

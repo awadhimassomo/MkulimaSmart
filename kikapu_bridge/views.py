@@ -438,6 +438,9 @@ class AssistantMessageView(BridgeView):
             "needs_expert": result["needs_expert"],
             "duplicate": result["duplicate"],
             "rate_limited": result["rate_limited"],
+            # True when an agronomist (or the queue for one) has the chat: the answer then arrives later as an
+            # "assistant.reply" webhook, and `reply.text` is only an acknowledgement, empty after the first message.
+            "queued": result.get("queued", False),
         })
 
 

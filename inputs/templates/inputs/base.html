@@ -100,5 +100,6 @@
     <a href="{% url 'inputs:order_list' %}" class="supplier-nav-secondary {% if active_nav == 'orders' %}is-active{% endif %}"><i class="fa-solid fa-truck"></i>&nbsp;My Orders</a>
     <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-nav-secondary"><i class="fa-solid fa-shop"></i>&nbsp;Marketplace Listings</a>
   {% endif %}
+  <a href="{% url 'callcenter:team' %}" class="supplier-nav-secondary"><i class="fa-solid fa-headset"></i>&nbsp;Agronomists</a>
   <a href="{% url 'marketplace:supplier_onboarding' %}" class="supplier-nav-secondary"><i class="fa-solid fa-id-card"></i>&nbsp;Profile</a>
 {% endblock %}

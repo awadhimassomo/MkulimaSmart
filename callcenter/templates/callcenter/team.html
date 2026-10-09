@@ -1,0 +1,38 @@
+{% extends "callcenter/base.html" %}
+{% block title %}Agronomists{% endblock %}
+{% block content %}
+<h1>Agronomists at {{ company.business_name|default:company.seller_name }}</h1>
+<p class="muted">Agronomists you invite answer farmers' WhatsApp questions for Mkulima Smart. They sign in with their own email and switch themselves on when they can take chats.</p>
+
+<div class="panel">
+  <div class="panel-head"><h2>Invite an agronomist</h2></div>
+  <form method="post" action="{% url 'callcenter:team_invite' %}" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:end">
+    {% csrf_token %}
+    <div style="flex:1;min-width:200px"><label for="name" style="margin-top:0">Name (optional)</label><input type="text" id="name" name="name" maxlength="120"></div>
+    <button class="btn" type="submit">Create invite link</button>
+  </form>
+  {% for item in invites %}
+    <div class="row">
+      <div><b>{{ item.invite.name|default:"Invite link" }}</b><code class="link">{{ item.link }}</code>
+        <span class="muted">Expires {{ item.invite.expires_at|date:"j M Y" }}. Works once.</span></div>
+      <form method="post" action="{% url 'callcenter:team_revoke' item.invite.pk %}">{% csrf_token %}<button class="btn danger" type="submit">Cancel</button></form>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Your agronomists</h2></div>
+  {% for a in agronomists %}
+    <div class="row">
+      <div><b>{{ a.full_name }}</b><span class="muted">{{ a.user.email }}</span></div>
+      <div>
+        {% if not a.is_active %}<span class="pill">Access off</span>{% elif a.is_online %}<span class="pill on">Online</span>{% else %}<span class="pill">Offline</span>{% endif %}
+        <form method="post" action="{% url 'callcenter:team_toggle' a.pk %}" style="display:inline">{% csrf_token %}
+          <button class="btn secondary" type="submit">{% if a.is_active %}Switch access off{% else %}Switch access on{% endif %}</button></form>
+      </div>
+    </div>
+  {% empty %}
+    <p class="empty">No agronomists yet. Create an invite link above.</p>
+  {% endfor %}
+</div>
+{% endblock %}

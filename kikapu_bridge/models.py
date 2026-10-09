@@ -70,3 +70,36 @@ class WebhookDelivery(models.Model):
         if self.delivered_at:
             return "delivered"
         return "failed" if self.gave_up else "pending"
+
+
+class ReplyDelivery(models.Model):
+    """
+    Outbox of chat replies for Kikapu to send on WhatsApp: an agronomist's answer, or the AI's answer
+    when nobody took the chat. Retried until Kikapu accepts it; replies to one farmer go out in order.
+    """
+
+    MAX_ATTEMPTS = 20
+
+    message = models.ForeignKey("assistant.Message", on_delete=models.CASCADE, related_name="kikapu_deliveries")
+    phone_number = models.CharField(max_length=20)
+    payload = models.JSONField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_response_code = models.PositiveSmallIntegerField(blank=True, null=True)
+    last_error = models.CharField(max_length=255, blank=True)
+    next_attempt_at = models.DateTimeField(default=timezone.now)
+    delivered_at = models.DateTimeField(blank=True, null=True)
+    gave_up = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name_plural = "reply deliveries"
+
+    def __str__(self):
+        return f"reply {self.message_id} to {self.phone_number}"
+
+    @property
+    def state(self):
+        if self.delivered_at:
+            return "delivered"
+        return "failed" if self.gave_up else "pending"

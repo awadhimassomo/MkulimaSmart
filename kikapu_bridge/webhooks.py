@@ -18,7 +18,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from .models import WebhookDelivery
+from .models import ReplyDelivery, WebhookDelivery
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +73,8 @@ def deliver_pending(order_id=None, now=None):
     return sent, failed
 
 
-def _send(delivery, now):
-    url = _setting("KIKAPU_BRIDGE_WEBHOOK_URL")
+def _send(delivery, now, url=None):
+    url = url or _setting("KIKAPU_BRIDGE_WEBHOOK_URL")
     secret = _setting("KIKAPU_BRIDGE_WEBHOOK_SECRET")
     if not url or not secret:
         # Not configured yet: keep it queued without using up attempts.
@@ -110,7 +110,58 @@ def _send(delivery, now):
     else:
         # 1, 2, 4 … minutes, capped at an hour.
         delivery.next_attempt_at = now + timedelta(minutes=min(2 ** (delivery.attempts - 1), 60))
-        delivery.gave_up = delivery.attempts >= WebhookDelivery.MAX_ATTEMPTS
-        logger.warning("Kikapu webhook for %s (%s) failed: %s", delivery.order_id, delivery.status, delivery.last_error)
+        delivery.gave_up = delivery.attempts >= type(delivery).MAX_ATTEMPTS
+        logger.warning("Kikapu webhook %s failed: %s", delivery, delivery.last_error)
     delivery.save()
     return ok
+
+
+# ---------------------------------------------------------------------------
+# Chat replies (agronomist or AI answers that arrive after the farmer's request has finished)
+# ---------------------------------------------------------------------------
+
+def build_reply_payload(message, conversation, source, agronomist=None, text=None):
+    """`reply_id` lets Kikapu ignore a repeat delivery of the same reply."""
+    return {
+        "event": "assistant.reply",
+        "reply_id": f"MSR-{message.pk}",
+        "phone_number": conversation.phone_number,
+        "conversation_id": conversation.pk,
+        "language": conversation.language,
+        "text": text or message.text,
+        "source": source,  # "agronomist" or "ai"
+        "agronomist": agronomist,
+        "sent_at": timezone.now().isoformat().replace("+00:00", "Z"),
+    }
+
+
+def queue_reply(message, conversation, source, agronomist=None, text=None):
+    """Write the reply to the outbox and send it once the surrounding transaction commits."""
+    delivery = ReplyDelivery.objects.create(
+        message=message, phone_number=conversation.phone_number,
+        payload=build_reply_payload(message, conversation, source, agronomist, text),
+    )
+    phone = conversation.phone_number
+    transaction.on_commit(lambda: deliver_replies(phone_number=phone))
+    return delivery
+
+
+def deliver_replies(phone_number=None, now=None):
+    """Send due replies. Returns (sent, failed). Replies to one farmer keep their order."""
+    now = now or timezone.now()
+    url = _setting("KIKAPU_BRIDGE_REPLY_URL")
+    pending = ReplyDelivery.objects.filter(delivered_at__isnull=True, gave_up=False)
+    if phone_number is not None:
+        pending = pending.filter(phone_number=phone_number)
+
+    sent = failed = 0
+    for phone in pending.values_list("phone_number", flat=True).distinct():
+        for delivery in pending.filter(phone_number=phone).order_by("created_at", "pk"):
+            if delivery.next_attempt_at > now:
+                break
+            if _send(delivery, now, url=url):
+                sent += 1
+            else:
+                failed += 1
+                break
+    return sent, failed

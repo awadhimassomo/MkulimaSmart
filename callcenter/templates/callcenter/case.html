@@ -1,0 +1,103 @@
+{% extends "callcenter/base.html" %}
+{% block title %}Chat with {{ farmer }}{% endblock %}
+{% block head %}
+<style>
+  .chat { display: flex; flex-direction: column; gap: .5rem; max-height: 55vh; overflow-y: auto; padding: .25rem; }
+  .msg { max-width: 80%; padding: .55rem .8rem; border-radius: .9rem; background: #eef2ec; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.farmer { align-self: flex-start; }
+  .msg.assistant { align-self: flex-end; background: #e8eefc; }
+  .msg.agronomist { align-self: flex-end; background: #d9efd8; }
+  .msg small { display: block; color: var(--muted); font-size: .75rem; }
+  .msg img { max-width: 260px; width: 100%; border-radius: .6rem; display: block; margin-bottom: .3rem; }
+  .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+  .note { background: #fef3c7; border-radius: .7rem; padding: .6rem .8rem; margin-top: .75rem; }
+</style>
+{% endblock %}
+{% block bar_right %}{{ agronomist.full_name }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'callcenter:console' %}">Back to all chats</a></p>
+<div class="panel-head">
+  <div><h1>{{ farmer }}</h1><span class="muted">{% if conversation.region %}{{ conversation.region }}. {% endif %}Reply language: {% if conversation.language == "sw" %}Swahili{% else %}English{% endif %}</span></div>
+  <span class="pill" id="status"></span>
+</div>
+
+{% if diagnosis %}
+<div class="panel">
+  <h2>Latest AI diagnosis of the photo</h2>
+  <p class="muted" style="margin:.4rem 0 0">{{ diagnosis.crop|default:"Crop not clear" }}: {{ diagnosis.problem|default:"no problem found" }}. {{ diagnosis.summary }}</p>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="chat" id="chat"></div>
+  <div class="note" id="note" hidden></div>
+  <div id="composer" hidden>
+    <label for="text" style="margin-top:1rem">Your reply (sent to the farmer on WhatsApp with your name)</label>
+    <textarea id="text" rows="3" maxlength="1500"></textarea>
+    <div class="actions">
+      <button class="btn" id="send" type="button">Send reply</button>
+      <button class="btn secondary" id="release" type="button">Give back to the queue</button>
+      <button class="btn secondary" id="ai" type="button">Let the AI answer</button>
+      <button class="btn danger" id="close" type="button">Close chat</button>
+    </div>
+  </div>
+  <div id="takebar" class="actions" hidden><button class="btn" id="accept" type="button">Accept this chat</button></div>
+</div>
+
+<script>
+  var CSRF = "{{ csrf_token }}";
+  var URLS = {
+    messages: "{% url 'callcenter:case_messages' case.pk %}", reply: "{% url 'callcenter:case_reply' case.pk %}",
+    accept: "{% url 'callcenter:case_accept' case.pk %}", release: "{% url 'callcenter:case_release' case.pk %}",
+    close: "{% url 'callcenter:case_close' case.pk %}", ai: "{% url 'callcenter:case_ai' case.pk %}"
+  };
+  var LABELS = {waiting: "Waiting for an agronomist", open: "With an agronomist", ai: "Answered by the AI", closed: "Closed"};
+  var last = 0;
+  var chat = document.getElementById("chat");
+
+  function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+  function add(m) {
+    if (m.id <= last) return;
+    last = m.id;
+    var who = m.role === "farmer" ? "Farmer" : (m.role === "agronomist" ? (m.name || "Agronomist") : "AI assistant");
+    var img = m.photo ? '<img src="' + esc(m.photo) + '" alt="Photo from the farmer">' : "";
+    var el = document.createElement("div");
+    el.className = "msg " + m.role;
+    el.innerHTML = img + esc(m.text) + "<small>" + esc(who) + ", " + esc(m.at) + "</small>";
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+  }
+  function post(url, body) {
+    return fetch(url, {method: "POST", credentials: "same-origin", headers: {"X-CSRFToken": CSRF, "Content-Type": "application/x-www-form-urlencoded"}, body: body || ""})
+      .then(function (r) { return r.json().then(function (j) { return [r.ok, j]; }); });
+  }
+  function poll() {
+    fetch(URLS.messages + "?after=" + last, {credentials: "same-origin"}).then(function (r) { return r.json(); }).then(function (s) {
+      s.messages.forEach(add);
+      document.getElementById("status").textContent = LABELS[s.status] || s.status;
+      document.getElementById("composer").hidden = !s.mine;
+      document.getElementById("takebar").hidden = !(s.status === "waiting" || s.status === "ai");
+      var note = document.getElementById("note");
+      note.hidden = !s.taken_by && s.status !== "closed";
+      note.textContent = s.taken_by ? s.taken_by + " is answering this chat." : (s.status === "closed" ? "This chat is closed." : "");
+    });
+  }
+  function act(url, after) { post(url).then(function (res) { if (res[0]) { after(res[1]); } else { alert(res[1].error); } }); }
+  document.getElementById("send").addEventListener("click", function () {
+    var box = document.getElementById("text");
+    if (!box.value.trim()) return;
+    post(URLS.reply, "text=" + encodeURIComponent(box.value)).then(function (res) {
+      if (res[0]) { box.value = ""; add(res[1].message); } else { alert(res[1].error); }
+    });
+  });
+  document.getElementById("accept").addEventListener("click", function () { act(URLS.accept, function () { poll(); }); });
+  ["release", "close", "ai"].forEach(function (name) {
+    document.getElementById(name).addEventListener("click", function () {
+      if (name === "ai" && !confirm("The AI will answer the farmer now. Continue?")) return;
+      act(URLS[name], function (j) { window.location = j.url; });
+    });
+  });
+  poll();
+  setInterval(poll, 4000);
+</script>
+{% endblock %}

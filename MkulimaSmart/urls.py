@@ -75,6 +75,9 @@ urlpatterns += i18n_patterns(
     # Input supply chain: manufacturer portal and input shop dashboard / POS
     path('inputs/', include('inputs.urls', namespace='inputs')),
 
+    # Farmer call center: company agronomists answer farmers' WhatsApp chats
+    path('call-center/', include('callcenter.urls', namespace='callcenter')),
+
     # Farmer Talk: crop/seed experience discussions
     path('community/', include('community.urls', namespace='community')),
 
