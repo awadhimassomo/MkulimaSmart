@@ -157,10 +157,28 @@ class ConversationFlowTests(AssistantTestBase):
     @mock.patch("assistant.engine.chat_completion", return_value="ok")
     def test_language_follows_request_then_is_remembered(self, chat_completion):
         self.send(text="hello", language="en", message_id="1")
-        self.assertIn("use English", chat_completion.call_args.args[0][0]["content"])
+        self.assertIn("Always reply in English", chat_completion.call_args.args[0][0]["content"])
         self.send(text="and then?", message_id="2")  # no language this time
         self.assertEqual(Conversation.objects.get().language, "en")
-        self.assertIn("use English", chat_completion.call_args.args[0][0]["content"])
+        self.assertIn("Always reply in English", chat_completion.call_args.args[0][0]["content"])
+
+    @mock.patch("assistant.engine.chat_completion", return_value="ok")
+    def test_reply_language_is_the_channel_language_not_the_typed_one(self, chat_completion):
+        self.send(text="habari za asubuhi", language="en", message_id="1")  # Swahili typed, English requested
+        system = chat_completion.call_args.args[0][0]["content"]
+        self.assertIn("Always reply in English, whatever language the farmer types in", system)
+
+    @mock.patch("assistant.engine.chat_completion", return_value="Karibu tena. Tuendelee na black pod?")
+    @mock.patch("assistant.engine.request_diagnosis", return_value=diagnosis_answer())
+    def test_greeting_after_a_diagnosis_carries_the_diagnosis_and_forbids_asking_for_a_photo(self, _, chat_completion):
+        self.send_photo(language="en", message_id="a")
+        self.send(text="Hello", language="en", message_id="b")
+        messages = chat_completion.call_args.args[0]
+        system = messages[0]["content"]
+        self.assertIn("Fall armyworm", system)
+        self.assertIn("do NOT ask for a photo", system)
+        self.assertEqual(messages[-1], {"role": "user", "content": "Hello"})
+        self.assertIn("[The farmer sent a photo]", messages[1]["content"])
 
     @mock.patch("assistant.engine.chat_completion", return_value="ok")
     def test_account_is_linked_by_phone_number(self, _):
