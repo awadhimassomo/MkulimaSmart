@@ -1,0 +1,47 @@
+{% extends "opsdash/base.html" %}
+{% block title %}Training data{% endblock %}
+{% block content %}
+<h1>Training data</h1>
+<p class="muted">Crop photos that farmers agreed to share and agronomists have labelled. They are split into train, validation and test sets automatically, by farmer, so no farm appears in two sets.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">Ready to export</div><div class="value">{{ stats.labelled }}</div><div class="note">labelled by a person</div></div>
+  <div class="kpi"><div class="label">Waiting to be labelled</div><div class="value">{{ stats.to_label }}</div><div class="note">of {{ stats.consented_photos }} shared photos</div></div>
+  <div class="kpi"><div class="label">Train / validation / test</div><div class="value">{{ stats.splits.train }} / {{ stats.splits.val }} / {{ stats.splits.test }}</div><div class="note">about 80 / 10 / 10</div></div>
+  <div class="kpi"><div class="label">Not usable</div><div class="value">{{ stats.rejected }}</div><div class="note">marked as blurry or not a crop</div></div>
+  <div class="kpi"><div class="label">AI agreed with the label</div><div class="value">{% if stats.ai_checked %}{% widthratio stats.ai_agree stats.ai_checked 100 %}%{% else %}-{% endif %}</div><div class="note">{{ stats.ai_agree }} of {{ stats.ai_checked }} labelled photos</div></div>
+  <div class="kpi"><div class="label">Farmers who said no</div><div class="value">{{ stats.declined }}</div><div class="note">photos never used</div></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Export</h2></div>
+  <p class="muted" style="margin:0">A zip with the photos in train, val and test folders (one folder per crop and problem), a labels spreadsheet and a class count. Photos have their location data removed and no names or phone numbers are included. Only photos whose farmer still agrees are included.</p>
+  <form method="post" action="{% url 'training_data:export' %}" class="actions">{% csrf_token %}
+    <button class="btn" type="submit" {% if not stats.labelled %}disabled{% endif %}>Export dataset (zip)</button>
+    {% if not stats.labelled %}<span class="muted">Nothing to export yet.</span>{% endif %}
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Photos per class</h2></div>
+  {% for c in stats.classes %}
+    <div class="row"><div class="row-top">
+      <div><b>{{ c.crop }}: {{ c.problem }}</b><span class="muted">{{ c.total }} photo{{ c.total|pluralize }}</span></div>
+      <div><span class="pill">train {{ c.train }}</span> <span class="pill">val {{ c.val }}</span> <span class="pill">test {{ c.test }}</span></div>
+    </div></div>
+  {% empty %}
+    <p class="empty">No labelled photos yet. Agronomists label them from their console (the "Label farmers' photos" box).</p>
+  {% endfor %}
+  <p class="muted">A model usually needs a few hundred photos per class to be useful. Aim for the same problems your farmers meet most.</p>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Recent exports</h2></div>
+  {% for e in exports %}
+    <div class="row"><div class="row-top"><div><b>{{ e.created_at|date:"j M Y H:i" }}</b>
+      <span class="muted">{{ e.exported_by.email|default:"unknown" }} | {{ e.image_count }} photos in {{ e.class_count }} classes{% if e.skipped %} | {{ e.skipped }} skipped (duplicates or unreadable){% endif %}</span></div></div></div>
+  {% empty %}
+    <p class="empty">Nothing exported yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

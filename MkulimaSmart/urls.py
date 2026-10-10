@@ -75,6 +75,9 @@ urlpatterns += i18n_patterns(
     # Input supply chain: manufacturer portal and input shop dashboard / POS
     path('inputs/', include('inputs.urls', namespace='inputs')),
 
+    # Agronomists label farmers' photos; administrators export the dataset
+    path('photo-labels/', include('trainingdata.urls', namespace='training_data')),
+
     # Operations dashboard for administrators
     path('ops/', include('opsdash.urls', namespace='ops')),
 

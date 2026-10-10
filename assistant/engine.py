@@ -23,6 +23,7 @@ from gova_pp.diagnosis import (
     resolve_image,
 )
 
+from . import consent
 from .models import Conversation, Message
 from .stock import orderable_items
 
@@ -236,6 +237,7 @@ def _result(conversation, inbound, reply, **extra):
         "duplicate": False,
         "rate_limited": False,
         "queued": False,
+        "consent_prompt": None,
         **extra,
     }
 
@@ -312,7 +314,10 @@ def handle_message(*, phone, name="", language="", region="", text="", upload=No
         return routed
 
     reply = respond(conversation, inbound, language, image=image)
-    return _result(conversation, inbound, reply)
+    question = None
+    if inbound.kind == "image" and (reply.payload.get("diagnosis") or {}).get("problem_type") != "not_agricultural":
+        question = consent.prompt_for(conversation, language)
+    return _result(conversation, inbound, reply, consent_prompt=question)
 
 
 def respond(conversation, inbound, language, image=None):

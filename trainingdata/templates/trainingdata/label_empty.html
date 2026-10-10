@@ -1,0 +1,10 @@
+{% extends "callcenter/base.html" %}
+{% block title %}Label photos{% endblock %}
+{% block content %}
+<p><a href="{% url 'callcenter:console' %}">Back to chats</a></p>
+<div class="panel">
+  <h1>Nothing to label right now</h1>
+  <p class="muted">{% if skipped %}You skipped {{ skipped }} photo{{ skipped|pluralize }}; they will come back in your next session. {% endif %}New photos appear here after a farmer sends a crop photo and agrees to share it.</p>
+  <p><a class="btn" href="{% url 'callcenter:console' %}">Back to chats</a></p>
+</div>
+{% endblock %}

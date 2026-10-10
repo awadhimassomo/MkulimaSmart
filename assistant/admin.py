@@ -16,8 +16,8 @@ class MessageInline(admin.TabularInline):
 
 @admin.register(Conversation)
 class ConversationAdmin(admin.ModelAdmin):
-    list_display = ("farmer_name", "phone_number", "language", "needs_expert", "last_message_at")
-    list_filter = ("needs_expert", "language", "channel")
+    list_display = ("farmer_name", "phone_number", "language", "needs_expert", "training_consent", "last_message_at")
+    list_filter = ("needs_expert", "training_consent", "language", "channel")
     search_fields = ("phone_number", "farmer_name")
-    readonly_fields = ("created_at", "last_message_at", "last_diagnosis", "last_products")
+    readonly_fields = ("created_at", "last_message_at", "last_diagnosis", "last_products", "training_consent_at", "consent_asked_at", "consent_asked_count")
     inlines = [MessageInline]

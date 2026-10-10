@@ -22,6 +22,13 @@ class Conversation(models.Model):
     last_diagnosis = models.JSONField(blank=True, null=True)
     last_products = models.JSONField(blank=True, default=list)
     needs_expert = models.BooleanField(default=False, help_text="The latest photo needs an extension officer.")
+    training_consent = models.BooleanField(
+        blank=True, null=True,
+        help_text="The farmer agreed (True) or declined (False) to our using their photos to improve diagnosis. Empty = never answered = not allowed.",
+    )
+    training_consent_at = models.DateTimeField(blank=True, null=True)
+    consent_asked_count = models.PositiveSmallIntegerField(default=0)
+    consent_asked_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_message_at = models.DateTimeField(auto_now_add=True)
 

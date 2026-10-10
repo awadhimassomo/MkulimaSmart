@@ -7,6 +7,11 @@
   <button class="btn" id="toggle" type="button"></button>
 </div>
 
+{% if to_label %}
+<div class="panel"><div class="panel-head"><div><h2>Label farmers' photos</h2><span class="muted">{{ to_label }} photo{{ to_label|pluralize }} from farmers who agreed to share them. Confirming the crop and problem helps us build our own crop doctor.</span></div>
+  <a class="btn" href="{% url 'training_data:station' %}">Start labelling</a></div></div>
+{% endif %}
+
 <div class="panel"><div class="panel-head"><h2>Waiting for an agronomist <span class="pill wait" id="n-waiting">0</span></h2></div><div id="waiting"></div></div>
 <div class="panel"><div class="panel-head"><h2>Your chats <span class="pill" id="n-mine">0</span></h2></div><div id="mine"></div></div>
 <div class="panel"><div class="panel-head"><h2>Answered by the AI (last 24 hours)</h2><span class="muted">You can take any of these over.</span></div><div id="ai"></div></div>

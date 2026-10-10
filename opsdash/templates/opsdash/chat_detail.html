@@ -4,7 +4,8 @@
 <p><a href="{% url 'ops:chats' %}">Back to chats</a></p>
 <h1>{{ conversation.farmer_name|default:conversation.phone_number }}</h1>
 <p class="muted">{{ conversation.phone_number }}{% if conversation.region %} | {{ conversation.region }}{% endif %} | replies in {% if conversation.language == "sw" %}Swahili{% else %}English{% endif %}
-  {% if conversation.needs_expert %}| <span class="pill no">Told to see an expert</span>{% endif %}</p>
+  {% if conversation.needs_expert %}| <span class="pill no">Told to see an expert</span>{% endif %}
+  | Photos for training: {% if conversation.training_consent is True %}<span class="pill ok">Allowed</span>{% elif conversation.training_consent is False %}<span class="pill no">Declined</span>{% else %}<span class="pill">Not answered, so not allowed</span>{% endif %}</p>
 
 {% if cases %}
 <div class="panel">

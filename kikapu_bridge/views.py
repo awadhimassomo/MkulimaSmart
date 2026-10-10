@@ -27,7 +27,8 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from assistant import engine as assistant_engine
+from assistant import consent, engine as assistant_engine
+from assistant.models import Conversation
 from gova_pp.diagnosis import DiagnosisError
 from inputs import services
 from inputs.models import FarmerOrder, ShopStockItem
@@ -445,7 +446,35 @@ class AssistantMessageView(BridgeView):
             # True when an agronomist (or the queue for one) has the chat: the answer then arrives later as an
             # "assistant.reply" webhook, and `reply.text` is only an acknowledgement, empty after the first message.
             "queued": result.get("queued", False),
+            # When set, show this question with two buttons (yes_label / no_label) after the reply, and send the
+            # farmer's tap to POST assistant/consent/. Absent or null: do not ask.
+            "consent_prompt": result.get("consent_prompt"),
         })
+
+
+class AssistantConsentView(BridgeView):
+    """
+    Whether a farmer lets us use their photos to improve crop diagnosis. Body (JSON or form):
+      phone_number (required), consent (true | false)
+    Returns `reply.text`, a thank-you in the farmer's language to send back on WhatsApp. Safe to repeat; the latest answer wins.
+    """
+
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+    def post(self, request):
+        phone = e164(str(request.data.get("phone_number") or ""))
+        if not phone:
+            return fail(400, "invalid_request", "phone_number is required, e.g. +255712345678.", {"phone_number": ["Required."]})
+        raw = request.data.get("consent")
+        answer = str(raw).strip().lower()
+        if answer not in ("true", "false", "1", "0", "yes", "no"):
+            return fail(400, "invalid_request", "consent must be true or false.", {"consent": ["Required."]})
+        conversation = Conversation.objects.filter(channel="whatsapp", phone_number=phone).first()
+        if conversation is None:
+            return fail(404, "not_found", "No conversation for this phone number.", {})
+        agreed = answer in ("true", "1", "yes")
+        text = consent.record(conversation, agreed)
+        return Response({"success": True, "consent": agreed, "reply": {"text": text, "language": conversation.language}})
 
 
 def _user_for_phone(phone):

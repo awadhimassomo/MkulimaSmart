@@ -162,6 +162,14 @@ class ChatTests(OpsBase):
         self.assertContains(page, "Weka mbolea ya CAN")
         self.assertContains(page, "With an agronomist: Asha Mwakyusa")
 
+    def test_the_chat_shows_whether_photos_may_be_used_for_training(self):
+        url = reverse("ops:chat", args=[self.niko.pk])
+        self.assertContains(self.client.get(url), "Not answered, so not allowed")
+        Conversation.objects.filter(pk=self.niko.pk).update(training_consent=True)
+        self.assertContains(self.client.get(url), "Allowed")
+        Conversation.objects.filter(pk=self.niko.pk).update(training_consent=False)
+        self.assertContains(self.client.get(url), "Declined")
+
     def test_an_unknown_chat_is_a_404(self):
         self.assertEqual(self.client.get(reverse("ops:chat", args=[9999])).status_code, 404)
 

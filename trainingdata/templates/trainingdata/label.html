@@ -1,0 +1,68 @@
+{% extends "callcenter/base.html" %}
+{% block title %}Label photos{% endblock %}
+{% block head %}
+<style>
+  .station { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  @media (max-width: 760px) { .station { grid-template-columns: 1fr; } }
+  .photo { width: 100%; max-height: 70vh; object-fit: contain; border-radius: .8rem; background: #eef2ec; }
+  .guess { background: #eef4e6; border-radius: .8rem; padding: .7rem .9rem; margin-bottom: .75rem; }
+  .guess.unsure { background: #fef3c7; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+  .btn-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+  details { margin-top: 1rem; }
+  summary { cursor: pointer; font-weight: 700; }
+  select { width: 100%; padding: .6rem .75rem; border: 1px solid #cdd8c9; border-radius: .6rem; font: inherit; background: #fff; }
+</style>
+{% endblock %}
+{% block content %}
+<p><a href="{% url 'callcenter:console' %}">Back to chats</a></p>
+<div class="panel-head"><div><h1>Label a photo</h1><span class="muted">{{ remaining }} photo{{ remaining|pluralize }} waiting. Only photos from farmers who agreed to share them are shown.</span></div></div>
+
+<div class="station">
+  <div class="panel" style="margin-top:0">
+    <img class="photo" src="{{ message.photo.url }}" alt="Photo from a farmer">
+    {% if message.text %}<p class="muted" style="margin:.6rem 0 0">Farmer wrote: {{ message.text }}</p>{% endif %}
+    {% if region %}<p class="muted" style="margin:.2rem 0 0">Region: {{ region }}</p>{% endif %}
+  </div>
+
+  <div class="panel" style="margin-top:0">
+    {% if guess %}
+      <div class="guess {% if guess.unsure %}unsure{% endif %}">
+        <b>The AI said:</b> {{ guess.crop|default:"crop unclear" }}, {{ guess.problem|default:"no problem named" }}
+        {% if guess.unsure %}<span class="muted">The AI was not sure, so your label matters most here.</span>{% endif %}
+      </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'training_data:save' message.pk %}">
+      {% csrf_token %}
+      <label for="crop" style="margin-top:0">Crop</label>
+      <input type="text" id="crop" name="crop" list="crop-list" value="{{ guess.crop }}" autocomplete="off" required>
+      <datalist id="crop-list">{% for c in crops %}<option value="{{ c }}">{% endfor %}</datalist>
+
+      <label for="problem">Problem</label>
+      <input type="text" id="problem" name="problem" list="problem-list" value="{{ guess.problem }}" autocomplete="off">
+      <datalist id="problem-list">{% for p in problems %}<option value="{{ p }}">{% endfor %}</datalist>
+      <span class="muted">Use the same name every time (for example "Black pod") so photos group together. Choose Healthy if nothing is wrong.</span>
+
+      <label for="problem_type">Kind of problem</label>
+      <select id="problem_type" name="problem_type">
+        {% for value, label in problem_types %}<option value="{{ value }}" {% if guess.problem_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+
+      <div class="btn-row">
+        <button class="btn" type="submit" name="action" value="save">Save label and next</button>
+        <button class="btn secondary" type="submit" name="action" value="skip" formnovalidate>Skip</button>
+      </div>
+
+      <details>
+        <summary>This photo cannot be used</summary>
+        <label for="reject_reason">Why?</label>
+        <select id="reject_reason" name="reject_reason">
+          <option>Blurry or too dark</option><option>Not a crop or plant</option><option>No clear subject</option><option>Person in the photo</option><option>Other</option>
+        </select>
+        <div class="btn-row"><button class="btn danger" type="submit" name="action" value="reject" formnovalidate>Mark as not usable</button></div>
+      </details>
+    </form>
+  </div>
+</div>
+{% endblock %}

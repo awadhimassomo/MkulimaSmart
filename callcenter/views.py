@@ -95,7 +95,9 @@ def _summary(case):
 @agronomist_required
 def console(request):
     request.agronomist.touch()
-    return render(request, "callcenter/console.html", {"agronomist": request.agronomist})
+    from trainingdata import services as training
+
+    return render(request, "callcenter/console.html", {"agronomist": request.agronomist, "to_label": training.labelable().count()})
 
 
 @agronomist_required

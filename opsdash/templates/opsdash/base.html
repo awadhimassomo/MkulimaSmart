@@ -76,6 +76,7 @@
     <a href="{% url 'gova_pp:officials' %}" class="{% if nav == 'officials' %}on{% endif %}">Government officers{% if badges.officials %}<span class="badge">{{ badges.officials }}</span>{% endif %}</a>
     <a href="{% url 'ops:agronomists' %}" class="{% if nav == 'agronomists' %}on{% endif %}">Agronomists</a>
     <a href="{% url 'ops:chats' %}" class="{% if nav == 'chats' %}on{% endif %}">Farmer chats</a>
+    <a href="{% url 'training_data:dataset' %}" class="{% if nav == 'dataset' %}on{% endif %}">Training data</a>
     <a href="{% url 'ops:deliveries' %}" class="{% if nav == 'deliveries' %}on{% endif %}">Messages to Kikapu{% if badges.deliveries %}<span class="badge">{{ badges.deliveries }}</span>{% endif %}</a>
   </nav>
   <main>

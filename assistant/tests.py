@@ -395,3 +395,99 @@ class KikapuProductsTests(AssistantTestBase):
         with mock.patch("assistant.engine.request_diagnosis", return_value=answer):
             found = self.send_photo(language="en").json()["kikapu_products"]
         self.assertEqual([f["id"] for f in found], [f"input-{fertilizer.pk}"])
+
+
+CONSENT_URL = "/api/kikapu-bridge/assistant/consent/"
+
+
+class TrainingConsentTests(AssistantTestBase):
+    def photo_reply(self, message_id, language="en", **answer):
+        with mock.patch("assistant.engine.request_diagnosis", return_value=diagnosis_answer(**answer)):
+            return self.send_photo(language=language, message_id=message_id).json()
+
+    def consent(self, **fields):
+        fields.setdefault("phone_number", PHONE)
+        return self.api.post(CONSENT_URL, fields, format="json")
+
+    def ago(self, **delta):
+        Conversation.objects.update(consent_asked_at=timezone.now() - timedelta(**delta))
+
+    def test_the_first_diagnosis_asks_in_the_farmers_language_with_two_button_labels(self):
+        body = self.photo_reply("a", language="sw")
+        prompt = body["consent_prompt"]
+        self.assertIn("Je, tunaweza kutumia picha zako", prompt["text"])
+        self.assertEqual((prompt["yes_label"], prompt["no_label"]), ("Ndiyo, nakubali", "Hapana"))
+        self.assertLessEqual(len(prompt["yes_label"]), 20)  # WhatsApp button titles stop at 20 characters
+        self.assertLessEqual(len(prompt["no_label"]), 20)
+        english = self.photo_reply("b", language="en")  # asked again? no: only once a day
+        self.assertIsNone(english["consent_prompt"])
+
+    def test_english_wording_and_the_promise_not_to_show_name_or_number(self):
+        prompt = self.photo_reply("a", language="en")["consent_prompt"]
+        self.assertIn("May we use your crop photos", prompt["text"])
+        self.assertIn("never show your name or phone number", prompt["text"])
+        self.assertEqual((prompt["yes_label"], prompt["no_label"]), ("Yes, I agree", "No thanks"))
+
+    def test_not_asked_twice_in_a_day_but_asked_again_later_up_to_three_times(self):
+        self.assertIsNotNone(self.photo_reply("a")["consent_prompt"])
+        self.assertIsNone(self.photo_reply("b")["consent_prompt"])
+        self.ago(days=2)
+        self.assertIsNotNone(self.photo_reply("c")["consent_prompt"])
+        self.ago(days=2)
+        self.assertIsNotNone(self.photo_reply("d")["consent_prompt"])
+        self.ago(days=2)
+        self.assertIsNone(self.photo_reply("e")["consent_prompt"])  # three tries is enough
+        self.assertIsNone(Conversation.objects.get().training_consent)  # and silence still means no
+
+    def test_text_messages_and_non_farm_photos_are_not_a_moment_to_ask(self):
+        with mock.patch("assistant.engine.chat_completion", return_value="Karibu"):
+            self.assertIsNone(self.send(text="Habari", language="sw", message_id="t").json()["consent_prompt"])
+        body = self.photo_reply("p", problem_type="not_agricultural", problem="", product_search_terms=[])
+        self.assertIsNone(body["consent_prompt"])
+        self.assertEqual(Conversation.objects.get().consent_asked_count, 0)
+
+    def test_saying_yes_is_stored_and_stops_the_questions(self):
+        self.photo_reply("a")
+        response = self.consent(consent=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["consent"])
+        self.assertIn("Thank you", response.json()["reply"]["text"])
+        conversation = Conversation.objects.get()
+        self.assertIs(conversation.training_consent, True)
+        self.assertIsNotNone(conversation.training_consent_at)
+        self.ago(days=5)
+        self.assertIsNone(self.photo_reply("b")["consent_prompt"])
+
+    def test_saying_no_is_stored_politely_and_stops_the_questions(self):
+        self.photo_reply("a", language="sw")
+        response = self.consent(consent=False)
+        self.assertIn("Hatutatumia picha zako", response.json()["reply"]["text"])
+        self.assertIs(Conversation.objects.get().training_consent, False)
+        self.ago(days=5)
+        self.assertIsNone(self.photo_reply("b", language="sw")["consent_prompt"])
+
+    def test_the_latest_answer_wins_and_repeats_are_harmless(self):
+        self.photo_reply("a")
+        self.consent(consent=True)
+        self.consent(consent=True)
+        self.consent(consent="no")
+        self.assertIs(Conversation.objects.get().training_consent, False)
+
+    def test_the_endpoint_checks_its_input(self):
+        self.photo_reply("a")
+        self.assertEqual(self.consent(phone_number="").status_code, 400)
+        self.assertEqual(self.consent(consent="maybe").status_code, 400)
+        self.assertEqual(self.api.post(CONSENT_URL, {"phone_number": PHONE}, format="json").status_code, 400)
+        self.assertEqual(self.consent(phone_number="+255799999999", consent=True).status_code, 404)
+        self.assertIsNone(Conversation.objects.get().training_consent)
+
+    def test_the_endpoint_needs_the_partner_token(self):
+        self.photo_reply("a")
+        anonymous = APIClient().post(CONSENT_URL, {"phone_number": PHONE, "consent": True}, format="json")
+        self.assertIn(anonymous.status_code, (401, 403))
+        self.assertIsNone(Conversation.objects.get().training_consent)
+
+    def test_the_number_format_does_not_matter(self):
+        self.photo_reply("a")
+        self.assertEqual(self.consent(phone_number="0711000001", consent=True).status_code, 200)
+        self.assertIs(Conversation.objects.get().training_consent, True)
