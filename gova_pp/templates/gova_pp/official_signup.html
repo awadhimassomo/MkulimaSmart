@@ -1,0 +1,31 @@
+{% extends "gova_pp/official_base.html" %}
+{% block title %}Request access{% endblock %}
+{% block content %}
+<div class="panel">
+  <h1>Request government access</h1>
+  <p class="muted">For government officers who answer farmers' questions and use the government dashboard. An administrator reviews every request, and you can sign in once it is approved. If an administrator sent you an invite link, use that link instead.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.website }}
+    <div class="cols">
+      <div><label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>{{ form.full_name }}{{ form.full_name.errors }}</div>
+      <div><label for="{{ form.job_title.id_for_label }}">{{ form.job_title.label }}</label>{{ form.job_title }}{{ form.job_title.errors }}</div>
+    </div>
+    <label for="{{ form.institution.id_for_label }}">{{ form.institution.label }}</label>{{ form.institution }}{{ form.institution.errors }}
+    <div class="cols">
+      <div><label for="{{ form.region.id_for_label }}">{{ form.region.label }}</label>{{ form.region }}{{ form.region.errors }}</div>
+      <div><label for="{{ form.district.id_for_label }}">{{ form.district.label }}</label>{{ form.district }}{{ form.district.errors }}</div>
+    </div>
+    <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>{{ form.reason }}<span class="helptext">{{ form.reason.help_text }}</span>{{ form.reason.errors }}
+    <div class="cols">
+      <div><label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>{{ form.email }}{{ form.email.errors }}</div>
+      <div><label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>{{ form.phone }}{{ form.phone.errors }}</div>
+    </div>
+    <div class="cols">
+      <div><label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>{{ form.password }}{{ form.password.errors }}</div>
+      <div><label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>{{ form.password2 }}{{ form.password2.errors }}</div>
+    </div>
+    <p><button class="btn" type="submit">Send my request</button></p>
+  </form>
+</div>
+{% endblock %}

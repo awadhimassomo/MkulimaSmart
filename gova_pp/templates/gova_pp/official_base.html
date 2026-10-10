@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Government access{% endblock %} | Mkulima Smart</title>
+  <style>
+    :root { --green: #2d5a27; --green-dark: #1a3316; --line: #dfe6dc; --bg: #f4f7f2; --muted: #66756b; --ink: #1a3316; --danger: #b42318; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--ink); background: var(--bg); }
+    header.bar { background: linear-gradient(135deg, var(--green-dark), var(--green)); color: #fff; padding: .9rem 1.25rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    header.bar a { color: #fff; text-decoration: none; font-weight: 700; }
+    main { max-width: {% block width %}640px{% endblock %}; margin: 0 auto; padding: 1.25rem; }
+    h1 { font-size: 1.5rem; margin: .25rem 0; }
+    h2 { font-size: 1.1rem; margin: 0; }
+    .muted { color: var(--muted); font-size: .92rem; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 1rem; padding: 1.25rem; margin-top: 1rem; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .75rem; flex-wrap: wrap; }
+    .row { padding: .8rem .9rem; border: 1px solid var(--line); border-radius: .8rem; background: #f9fbf7; margin-top: .6rem; }
+    .row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; flex-wrap: wrap; }
+    .row b { display: block; }
+    .row .muted { display: block; }
+    .btn { display: inline-block; border: 0; border-radius: .7rem; padding: .55rem 1rem; font: inherit; font-weight: 700; cursor: pointer; background: var(--green); color: #fff; text-decoration: none; }
+    .btn:hover { filter: brightness(1.1); }
+    .btn.secondary { background: #eef4e6; color: var(--ink); }
+    .btn.danger { background: #fdecea; color: var(--danger); }
+    .btn.sm { padding: .35rem .75rem; font-size: .88rem; }
+    .pill { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .8rem; font-weight: 700; background: #eef2ec; }
+    .pill.wait { background: #fef3c7; color: #92400e; }
+    .pill.ok { background: #d1fae5; color: #065f46; }
+    .pill.no { background: #fee2e2; color: #991b1b; }
+    input[type=text], input[type=email], input[type=password], select, textarea { width: 100%; padding: .6rem .75rem; border: 1px solid #cdd8c9; border-radius: .6rem; font: inherit; background: #fff; }
+    label { display: block; font-weight: 700; margin: .85rem 0 .25rem; }
+    .helptext { display: block; color: var(--muted); font-size: .85rem; margin-top: .2rem; }
+    .errorlist { color: var(--danger); list-style: none; padding: 0; margin: .25rem 0 0; font-size: .9rem; }
+    .flash { background: #eef4e6; border: 1px solid var(--line); padding: .6rem .9rem; border-radius: .7rem; margin-top: 1rem; }
+    .flash.error { background: #fdecea; border-color: #f5c6c0; color: var(--danger); }
+    .empty { color: var(--muted); padding: .6rem 0; }
+    .inline { display: inline; }
+    .actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: .6rem; }
+    .actions input[type=text] { flex: 1; min-width: 160px; }
+    code.link { word-break: break-all; font-size: .85rem; display: block; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    @media (max-width: 560px) { .cols { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <a href="{% url 'gova_pp:login' %}">Mkulima Smart Government</a>
+    <span>{% block bar_right %}{% endblock %}</span>
+  </header>
+  <main>
+    {% for message in messages %}<div class="flash {% if message.tags == 'error' %}error{% endif %}">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

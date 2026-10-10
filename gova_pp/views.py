@@ -31,7 +31,7 @@ from openai import OpenAI
 from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from .models import FarmerMessage, GovernmentReply, ImageAnalysis
+from .models import FarmerMessage, GovernmentOfficial, GovernmentReply, ImageAnalysis
 
 def government_login_required(view_func):
     """Custom login required decorator that redirects to government login page"""
@@ -63,7 +63,13 @@ def government_login(request):
                     messages.success(request, f'Welcome to GOV  APP Dashboard, {user.get_full_name() or user.phone_number}!')
                     return redirect('gova_pp:dashboard')
                 else:
-                    messages.error(request, 'You do not have permission to access the government dashboard.')
+                    official = GovernmentOfficial.objects.filter(user=user).first()
+                    waiting = {
+                        'pending': 'Your request for access is waiting for approval. You can sign in once an administrator approves it.',
+                        'rejected': 'Your request for access was not approved. Please contact an administrator.',
+                        'suspended': 'Your access has been suspended. Please contact an administrator.',
+                    }
+                    messages.error(request, waiting.get(official.status if official else '', 'You do not have permission to access the government dashboard.'))
             else:
                 messages.error(request, 'Invalid email or password.')
         else:

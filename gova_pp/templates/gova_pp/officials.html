@@ -1,0 +1,98 @@
+{% extends "gova_pp/official_base.html" %}
+{% block title %}Government access{% endblock %}
+{% block width %}900px{% endblock %}
+{% block bar_right %}<a href="{% url 'gova_pp:dashboard' %}">Dashboard</a>{% endblock %}
+{% block content %}
+<h1>Government access</h1>
+<p class="muted">Decide who can use the government dashboard. Approved officers can read and answer farmers' messages. Only administrators can see this page.</p>
+
+<div class="panel">
+  <div class="panel-head"><h2>Waiting for approval <span class="pill wait">{{ pending|length }}</span></h2></div>
+  {% for o in pending %}
+    <div class="row">
+      <div class="row-top">
+        <div>
+          <b>{{ o.full_name }}{% if o.job_title %}, {{ o.job_title }}{% endif %}</b>
+          <span class="muted">{{ o.institution }}{% if o.region_name %}, {{ o.region_name }}{% endif %}{% if o.district %} ({{ o.district }}){% endif %}</span>
+          <span class="muted">{{ o.user.email }}{% if o.phone %} | {{ o.phone }}{% endif %} | asked {{ o.created_at|date:"j M Y" }}</span>
+        </div>
+      </div>
+      {% if o.reason %}<p style="margin:.5rem 0 0">{{ o.reason }}</p>{% endif %}
+      <form method="post" class="actions" action="{% url 'gova_pp:official_decide' o.pk 'approve' %}">
+        {% csrf_token %}
+        <input type="text" name="note" maxlength="255" placeholder="Note (optional)">
+        <button class="btn sm" type="submit">Approve</button>
+        <button class="btn sm danger" type="submit" formaction="{% url 'gova_pp:official_decide' o.pk 'reject' %}">Turn down</button>
+      </form>
+    </div>
+  {% empty %}
+    <p class="empty">No requests are waiting.</p>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Send an invite link</h2></div>
+  <p class="muted" style="margin:0">Someone who signs up through an invite link is approved straight away. A link works once and expires after 7 days.</p>
+  <form method="post" action="{% url 'gova_pp:official_invite' %}">
+    {% csrf_token %}
+    <div class="cols">
+      <div><label for="inv-name">Officer's name (optional)</label><input type="text" id="inv-name" name="name" maxlength="120"></div>
+      <div><label for="inv-inst">Ministry, council or office (optional)</label><input type="text" id="inv-inst" name="institution" maxlength="160"></div>
+    </div>
+    <label for="inv-region">Region (optional)</label>
+    <select id="inv-region" name="region"><option value="">Any region</option>{% for code, name in regions %}<option value="{{ code }}">{{ name }}</option>{% endfor %}</select>
+    <p><button class="btn" type="submit">Create invite link</button></p>
+  </form>
+  {% for item in invites %}
+    <div class="row">
+      <div class="row-top">
+        <div><b>{{ item.invite.name|default:"Invite link" }}{% if item.invite.institution %} ({{ item.invite.institution }}){% endif %}</b>
+          <code class="link">{{ item.link }}</code>
+          <span class="muted">Expires {{ item.invite.expires_at|date:"j M Y" }}</span></div>
+        <form method="post" action="{% url 'gova_pp:official_invite_revoke' item.invite.pk %}">{% csrf_token %}<button class="btn sm danger" type="submit">Cancel</button></form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Officers with access</h2></div>
+  {% for o in active %}
+    <div class="row">
+      <div class="row-top">
+        <div>
+          <b>{{ o.full_name }}{% if o.job_title %}, {{ o.job_title }}{% endif %}
+            {% if o.status == "approved" %}<span class="pill ok">Approved</span>{% else %}<span class="pill no">Suspended</span>{% endif %}
+            {% if o.via == "invite" %}<span class="pill">Invited</span>{% endif %}</b>
+          <span class="muted">{{ o.institution }}{% if o.region_name %}, {{ o.region_name }}{% endif %} | {{ o.user.email }}</span>
+          {% if o.decision_note %}<span class="muted">Note: {{ o.decision_note }}</span>{% endif %}
+        </div>
+        <form method="post" class="inline" action="{% url 'gova_pp:official_decide' o.pk 'suspend' %}">
+          {% csrf_token %}
+          {% if o.status == "approved" %}
+            <button class="btn sm danger" type="submit">Suspend</button>
+          {% else %}
+            <button class="btn sm" type="submit" formaction="{% url 'gova_pp:official_decide' o.pk 'reinstate' %}">Reinstate</button>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <p class="empty">No approved officers yet.</p>
+  {% endfor %}
+</div>
+
+{% if rejected %}
+<div class="panel">
+  <div class="panel-head"><h2>Turned down</h2></div>
+  {% for o in rejected %}
+    <div class="row">
+      <div class="row-top">
+        <div><b>{{ o.full_name }}</b><span class="muted">{{ o.institution }} | {{ o.user.email }}{% if o.decision_note %} | {{ o.decision_note }}{% endif %}</span></div>
+        <form method="post" class="inline" action="{% url 'gova_pp:official_decide' o.pk 'approve' %}">{% csrf_token %}<button class="btn sm secondary" type="submit">Approve after all</button></form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

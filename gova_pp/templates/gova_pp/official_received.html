@@ -1,0 +1,10 @@
+{% extends "gova_pp/official_base.html" %}
+{% block title %}Request received{% endblock %}
+{% block content %}
+<div class="panel">
+  <h1>Request received</h1>
+  <p>Thank you. An administrator will review your request. Once it is approved you can sign in with your email and password.</p>
+  <p class="muted">You will not receive an email yet, so please try signing in again in a day or two. If you are not approved, the sign-in page will tell you.</p>
+  <p><a class="btn" href="{% url 'gova_pp:login' %}">Go to sign in</a></p>
+</div>
+{% endblock %}

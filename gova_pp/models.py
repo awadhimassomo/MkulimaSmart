@@ -411,3 +411,71 @@ class Alert(models.Model):
             'critical': 'dark'
         }
         return colors.get(self.priority, 'secondary')
+
+
+def _invite_token():
+    import secrets
+    return secrets.token_urlsafe(24)
+
+
+class GovernmentOfficial(models.Model):
+    """
+    A government officer's access request and decision. Access to the government dashboard is `is_staff`,
+    which is switched on when the request is approved (or the officer joined through an invite) and off again
+    if they are suspended; accounts that were already staff before are never touched.
+    """
+
+    PENDING, APPROVED, REJECTED, SUSPENDED = "pending", "approved", "rejected", "suspended"
+    STATUS_CHOICES = [
+        (PENDING, "Waiting for approval"),
+        (APPROVED, "Approved"),
+        (REJECTED, "Not approved"),
+        (SUSPENDED, "Suspended"),
+    ]
+    VIA_CHOICES = [("signup", "Asked for access"), ("invite", "Invited")]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="government_official")
+    full_name = models.CharField(max_length=120)
+    institution = models.CharField(max_length=160, help_text="Ministry, council, regional office or agency.")
+    job_title = models.CharField(max_length=120, blank=True)
+    region = models.CharField(max_length=40, blank=True)
+    district = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    reason = models.TextField(blank=True, help_text="Why they need access, in their words.")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING, db_index=True)
+    via = models.CharField(max_length=10, choices=VIA_CHOICES, default="signup")
+    staff_granted = models.BooleanField(default=False, help_text="We switched on is_staff for them, so we may switch it off.")
+    decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+    decided_at = models.DateTimeField(blank=True, null=True)
+    decision_note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.full_name} ({self.institution}): {self.status}"
+
+
+class GovernmentInvite(models.Model):
+    """A one-time link an administrator sends to an officer; signing up through it needs no further approval."""
+
+    token = models.CharField(max_length=64, unique=True, default=_invite_token, editable=False)
+    name = models.CharField(max_length=120, blank=True)
+    institution = models.CharField(max_length=160, blank=True)
+    region = models.CharField(max_length=40, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(blank=True, null=True)
+    official = models.OneToOneField(GovernmentOfficial, on_delete=models.SET_NULL, blank=True, null=True, related_name="invite")
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Invite for {self.name or 'an officer'}"
+
+    @property
+    def usable(self):
+        return self.used_at is None and self.expires_at > timezone.now()

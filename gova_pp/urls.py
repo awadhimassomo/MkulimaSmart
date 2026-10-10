@@ -6,6 +6,7 @@ from . import auth_api
 from . import chat_api
 from . import webhook_views
 from . import ai_views
+from . import official_views
 from django.conf import settings
 
 app_name = 'gova_pp'
@@ -19,6 +20,14 @@ urlpatterns = [
     # Authentication
     path('login/', views.government_login, name='login'),
     path('logout/', views.government_logout, name='logout'),
+
+    # Getting access: invite link, request with approval, and the administrators' page
+    path('signup/', official_views.signup, name='signup'),
+    path('join/<str:token>/', official_views.join, name='join'),
+    path('officials/', official_views.manage, name='officials'),
+    path('officials/<int:pk>/<str:action>/', official_views.decide, name='official_decide'),
+    path('officials/invite/', official_views.invite_create, name='official_invite'),
+    path('officials/invite/<int:pk>/revoke/', official_views.invite_revoke, name='official_invite_revoke'),
     
     # Alerts URLs
     path('alerts/', views.alerts, name='alerts'),

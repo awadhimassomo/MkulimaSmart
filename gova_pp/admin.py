@@ -67,3 +67,32 @@ class ImageAnalysisAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         })
     )
+
+
+from . import officials as official_actions  # noqa: E402
+from .models import GovernmentInvite, GovernmentOfficial  # noqa: E402
+
+
+@admin.register(GovernmentOfficial)
+class GovernmentOfficialAdmin(admin.ModelAdmin):
+    list_display = ['full_name', 'institution', 'region', 'status', 'via', 'created_at']
+    list_filter = ['status', 'via', 'region']
+    search_fields = ['full_name', 'institution', 'user__email']
+    readonly_fields = ['user', 'staff_granted', 'decided_by', 'decided_at', 'created_at']
+    actions = ['approve_selected', 'suspend_selected']
+
+    @admin.action(description='Approve selected officers (grants dashboard access)')
+    def approve_selected(self, request, queryset):
+        for official in queryset.select_related('user'):
+            official_actions.approve(official, request.user)
+
+    @admin.action(description='Suspend selected officers (removes dashboard access)')
+    def suspend_selected(self, request, queryset):
+        for official in queryset.select_related('user'):
+            official_actions.suspend(official, request.user)
+
+
+@admin.register(GovernmentInvite)
+class GovernmentInviteAdmin(admin.ModelAdmin):
+    list_display = ['name', 'institution', 'created_at', 'expires_at', 'used_at']
+    readonly_fields = ['token', 'created_at', 'used_at', 'official']
