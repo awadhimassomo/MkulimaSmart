@@ -1,0 +1,43 @@
+{% extends "opsdash/base.html" %}
+{% block title %}Farmer chats{% endblock %}
+{% block content %}
+<h1>Farmer chats</h1>
+<p class="muted">Every crop doctor conversation, including who answered. You see the full phone number here, so please treat it as private.</p>
+
+<div class="panel">
+  <form method="get" class="filters">
+    <div><label for="q" style="margin-top:0">Search name, phone or region</label><input type="search" id="q" name="q" value="{{ term }}"></div>
+    <div><label for="state" style="margin-top:0">Show</label>
+      <select id="state" name="state">{% for value, label in states %}<option value="{{ value }}" {% if value == state %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <button class="btn" type="submit">Filter</button>
+  </form>
+</div>
+
+<div class="panel">
+  {% for c in page %}
+    <a href="{% url 'ops:chat' c.pk %}" style="text-decoration:none;color:inherit">
+      <div class="row">
+        <div class="row-top">
+          <div>
+            <b>{{ c.farmer_name|default:c.phone_number }}</b>
+            <span class="muted">{{ c.phone_number }}{% if c.region %} | {{ c.region }}{% endif %} | {{ c.message_count }} message{{ c.message_count|pluralize }} | last {{ c.last_message_at|timesince }} ago</span>
+          </div>
+          <div>
+            {% if c.active_status == "waiting" %}<span class="pill wait">Waiting</span>{% elif c.active_status == "open" %}<span class="pill ok">With an agronomist</span>{% elif c.active_status == "ai" %}<span class="pill">AI</span>{% endif %}
+            {% if c.needs_expert %}<span class="pill no">Needs expert</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </a>
+  {% empty %}
+    <p class="empty">No chats match.</p>
+  {% endfor %}
+  {% if page.paginator.num_pages > 1 %}
+    <div class="pager">
+      {% if page.has_previous %}<a class="btn sm secondary" href="?page={{ page.previous_page_number }}&state={{ state }}&q={{ term|urlencode }}">Previous</a>{% endif %}
+      <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a class="btn sm secondary" href="?page={{ page.next_page_number }}&state={{ state }}&q={{ term|urlencode }}">Next</a>{% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

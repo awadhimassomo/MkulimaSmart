@@ -1,10 +1,8 @@
-{% extends "gova_pp/official_base.html" %}
+{% extends "opsdash/base.html" %}
 {% block title %}Government access{% endblock %}
-{% block width %}900px{% endblock %}
-{% block bar_right %}<a href="{% url 'gova_pp:dashboard' %}">Dashboard</a>{% endblock %}
 {% block content %}
-<h1>Government access</h1>
-<p class="muted">Decide who can use the government dashboard. Approved officers can read and answer farmers' messages. Only administrators can see this page.</p>
+<h1>Government officers</h1>
+<p class="muted">Decide who can use the government dashboard. Approved officers can read and answer farmers' messages, and nothing else: they cannot open the Django admin.</p>
 
 <div class="panel">
   <div class="panel-head"><h2>Waiting for approval <span class="pill wait">{{ pending|length }}</span></h2></div>
@@ -81,6 +79,22 @@
     <p class="empty">No approved officers yet.</p>
   {% endfor %}
 </div>
+
+{% if existing_staff %}
+<div class="panel">
+  <div class="panel-head"><h2>Existing staff accounts <span class="pill">{{ existing_staff|length }}</span></h2></div>
+  <p class="muted" style="margin:0">These accounts were made staff before officers had their own role, so they can also open the Django admin and other staff-only pages. They keep working as they are. Move an account to give it government access only.</p>
+  {% for u in existing_staff %}
+    <div class="row">
+      <div class="row-top">
+        <div><b>{{ u.get_full_name|default:u.email }}</b><span class="muted">{{ u.email }} | {% if u.last_login %}last sign-in {{ u.last_login|timesince }} ago{% else %}never signed in{% endif %}</span></div>
+        <form method="post" action="{% url 'gova_pp:official_convert_staff' u.pk %}" onsubmit="return confirm('Remove Django admin access for this account and keep only government access?');">{% csrf_token %}
+          <button class="btn sm secondary" type="submit">Move to government access only</button></form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
 
 {% if rejected %}
 <div class="panel">

@@ -1,0 +1,86 @@
+{% load ops %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Operations{% endblock %} | Mkulima Smart</title>
+  <style>
+    :root { --green: #2d5a27; --green-dark: #1a3316; --line: #dfe6dc; --bg: #f4f7f2; --muted: #66756b; --ink: #1a3316; --danger: #b42318; --warn: #92400e; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--ink); background: var(--bg); }
+    header.bar { background: linear-gradient(135deg, var(--green-dark), var(--green)); color: #fff; padding: .8rem 1.25rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    header.bar a { color: #fff; text-decoration: none; }
+    header.bar .brand { font-weight: 800; }
+    nav.tabs { display: flex; gap: .25rem; flex-wrap: wrap; background: #fff; border-bottom: 1px solid var(--line); padding: 0 1rem; }
+    nav.tabs a { padding: .75rem .9rem; text-decoration: none; color: var(--muted); font-weight: 700; border-bottom: 3px solid transparent; }
+    nav.tabs a.on { color: var(--ink); border-bottom-color: var(--green); }
+    .badge { display: inline-block; min-width: 1.3rem; padding: 0 .4rem; border-radius: 999px; background: #dc2626; color: #fff; font-size: .75rem; text-align: center; margin-left: .25rem; }
+    main { max-width: 1000px; margin: 0 auto; padding: 1.25rem; }
+    h1 { font-size: 1.5rem; margin: .25rem 0; }
+    h2 { font-size: 1.1rem; margin: 0; }
+    .muted { color: var(--muted); font-size: .92rem; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 1rem; padding: 1.25rem; margin-top: 1rem; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .75rem; flex-wrap: wrap; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; margin-top: 1rem; }
+    .kpi { background: #fff; border: 1px solid var(--line); border-radius: 1rem; padding: .9rem 1rem; }
+    .kpi .label { font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+    .kpi .value { font-size: 1.7rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .kpi .note { font-size: .85rem; color: var(--muted); }
+    .alert { display: flex; justify-content: space-between; gap: .75rem; align-items: center; padding: .7rem .9rem; border-radius: .8rem; margin-top: .5rem; background: #fef3c7; color: var(--warn); font-weight: 600; text-decoration: none; }
+    .alert.bad { background: #fee2e2; color: #991b1b; }
+    .alert.good { background: #d1fae5; color: #065f46; }
+    .row { padding: .8rem .9rem; border: 1px solid var(--line); border-radius: .8rem; background: #f9fbf7; margin-top: .6rem; }
+    .row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; flex-wrap: wrap; }
+    .row b { display: block; }
+    .row .muted { display: block; }
+    .btn { display: inline-block; border: 0; border-radius: .7rem; padding: .55rem 1rem; font: inherit; font-weight: 700; cursor: pointer; background: var(--green); color: #fff; text-decoration: none; }
+    .btn:hover { filter: brightness(1.1); }
+    .btn.secondary { background: #eef4e6; color: var(--ink); }
+    .btn.danger { background: #fdecea; color: var(--danger); }
+    .btn.sm { padding: .35rem .75rem; font-size: .88rem; }
+    .pill { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .8rem; font-weight: 700; background: #eef2ec; }
+    .pill.wait { background: #fef3c7; color: #92400e; }
+    .pill.ok { background: #d1fae5; color: #065f46; }
+    .pill.no { background: #fee2e2; color: #991b1b; }
+    input[type=text], input[type=search], select, textarea { width: 100%; padding: .55rem .75rem; border: 1px solid #cdd8c9; border-radius: .6rem; font: inherit; background: #fff; }
+    label { display: block; font-weight: 700; margin: .85rem 0 .25rem; }
+    .flash { background: #eef4e6; border: 1px solid var(--line); padding: .6rem .9rem; border-radius: .7rem; margin-top: 1rem; }
+    .empty { color: var(--muted); padding: .6rem 0; }
+    .inline { display: inline; }
+    .actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: .6rem; }
+    .actions input[type=text] { flex: 1; min-width: 160px; }
+    .filters { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; }
+    .filters > * { flex: 1; min-width: 150px; }
+    .filters .btn { flex: 0 0 auto; }
+    code.link { word-break: break-all; font-size: .85rem; display: block; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    @media (max-width: 560px) { .cols { grid-template-columns: 1fr; } }
+    .chat { display: flex; flex-direction: column; gap: .5rem; padding: .25rem; }
+    .msg { max-width: 82%; padding: .55rem .8rem; border-radius: .9rem; background: #eef2ec; white-space: pre-wrap; word-wrap: break-word; }
+    .msg.farmer { align-self: flex-start; }
+    .msg.assistant { align-self: flex-end; background: #e8eefc; }
+    .msg.agronomist { align-self: flex-end; background: #d9efd8; }
+    .msg small { display: block; color: var(--muted); font-size: .75rem; }
+    .msg img { max-width: 260px; width: 100%; border-radius: .6rem; display: block; margin-bottom: .3rem; }
+    .pager { display: flex; gap: .5rem; justify-content: center; align-items: center; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  {% ops_badges as badges %}
+  <header class="bar">
+    <a class="brand" href="{% url 'ops:overview' %}">Mkulima Smart Operations</a>
+    <span>{{ request.user.email }} | <a href="{% url 'gova_pp:dashboard' %}">Government dashboard</a> | <a href="{% url 'admin:index' %}">Django admin</a></span>
+  </header>
+  <nav class="tabs">
+    <a href="{% url 'ops:overview' %}" class="{% if nav == 'overview' %}on{% endif %}">Overview</a>
+    <a href="{% url 'gova_pp:officials' %}" class="{% if nav == 'officials' %}on{% endif %}">Government officers{% if badges.officials %}<span class="badge">{{ badges.officials }}</span>{% endif %}</a>
+    <a href="{% url 'ops:agronomists' %}" class="{% if nav == 'agronomists' %}on{% endif %}">Agronomists</a>
+    <a href="{% url 'ops:chats' %}" class="{% if nav == 'chats' %}on{% endif %}">Farmer chats</a>
+    <a href="{% url 'ops:deliveries' %}" class="{% if nav == 'deliveries' %}on{% endif %}">Messages to Kikapu{% if badges.deliveries %}<span class="badge">{{ badges.deliveries }}</span>{% endif %}</a>
+  </nav>
+  <main>
+    {% for message in messages %}<div class="flash">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

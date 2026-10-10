@@ -21,6 +21,7 @@ from .models import Thread, ThreadParticipant, Message, Media, MediaKeyWrap
 from .utils import BinaryAwareJSONEncoder
 
 # Import the old FarmerMessage model for compatibility during transition
+from gova_pp.access import has_government_access
 from gova_pp.models import FarmerMessage
 
 # Set up logger
@@ -62,7 +63,7 @@ class MediaRetrieveView(APIView):
                 authorized = True
                 break
                 
-        if not authorized and not user.is_staff:
+        if not authorized and not has_government_access(user):
             logger.warning(f"Unauthorized media access: user={user.id}, media={media_id}")
             return Response({"error": "Not authorized to access this media"}, status=403)
         

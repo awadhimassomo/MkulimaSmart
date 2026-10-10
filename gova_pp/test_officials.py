@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone, translation
 
 from . import officials
+from .access import has_government_access
 from .models import GovernmentInvite, GovernmentOfficial
 
 User = get_user_model()
@@ -65,9 +66,20 @@ class SignupWithApprovalTests(OfficialTestBase):
         self.assertRedirects(response, reverse("gova_pp:officials"))
         official.refresh_from_db()
         self.assertEqual((official.status, official.decided_by, official.decision_note), ("approved", self.admin, "Confirmed with the council"))
-        self.assertTrue(official.user.is_staff)
-        login = Client().post(reverse("gova_pp:login"), {"email": "neema@council.go.tz", "password": PASSWORD})
+        self.assertFalse(official.user.is_staff)  # dashboard access is the officer role, not Django staff
+        officer = Client()
+        login = officer.post(reverse("gova_pp:login"), {"email": "neema@council.go.tz", "password": PASSWORD})
         self.assertRedirects(login, reverse("gova_pp:dashboard"), fetch_redirect_response=False)
+        self.assertEqual(officer.get(reverse("gova_pp:dashboard")).status_code, 200)
+
+    def test_an_approved_officer_cannot_open_the_django_admin(self):
+        self.request_access()
+        self.decide(self.official(), "approve")
+        officer = Client()
+        officer.post(reverse("gova_pp:login"), {"email": "neema@council.go.tz", "password": PASSWORD})
+        response = officer.get(reverse("admin:index"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response["Location"])
 
     def test_turning_down_keeps_them_out_and_says_so(self):
         self.request_access()
@@ -82,27 +94,51 @@ class SignupWithApprovalTests(OfficialTestBase):
         self.request_access()
         official = self.official()
         self.decide(official, "approve")
+        self.assertTrue(has_government_access(official.user))
         self.decide(official, "suspend")
         official.user.refresh_from_db()
-        self.assertFalse(official.user.is_staff)
+        self.assertFalse(has_government_access(official.user))
         self.assertContains(Client().post(reverse("gova_pp:login"), {"email": "neema@council.go.tz", "password": PASSWORD}), "suspended")
         self.decide(official, "reinstate")
-        official.user.refresh_from_db()
-        self.assertTrue(official.user.is_staff)
+        self.assertTrue(has_government_access(official.user))
 
-    def test_an_account_that_was_already_staff_keeps_its_access_when_suspended(self):
-        staff = User.objects.create_user(password="pass12345", email="old@gov.test", is_staff=True)
-        official = GovernmentOfficial.objects.create(user=staff, full_name="Old Hand", institution="Ministry")
+    def test_access_rules(self):
+        plain = User.objects.create_user(password="pass12345", email="plain@x.test")
+        legacy = User.objects.create_user(password="pass12345", email="legacy@x.test", is_staff=True)
+        self.assertFalse(has_government_access(plain))
+        self.assertTrue(has_government_access(legacy))  # staff made before officers had a role keep working
+        self.assertTrue(has_government_access(self.admin))
+        official = GovernmentOfficial.objects.create(user=plain, full_name="P", institution="X", status="pending")
+        self.assertFalse(has_government_access(plain))
         officials.approve(official, self.admin)
-        officials.suspend(official, self.admin)
-        staff.refresh_from_db()
-        self.assertTrue(staff.is_staff)  # we did not grant it, so we do not take it
+        self.assertTrue(has_government_access(plain))
+        plain.is_active = False
+        self.assertFalse(has_government_access(plain))
 
-    def test_a_superuser_is_never_demoted(self):
-        official = GovernmentOfficial.objects.create(user=self.admin, full_name="Boss", institution="Ministry", staff_granted=True)
-        officials.suspend(official, self.admin)
-        self.admin.refresh_from_db()
-        self.assertTrue(self.admin.is_staff)
+    def test_existing_staff_are_listed_and_can_be_moved_to_government_access_only(self):
+        legacy = User.objects.create_user(password="pass12345", email="legacy@gov.test", first_name="Old", last_name="Hand", is_staff=True)
+        self.assertContains(self.admin_client.get(reverse("gova_pp:officials")), "legacy@gov.test")
+        response = self.admin_client.post(reverse("gova_pp:official_convert_staff", args=[legacy.pk]))
+        self.assertRedirects(response, reverse("gova_pp:officials"))
+        legacy.refresh_from_db()
+        self.assertFalse(legacy.is_staff)
+        self.assertTrue(has_government_access(legacy))
+        official = GovernmentOfficial.objects.get(user=legacy)
+        self.assertEqual((official.status, official.via, official.full_name), ("approved", "existing", "Old Hand"))
+        self.assertNotContains(self.admin_client.get(reverse("gova_pp:officials")), 'convert/"')
+
+    def test_superusers_cannot_be_moved(self):
+        other = User.objects.create_superuser(password="pass12345", email="other-admin@x.test")
+        self.assertEqual(self.admin_client.post(reverse("gova_pp:official_convert_staff", args=[other.pk])).status_code, 404)
+        self.assertTrue(User.objects.get(pk=other.pk).is_staff)
+
+    def test_only_a_superuser_can_move_staff(self):
+        legacy = User.objects.create_user(password="pass12345", email="legacy@gov.test", is_staff=True)
+        client = Client()
+        client.force_login(legacy)
+        self.assertEqual(client.post(reverse("gova_pp:official_convert_staff", args=[legacy.pk])).status_code, 403)
+        legacy.refresh_from_db()
+        self.assertTrue(legacy.is_staff)
 
     def test_form_checks(self):
         self.request_access()
@@ -150,7 +186,8 @@ class InviteTests(OfficialTestBase):
         self.assertRedirects(response, reverse("gova_pp:dashboard"), fetch_redirect_response=False)
         official = self.official()
         self.assertEqual((official.status, official.via, official.decided_by), ("approved", "invite", self.admin))
-        self.assertTrue(official.user.is_staff)
+        self.assertFalse(official.user.is_staff)
+        self.assertTrue(has_government_access(official.user))
         self.assertEqual(guest.get(reverse("gova_pp:dashboard")).status_code, 200)  # already signed in
         invite.refresh_from_db()
         self.assertEqual(invite.official, official)

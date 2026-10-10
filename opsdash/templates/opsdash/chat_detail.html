@@ -1,0 +1,33 @@
+{% extends "opsdash/base.html" %}
+{% block title %}Chat with {{ conversation.farmer_name|default:conversation.phone_number }}{% endblock %}
+{% block content %}
+<p><a href="{% url 'ops:chats' %}">Back to chats</a></p>
+<h1>{{ conversation.farmer_name|default:conversation.phone_number }}</h1>
+<p class="muted">{{ conversation.phone_number }}{% if conversation.region %} | {{ conversation.region }}{% endif %} | replies in {% if conversation.language == "sw" %}Swahili{% else %}English{% endif %}
+  {% if conversation.needs_expert %}| <span class="pill no">Told to see an expert</span>{% endif %}</p>
+
+{% if cases %}
+<div class="panel">
+  <div class="panel-head"><h2>Who handled it</h2></div>
+  {% for case in cases %}
+    <div class="row"><div class="row-top"><div>
+      <b>{{ case.get_status_display }}{% if case.agronomist %}: {{ case.agronomist.full_name }}{% if case.agronomist.company_name %}, {{ case.agronomist.company_name }}{% endif %}{% endif %}</b>
+      <span class="muted">Started {{ case.created_at|date:"j M Y H:i" }}{% if case.answered_by_ai %} | the AI answered at least once{% endif %}</span>
+    </div></div></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="chat">
+    {% for m in messages_list %}
+      <div class="msg {{ m.role }}">
+        {% if m.photo %}<img src="{{ m.photo.url }}" alt="Photo from the farmer">{% elif m.image_url %}<img src="{{ m.image_url }}" alt="Photo from the farmer">{% endif %}{{ m.text }}
+        <small>{% if m.role == "farmer" %}Farmer{% elif m.role == "agronomist" %}{{ m.payload.name|default:"Agronomist" }}{% else %}AI assistant{% endif %}, {{ m.created_at|date:"j M H:i" }}</small>
+      </div>
+    {% empty %}
+      <p class="empty">No messages.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

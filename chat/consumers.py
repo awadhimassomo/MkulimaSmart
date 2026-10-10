@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.core.exceptions import PermissionDenied
+from gova_pp.access import has_government_access
 from gova_pp.models import FarmerMessage, GovernmentReply
 import uuid
 import logging
@@ -315,7 +316,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         elif message.assigned_to_id == user.id:
             logger.info(f"WebSocket auth success - User {user.id} is assigned to this thread")
             return True
-        elif getattr(user, 'is_staff', False):
+        elif has_government_access(user):
             logger.info(f"WebSocket auth success - User {user.id} has staff privileges")
             return True
         

@@ -1,0 +1,39 @@
+{% extends "opsdash/base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<h1>Operations overview</h1>
+<p class="muted">What needs attention now, and how the platform is doing.</p>
+
+<div class="panel">
+  <div class="panel-head"><h2>Needs attention</h2></div>
+  {% for item in attention %}
+    <a class="alert {{ item.level }}" href="{% url item.url %}{{ item.query|default:'' }}"><span>{{ item.text }}</span><span>Open</span></a>
+  {% empty %}
+    <div class="alert good"><span>Nothing needs attention.</span></div>
+  {% endfor %}
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">Farmers</div><div class="value">{{ farmers }}</div><div class="note">{{ new_farmers }} joined in the last 7 days</div></div>
+  <div class="kpi"><div class="label">Chats, last 24 hours</div><div class="value">{{ chats_24h }}</div><div class="note">Crop doctor conversations</div></div>
+  <div class="kpi"><div class="label">Waiting for an agronomist</div><div class="value">{{ waiting }}</div><div class="note">{{ open_cases }} with an agronomist now</div></div>
+  <div class="kpi"><div class="label">Answered by the AI</div><div class="value">{{ ai_24h }}</div><div class="note">Nobody took the chat, last 24 hours</div></div>
+  <div class="kpi"><div class="label">Agronomists online</div><div class="value">{{ agronomists_online }}</div><div class="note">of {{ agronomists_total }} with access</div></div>
+  <div class="kpi"><div class="label">Government officers</div><div class="value">{{ officials_active }}</div><div class="note">{{ officials_pending }} waiting for approval</div></div>
+  <div class="kpi"><div class="label">Farmer messages to government</div><div class="value">{{ messages_new }}</div><div class="note">new, {{ messages_urgent }} urgent open</div></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Call center</h2>
+    {% if enabled %}<span class="pill ok">On</span>{% else %}<span class="pill">Off</span>{% endif %}</div>
+  <p class="muted" style="margin:0">
+    {% if enabled %}
+      Agronomists are offered chats first and the AI answers when nobody accepts.
+      Background worker: {% if worker_ok %}<span class="pill ok">running, last seen {{ worker_age }}</span>{% else %}<span class="pill no">not running (last seen {{ worker_age }})</span>{% endif %}
+    {% else %}
+      The AI answers every farmer. Switch on <code>CALLCENTER_ENABLED</code> once the background worker is running.
+      Worker: last seen {{ worker_age }}.
+    {% endif %}
+  </p>
+</div>
+{% endblock %}

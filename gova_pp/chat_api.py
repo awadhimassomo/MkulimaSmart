@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 import logging
 
 # Import models
+from .access import has_government_access
 from .models import FarmerMessage, GovernmentReply, ChatMedia
 
 # Set up logging
@@ -572,7 +573,7 @@ def handle_multipart_upload(request):
                 {'error': 'You do not have permission to add to this conversation'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        if not user.is_farmer and thread.assigned_to != user and not user.is_staff:
+        if not user.is_farmer and thread.assigned_to != user and not has_government_access(user):
             return Response(
                 {'error': 'You are not assigned to this conversation'},
                 status=status.HTTP_403_FORBIDDEN

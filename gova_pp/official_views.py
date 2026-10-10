@@ -10,6 +10,7 @@ from functools import wraps
 
 from django import forms
 from django.contrib import messages
+from django.db.models import Q
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
@@ -167,7 +168,10 @@ def manage(request):
         {"invite": invite, "link": request.build_absolute_uri(reverse("gova_pp:join", args=[invite.token]))}
         for invite in GovernmentInvite.objects.filter(used_at__isnull=True, expires_at__gt=timezone.now())
     ]
+    existing_staff = User.objects.filter(is_staff=True, is_superuser=False, is_active=True, government_official__isnull=True).order_by("email")
     return render(request, "gova_pp/officials.html", {
+        "nav": "officials",
+        "existing_staff": existing_staff,
         "pending": [o for o in everyone if o.status == GovernmentOfficial.PENDING],
         "active": [o for o in everyone if o.status in (GovernmentOfficial.APPROVED, GovernmentOfficial.SUSPENDED)],
         "rejected": [o for o in everyone if o.status == GovernmentOfficial.REJECTED],
@@ -186,6 +190,16 @@ def decide(request, pk, action):
     handlers[action](official, request.user, request.POST.get("note", "").strip())
     done = {"approve": "approved", "reject": "turned down", "suspend": "suspended", "reinstate": "reinstated"}[action]
     messages.success(request, f"{official.full_name} {done}.")
+    return redirect("gova_pp:officials")
+
+
+@superuser_required
+@require_POST
+def convert_staff(request, user_id):
+    """Move an existing staff account onto the officer role (keeps the government dashboard, loses Django admin)."""
+    user = get_object_or_404(User, pk=user_id, is_staff=True, is_superuser=False)
+    official = officials.convert_staff(user, request.user)
+    messages.success(request, f"{official.full_name} now has government access only. They can no longer open the Django admin.")
     return redirect("gova_pp:officials")
 
 

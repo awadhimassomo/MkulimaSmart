@@ -124,3 +124,22 @@ class Case(models.Model):
     @property
     def is_active(self):
         return self.status in self.ACTIVE
+
+
+class Heartbeat(models.Model):
+    """Written by the background worker every round, so the operations dashboard can tell it is running."""
+
+    name = models.CharField(max_length=40, unique=True)
+    beat_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.name} at {self.beat_at:%Y-%m-%d %H:%M:%S}"
+
+    @classmethod
+    def beat(cls, name="callcenter-worker"):
+        cls.objects.update_or_create(name=name, defaults={"beat_at": timezone.now()})
+
+    @classmethod
+    def age_seconds(cls, name="callcenter-worker"):
+        row = cls.objects.filter(name=name).first()
+        return None if row is None else int((timezone.now() - row.beat_at).total_seconds())

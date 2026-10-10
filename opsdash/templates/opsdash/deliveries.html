@@ -1,0 +1,46 @@
+{% extends "opsdash/base.html" %}
+{% block title %}Messages to Kikapu{% endblock %}
+{% block content %}
+<h1>Messages to Kikapu</h1>
+<p class="muted">Replies and order updates that Mkulima Smart sent to Kikapu but Kikapu has not accepted yet. They are retried automatically; "Try again now" restarts one that gave up.</p>
+
+<div class="panel">
+  <div class="panel-head"><h2>Background worker</h2>
+    {% if worker_ok %}<span class="pill ok">Running, last seen {{ worker_age }}</span>{% else %}<span class="pill no">Not running, last seen {{ worker_age }}</span>{% endif %}</div>
+  <p class="muted" style="margin:0">It sends these messages and hands unanswered chats to the AI. On PythonAnywhere it runs as an always-on task: <code>python manage.py run_callcenter --loop</code>.
+    {% if enabled and not worker_ok %}<strong>The call center is on but the worker is not running, so farmers may wait without an answer.</strong>{% endif %}</p>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Chat replies not delivered <span class="pill">{{ replies|length }}</span></h2></div>
+  {% for d in replies %}
+    <div class="row"><div class="row-top">
+      <div>
+        <b>To {{ d.phone_number }} {% if d.gave_up %}<span class="pill no">Gave up</span>{% else %}<span class="pill wait">Retrying</span>{% endif %}</b>
+        <span class="muted">{{ d.payload.source|default:"reply" }} | queued {{ d.created_at|timesince }} ago | {{ d.attempts }} attempt{{ d.attempts|pluralize }}</span>
+        <span class="muted">{{ d.payload.text|truncatechars:140 }}</span>
+        {% if d.last_error %}<span class="muted">Last error: {{ d.last_error }}</span>{% endif %}
+      </div>
+      <form method="post" action="{% url 'ops:delivery_retry' 'reply' d.pk %}">{% csrf_token %}<button class="btn sm" type="submit">Try again now</button></form>
+    </div></div>
+  {% empty %}
+    <p class="empty">Everything has been delivered.</p>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Order updates not delivered <span class="pill">{{ orders|length }}</span></h2></div>
+  {% for d in orders %}
+    <div class="row"><div class="row-top">
+      <div>
+        <b>Order {{ d.order }} to {{ d.status }} {% if d.gave_up %}<span class="pill no">Gave up</span>{% else %}<span class="pill wait">Retrying</span>{% endif %}</b>
+        <span class="muted">queued {{ d.created_at|timesince }} ago | {{ d.attempts }} attempt{{ d.attempts|pluralize }}</span>
+        {% if d.last_error %}<span class="muted">Last error: {{ d.last_error }}</span>{% endif %}
+      </div>
+      <form method="post" action="{% url 'ops:delivery_retry' 'order' d.pk %}">{% csrf_token %}<button class="btn sm" type="submit">Try again now</button></form>
+    </div></div>
+  {% empty %}
+    <p class="empty">Everything has been delivered.</p>
+  {% endfor %}
+</div>
+{% endblock %}

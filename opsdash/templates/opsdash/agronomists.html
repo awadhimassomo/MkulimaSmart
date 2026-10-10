@@ -1,0 +1,26 @@
+{% extends "opsdash/base.html" %}
+{% block title %}Agronomists{% endblock %}
+{% block content %}
+<h1>Agronomists</h1>
+<p class="muted">Everyone invited by an input company or shop. Companies invite their own agronomists from their dashboard; you can switch anyone's access off here.</p>
+
+<div class="panel">
+  {% for a in rows %}
+    <div class="row">
+      <div class="row-top">
+        <div>
+          <b>{{ a.full_name }}
+            {% if not a.is_active %}<span class="pill no">Access off</span>{% elif a.is_online %}<span class="pill ok">Online</span>{% else %}<span class="pill">Offline</span>{% endif %}</b>
+          <span class="muted">{{ a.company_name|default:"No company" }} | {{ a.user.email }}</span>
+          <span class="muted">{{ a.open_chats }} chat{{ a.open_chats|pluralize }} open | {{ a.handled }} handled in total{% if a.last_reply %} | last active {{ a.last_reply|timesince }} ago{% endif %}</span>
+        </div>
+        <form method="post" action="{% url 'ops:agronomist_toggle' a.pk %}">{% csrf_token %}
+          <button class="btn sm {% if a.is_active %}danger{% else %}secondary{% endif %}" type="submit">{% if a.is_active %}Switch access off{% else %}Switch access on{% endif %}</button>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <p class="empty">No agronomists yet. Input companies invite them from their dashboard (the Agronomists tab).</p>
+  {% endfor %}
+</div>
+{% endblock %}

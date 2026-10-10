@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from .access import has_government_access
 from .models import FarmerMessage, GovernmentReply
 import os
 from django.conf import settings
@@ -108,7 +109,7 @@ class ChatMediaViewSet(viewsets.ViewSet):
         try:
             thread = FarmerMessage.objects.get(id=thread_id)
             # Check permission (basic check, can be expanded)
-            if not request.user.is_staff and thread.farmer_phone != request.user.phone_number:
+            if not has_government_access(request.user) and thread.farmer_phone != request.user.phone_number:
                 return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
         except FarmerMessage.DoesNotExist:
             return Response({"error": "Thread not found"}, status=status.HTTP_404_NOT_FOUND)

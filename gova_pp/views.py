@@ -31,6 +31,7 @@ from openai import OpenAI
 from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from .access import has_government_access
 from .models import FarmerMessage, GovernmentOfficial, GovernmentReply, ImageAnalysis
 
 def government_login_required(view_func):
@@ -39,7 +40,7 @@ def government_login_required(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('gova_pp:login')
-        if not (request.user.is_staff or request.user.is_superuser):
+        if not has_government_access(request.user):
             messages.error(request, 'You do not have permission to access the government dashboard.')
             return redirect('gova_pp:login')
         return view_func(request, *args, **kwargs)
@@ -58,7 +59,7 @@ def government_login(request):
             user = authenticate(request, email=email, password=password)
             if user is not None:
                 # Check if user has permission to access government dashboard
-                if user.is_staff or user.is_superuser:
+                if has_government_access(user):
                     login(request, user)
                     messages.success(request, f'Welcome to GOV  APP Dashboard, {user.get_full_name() or user.phone_number}!')
                     return redirect('gova_pp:dashboard')

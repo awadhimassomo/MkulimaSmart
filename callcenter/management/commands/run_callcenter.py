@@ -3,6 +3,7 @@ import time
 from django.core.management.base import BaseCommand
 from django.db import close_old_connections
 
+from callcenter.models import Heartbeat
 from callcenter.services import enabled, sweep
 from kikapu_bridge.webhooks import deliver_replies
 
@@ -18,6 +19,7 @@ class Command(BaseCommand):
         parser.add_argument("--interval", type=int, default=10, help="Seconds between checks in --loop mode (default 10).")
 
     def run_once(self):
+        Heartbeat.beat()
         counts = sweep() if enabled() else {}
         sent, failed = deliver_replies()
         return counts, sent, failed

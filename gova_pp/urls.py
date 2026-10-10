@@ -26,6 +26,7 @@ urlpatterns = [
     path('join/<str:token>/', official_views.join, name='join'),
     path('officials/', official_views.manage, name='officials'),
     path('officials/<int:pk>/<str:action>/', official_views.decide, name='official_decide'),
+    path('officials/staff/<int:user_id>/convert/', official_views.convert_staff, name='official_convert_staff'),
     path('officials/invite/', official_views.invite_create, name='official_invite'),
     path('officials/invite/<int:pk>/revoke/', official_views.invite_revoke, name='official_invite_revoke'),
     

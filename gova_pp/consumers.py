@@ -7,6 +7,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.core.files.base import ContentFile
+from .access import has_government_access
 from .models import ChatMedia, FarmerMessage, GovernmentReply
 
 logger = logging.getLogger('gova_pp')
@@ -57,7 +58,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             thread = FarmerMessage.objects.get(id=self.thread_id)
             if self.user.is_farmer:
                 return thread.farmer_phone == self.user.phone_number
-            return thread.assigned_to == self.user or self.user.is_staff
+            return thread.assigned_to == self.user or has_government_access(self.user)
         except FarmerMessage.DoesNotExist:
             return False
     

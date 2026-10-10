@@ -78,7 +78,7 @@ class GovernmentOfficialAdmin(admin.ModelAdmin):
     list_display = ['full_name', 'institution', 'region', 'status', 'via', 'created_at']
     list_filter = ['status', 'via', 'region']
     search_fields = ['full_name', 'institution', 'user__email']
-    readonly_fields = ['user', 'staff_granted', 'decided_by', 'decided_at', 'created_at']
+    readonly_fields = ['user', 'decided_by', 'decided_at', 'created_at']
     actions = ['approve_selected', 'suspend_selected']
 
     @admin.action(description='Approve selected officers (grants dashboard access)')
