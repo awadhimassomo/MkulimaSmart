@@ -435,6 +435,10 @@ class AssistantMessageView(BridgeView):
             "reply": {"text": result["reply_text"], "language": result["language"]},
             "diagnosis": result["diagnosis"],
             "products": result["products"],
+            # Items Kikapu can sell today, in Kikapu's own catalogue ids ("input-12", shop "shop-3"): in-stock items
+            # of shops that take Kikapu orders. `products` above are marketplace items with marketplace ids,
+            # bought on the website; never look those ids up in the Kikapu catalogue.
+            "kikapu_products": result.get("kikapu_products", []),
             "needs_expert": result["needs_expert"],
             "duplicate": result["duplicate"],
             "rate_limited": result["rate_limited"],

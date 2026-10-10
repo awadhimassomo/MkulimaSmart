@@ -13,6 +13,12 @@ from assistant import engine
 from assistant.models import Conversation, Message
 from gova_pp.diagnosis import DiagnosisError
 from kikapu_bridge.models import PartnerToken
+from datetime import timedelta
+
+from django.utils import timezone
+
+from inputs.models import ShopStockItem
+from inputs.tests import make_seller
 from website.models import Category, Product
 
 User = get_user_model()
@@ -292,3 +298,100 @@ class FormattingTests(TestCase):
 
     def test_reply_is_capped(self):
         self.assertEqual(len(engine.to_whatsapp("x" * 5000)), engine.MAX_REPLY_CHARS)
+
+
+class CropIdentificationTests(AssistantTestBase):
+    @mock.patch("assistant.engine.request_diagnosis", return_value=diagnosis_answer(crop="Cocoa", crop_confidence="high"))
+    def test_a_sure_crop_gets_no_correction_prompt(self, _):
+        text = self.send_photo(language="en").json()["reply"]["text"]
+        self.assertIn("Cocoa", text)
+        self.assertNotIn("If that is wrong", text)
+
+    @mock.patch("assistant.engine.request_diagnosis", return_value=diagnosis_answer(crop="Papaya", crop_confidence="low"))
+    def test_an_unsure_crop_is_flagged_and_the_farmer_can_correct_it(self, _):
+        body = self.send_photo(language="en").json()
+        text = body["reply"]["text"]
+        self.assertIn("I think this crop is Papaya. If that is wrong, tell me your crop", text)
+        self.assertTrue(body["needs_expert"])  # a wrong crop gives wrong advice
+
+    @mock.patch("assistant.engine.request_diagnosis", return_value=diagnosis_answer(crop="Papaya", crop_confidence="medium"))
+    def test_a_medium_confidence_crop_is_also_confirmed_in_swahili(self, _):
+        text = self.send_photo(language="sw").json()["reply"]["text"]
+        self.assertIn("Nimedhani zao hili ni Papaya", text)
+
+    def test_the_model_is_told_to_describe_first_and_how_to_tell_cocoa_from_papaya(self):
+        from gova_pp.diagnosis import SYSTEM_PROMPT, normalize_diagnosis
+
+        self.assertLess(SYSTEM_PROMPT.index("visible_features"), SYSTEM_PROMPT.index('"crop":'))
+        self.assertIn("Cocoa pods", SYSTEM_PROMPT)
+        self.assertIn("black pod", SYSTEM_PROMPT)
+        normalized = normalize_diagnosis({"crop": "Cocoa", "crop_confidence": "nonsense", "visible_features": "x" * 500})
+        self.assertEqual(normalized["crop_confidence"], "medium")
+        self.assertEqual(len(normalized["visible_features"]), 300)
+
+
+class KikapuProductsTests(AssistantTestBase):
+    def setUp(self):
+        super().setUp()
+        self.owner, self.shop = make_seller("0712000001", "agro_input_dealer", "Arusha Agrovet")
+
+    def item(self, **fields):
+        fields.setdefault("shop", self.shop)
+        fields.setdefault("name", "Ridomil Gold 1kg")
+        fields.setdefault("category", "pesticides")
+        fields.setdefault("selling_price", 24000)
+        fields.setdefault("quantity", 5)
+        return ShopStockItem.objects.create(**fields)
+
+    def diagnose(self, **overrides):
+        answer = diagnosis_answer(problem_type="disease", problem="Black pod", crop="Cocoa", product_search_terms=["fungicide", "ridomil"], **overrides)
+        with mock.patch("assistant.engine.request_diagnosis", return_value=answer):
+            return self.send_photo(language="en").json()
+
+    def test_orderable_items_come_back_with_kikapus_own_ids(self):
+        item = self.item()
+        body = self.diagnose()
+        self.assertEqual(len(body["kikapu_products"]), 1)
+        found = body["kikapu_products"][0]
+        self.assertEqual(found["id"], f"input-{item.pk}")
+        self.assertEqual(found["shop_id"], f"shop-{self.shop.pk}")
+        self.assertEqual((found["name"], found["price"], found["shop_name"]), ("Ridomil Gold 1kg", 24000, "Arusha Agrovet"))
+
+    def test_marketplace_suggestions_are_separate_and_keep_their_own_ids(self):
+        item = self.item()
+        body = self.diagnose()
+        marketplace_ids = {p["id"] for p in body["products"]}
+        self.assertTrue(marketplace_ids.isdisjoint({found["id"] for found in body["kikapu_products"]}))
+        self.assertNotIn(item.pk, [0])  # ids are strings with a prefix on the Kikapu side, plain numbers on the marketplace side
+
+    def test_items_kikapu_cannot_sell_are_left_out(self):
+        self.item(name="Sold out fungicide", quantity=0)
+        self.item(name="Expired fungicide", expiry_date=timezone.localdate() - timedelta(days=1))
+        self.item(name="Switched off fungicide", is_active=False)
+        other_owner, other_shop = make_seller("0712000002", "agro_input_dealer", "No Kikapu Agrovet")
+        other_shop.list_on_kikapu = False
+        other_shop.save()
+        self.item(name="Fungicide at a shop that does not take Kikapu orders", shop=other_shop)
+        self.assertEqual(self.diagnose()["kikapu_products"], [])
+
+    def test_a_healthy_crop_gets_none(self):
+        self.item()
+        answer = diagnosis_answer(problem_type="healthy", problem="", product_search_terms=[])
+        with mock.patch("assistant.engine.request_diagnosis", return_value=answer):
+            self.assertEqual(self.send_photo(language="en").json()["kikapu_products"], [])
+
+    def test_the_best_three_are_returned_with_name_matches_first(self):
+        for i in range(4):
+            self.item(name=f"Generic pesticide {i}")
+        best = self.item(name="Ridomil fungicide", category="other")
+        found = self.diagnose()["kikapu_products"]
+        self.assertEqual(len(found), 3)
+        self.assertEqual(found[0]["id"], f"input-{best.pk}")
+
+    def test_a_nutrient_problem_matches_fertilizer_stock(self):
+        fertilizer = self.item(name="CAN top dressing 50kg", category="fertilizer")
+        self.item(name="Some fungicide")
+        answer = diagnosis_answer(problem_type="nutrient_deficiency", problem="Nitrogen deficiency", product_search_terms=["can", "fertilizer"])
+        with mock.patch("assistant.engine.request_diagnosis", return_value=answer):
+            found = self.send_photo(language="en").json()["kikapu_products"]
+        self.assertEqual([f["id"] for f in found], [f"input-{fertilizer.pk}"])

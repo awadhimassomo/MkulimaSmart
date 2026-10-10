@@ -114,7 +114,10 @@ def resolve_image(image_url):
 SYSTEM_PROMPT = """You are an expert agronomist helping smallholder farmers in Tanzania through the Mkulima Smart platform.
 Look at the farmer's photo and reply with ONE JSON object and nothing else, with exactly these keys:
 
+  "visible_features":     FIRST describe what you can actually see (plant part, shape, colour, how it grows, surroundings)
+                          in English, in one or two sentences, before naming anything
   "crop":                 the crop or plant shown (e.g. "Maize"), or "" if unclear
+  "crop_confidence":      "low", "medium" or "high" - how sure you are WHICH CROP this is (separate from the problem)
   "problem_type":         one of: pest, disease, weed, nutrient_deficiency, soil, water_stress, healthy, other, not_agricultural
   "problem":              short name of the specific problem (e.g. "Fall armyworm", "Maize streak virus"), or "" if healthy
   "confidence":           "low", "medium" or "high" - how sure you are from this photo
@@ -127,6 +130,13 @@ Look at the farmer's photo and reply with ONE JSON object and nothing else, with
   "needs_expert":         true if you are unsure, the damage is severe, or an extension officer should see it
 
 Rules:
+- Identify the crop from its structure (pod, fruit, leaf and growth habit), not from the problem. Common crops in Tanzania:
+  maize, rice, beans, cassava, sweet potato, tomato, onion, banana, coffee, cashew, cocoa, tea, cotton, sunflower, sesame,
+  mango, citrus, avocado, pineapple, papaya. Cocoa pods are ridged oval pods that grow straight out of the trunk or thick
+  branches (yellow, orange, red or green when healthy); black pod disease (Phytophthora) turns them dark brown to black,
+  often with white fungal growth. Papaya fruit hangs in a cluster under the crown of leaves of a soft-stemmed palm-like tree.
+- A wrong crop gives wrong advice. If you are not sure which crop it is, set "crop_confidence" to "low", still name the most
+  likely crop in "crop", and set needs_expert true. Never present a guess as certain.
 - Write "summary" and "advice" in {language_name}. Keep "product_search_terms" in English.
 - Never give pesticide doses or mixing rates. Say to follow the product label and wear protective gear.
 - If the photo is not a plant, crop, soil or farm problem, use problem_type "not_agricultural".
@@ -201,6 +211,8 @@ def normalize_diagnosis(raw):
 
     return {
         "crop": str(raw.get("crop") or "").strip()[:80],
+        "crop_confidence": level(raw.get("crop_confidence"), "medium"),
+        "visible_features": str(raw.get("visible_features") or "").strip()[:300],
         "problem_type": problem_type,
         "problem": str(raw.get("problem") or "").strip()[:120],
         "confidence": level(raw.get("confidence"), "low"),
@@ -208,7 +220,8 @@ def normalize_diagnosis(raw):
         "summary": str(raw.get("summary") or "").strip()[:600],
         "advice": str(raw.get("advice") or "").strip()[:2000],
         "product_search_terms": terms,
-        "needs_expert": bool(raw.get("needs_expert")) or str(raw.get("confidence", "")).lower() == "low",
+        "needs_expert": bool(raw.get("needs_expert")) or str(raw.get("confidence", "")).lower() == "low"
+        or str(raw.get("crop_confidence", "")).lower() == "low",
     }
 
 

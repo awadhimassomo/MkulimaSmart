@@ -24,6 +24,7 @@ from gova_pp.diagnosis import (
 )
 
 from .models import Conversation, Message
+from .stock import orderable_items
 
 logger = logging.getLogger("assistant")
 
@@ -45,6 +46,7 @@ STRINGS = {
         "err_image": "Samahani, sikuweza kusoma picha hiyo. Tafadhali tuma picha nyingine (JPG au PNG).",
         "err_service": "Samahani, huduma ina hitilafu kwa sasa. Tafadhali jaribu tena baada ya dakika chache.",
         "err_empty": "Tafadhali andika ujumbe au tuma picha ya zao lako.",
+        "crop_check": "Nimedhani zao hili ni {crop}. Kama si sahihi, niambie zao lako nitaangalia tena.",
         "connecting": "Asante. Tunakuunganisha na mtaalamu wa kilimo. Utajibiwa ndani ya dakika chache.",
     },
     "en": {
@@ -61,6 +63,7 @@ STRINGS = {
         "err_image": "Sorry, I could not read that photo. Please send another one (JPG or PNG).",
         "err_service": "Sorry, the service has a problem right now. Please try again in a few minutes.",
         "err_empty": "Please type a message or send a photo of your crop.",
+        "crop_check": "I think this crop is {crop}. If that is wrong, tell me your crop and I will look again.",
         "connecting": "Thank you. We are connecting you to an agronomist. You will get a reply within a few minutes.",
     },
 }
@@ -120,6 +123,8 @@ def build_image_reply(diagnosis, products, language):
         parts.append(f"*{headline}*")
     if diagnosis["problem_type"] == "healthy" and not diagnosis["summary"]:
         parts.append(t["healthy"])
+    if diagnosis["crop"] and diagnosis.get("crop_confidence") != "high":
+        parts.append(t["crop_check"].format(crop=diagnosis["crop"]))
     if diagnosis["summary"]:
         parts.append(diagnosis["summary"])
     if diagnosis["urgency"] == "high" and diagnosis["problem_type"] not in ("healthy", "other"):
@@ -226,6 +231,7 @@ def _result(conversation, inbound, reply, **extra):
         "language": conversation.language,
         "diagnosis": reply.payload.get("diagnosis"),
         "products": reply.payload.get("products", []),
+        "kikapu_products": reply.payload.get("kikapu_products", []),
         "needs_expert": bool(reply.payload.get("needs_expert")),
         "duplicate": False,
         "rate_limited": False,
@@ -320,7 +326,10 @@ def respond(conversation, inbound, language, image=None):
         with translation.override(language):  # links open the site in the farmer's language
             products = recommend_products(diagnosis, request=_SiteUrls())
         reply_text = build_image_reply(diagnosis, products, language)
-        payload = {"diagnosis": diagnosis, "products": products, "needs_expert": diagnosis["needs_expert"]}
+        payload = {
+            "diagnosis": diagnosis, "products": products, "needs_expert": diagnosis["needs_expert"],
+            "kikapu_products": orderable_items(diagnosis),
+        }
         conversation.last_diagnosis = diagnosis
         conversation.last_products = products
         conversation.needs_expert = diagnosis["needs_expert"]
