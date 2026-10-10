@@ -1,4 +1,5 @@
 {% extends 'website/base.html' %}
+{% load money %}
 {% load static product_filters humanize %}
 
 {% block title %}Shopping Cart - Mkulima Smart{% endblock %}
@@ -256,10 +257,10 @@
 
                                     <div class="price-col">
                                         {% if item.product.discount_price %}
-                                            <span class="text-danger fw-bold">TSh {{ item.product.discount_price|intcomma }}</span>
-                                            <span class="old">TSh {{ item.product.price|intcomma }}</span>
+                                            <span class="text-danger fw-bold">TSh {{ item.product.discount_price|tzs }}</span>
+                                            <span class="old">TSh {{ item.product.price|tzs }}</span>
                                         {% else %}
-                                            <span class="fw-bold">TSh {{ item.product.price|intcomma }}</span>
+                                            <span class="fw-bold">TSh {{ item.product.price|tzs }}</span>
                                         {% endif %}
                                     </div>
 
@@ -269,7 +270,7 @@
                                     </form>
 
                                     <div class="subtotal">
-                                        TSh {{ item.get_total_price|intcomma }}
+                                        TSh {{ item.get_total_price|tzs }}
                                     </div>
 
                                     <a href="{% url 'website:remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger">
@@ -303,22 +304,22 @@
 
                         <div class="summary-item">
                             <span>Subtotal ({{ cart_item_count }} items)</span>
-                            <span>TSh {{ cart_subtotal|intcomma }}</span>
+                            <span>TSh {{ cart_subtotal|tzs }}</span>
                         </div>
 
                         <div class="summary-item">
                             <span>Delivery Fee</span>
-                            <span>TSh {{ cart_delivery_fee|intcomma }}</span>
+                            <span>TSh {{ cart_delivery_fee|tzs }}</span>
                         </div>
 
                         <div class="summary-item">
                             <span>Tax (18% VAT)</span>
-                            <span>TSh {{ cart_tax|intcomma }}</span>
+                            <span>TSh {{ cart_tax|tzs }}</span>
                         </div>
 
                         <div class="summary-item summary-total">
                             <span>Total</span>
-                            <span>TSh {{ cart_total_with_fees|intcomma }}</span>
+                            <span>TSh {{ cart_total_with_fees|tzs }}</span>
                         </div>
 
                         <div class="d-flex flex-wrap gap-2 justify-content-end align-items-center mt-4">
@@ -361,7 +362,7 @@
 <div class="mobile-checkout-bar">
     <div>
         <div class="text-sm text-gray-500">Total</div>
-        <div class="total">TSh {{ cart_total_with_fees|intcomma }}</div>
+        <div class="total">TSh {{ cart_total_with_fees|tzs }}</div>
     </div>
     <a href="{% url 'website:checkout' %}" class="btn btn-success w-auto">Checkout</a>
 </div>

@@ -1,4 +1,5 @@
 {% extends "marketplace/supplier_base.html" %}
+{% load money %}
 
 {% block supplier_title %}Marketplace Listings{% endblock %}
 {% block supplier_subtitle %}Track performance from one place with shared business KPIs first, then stock, orders, and supplier-specific tools that adapt to what you actually sell.{% endblock %}
@@ -310,7 +311,7 @@
           </article>
           <article class="ops-metric">
             <div class="ops-metric-label">Inventory Value</div>
-            <div class="ops-metric-value">TZS {{ inventory_value|floatformat:0 }}</div>
+            <div class="ops-metric-value">TZS {{ inventory_value|tzs }}</div>
             <div class="ops-metric-note">Estimated stock value based on your current listing price and quantity.</div>
           </article>
         </div>
@@ -340,7 +341,7 @@
               <strong>Average Listing Price</strong>
               <div class="ops-status-meta">Useful for pricing consistency across your catalog.</div>
             </div>
-            <div class="ops-status-value">TZS {{ average_price|floatformat:0 }}</div>
+            <div class="ops-status-value">TZS {{ average_price|tzs }}</div>
           </div>
           <div class="ops-status-item">
             <div>
@@ -456,7 +457,7 @@
                   <tr>
                     <td><a href="{% url 'marketplace:supplier_product_detail' product.pk %}" class="supplier-product-link">{{ product.name }}</a></td>
                     <td>{{ product.category.name }}</td>
-                    <td>TZS {{ product.price|floatformat:0 }}</td>
+                    <td>TZS {{ product.price|tzs }}</td>
                     <td>{{ product.stock }}</td>
                     <td>
                       {% if product.is_active %}

@@ -1,4 +1,5 @@
 {% extends 'website/base.html' %}
+{% load money %}
 {% load static product_filters %}
 
 {% block title %}{{ category.name }} - Mkulima Smart Marketplace{% endblock %}
@@ -217,10 +218,10 @@
                                     
                                     <div class="price-section mb-3">
                                         {% if product.discount_price %}
-                                            <span class="original-price">TSh {{ product.price }}</span>
-                                            <span class="discount-price">TSh {{ product.discount_price }}</span>
+                                            <span class="original-price">TSh {{ product.price|tzs }}</span>
+                                            <span class="discount-price">TSh {{ product.discount_price|tzs }}</span>
                                         {% else %}
-                                            <span class="fw-bold">TSh {{ product.price }}</span>
+                                            <span class="fw-bold">TSh {{ product.price|tzs }}</span>
                                         {% endif %}
                                     </div>
                                     

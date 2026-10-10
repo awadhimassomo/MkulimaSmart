@@ -47,3 +47,41 @@ class ProductDetailFarmerTalkTests(TestCase):
         response = self.client.get(self.product.get_absolute_url())
         expected = reverse("community:discussion_create")
         self.assertContains(response, f'{expected}?crop=Hybrid')
+
+
+class PriceFormattingTests(TestCase):
+    def setUp(self):
+        translation.activate("en")
+        self.addCleanup(translation.deactivate)
+
+    def test_the_tzs_filter(self):
+        from decimal import Decimal
+
+        from website.templatetags.money import tzs
+
+        self.assertEqual(tzs(Decimal("18000.00")), "18,000")
+        self.assertEqual(tzs(18000), "18,000")
+        self.assertEqual(tzs(18000.0), "18,000")
+        self.assertEqual(tzs("1234567"), "1,234,567")
+        self.assertEqual(tzs(Decimal("18000.50")), "18,000.50")
+        self.assertEqual(tzs(0), "0")
+        self.assertEqual(tzs(Decimal("999")), "999")
+        self.assertEqual(tzs(None), "")
+        self.assertEqual(tzs(""), "")
+        self.assertEqual(tzs("not a price"), "not a price")
+
+    def test_product_and_category_pages_show_formatted_prices(self):
+        supplier = User.objects.create_user(phone_number="0700000030", password="pass12345", is_supplier=True)
+        category = Category.objects.create(name="Test Fertilizer", slug="test-fertilizer")
+        product = Product.objects.create(
+            name="CAN Fertilizer 50kg", slug="can-fertilizer-50kg", category=category, description="Top dressing.",
+            price=125000, discount_price=118500, stock=10, supplier=supplier,
+        )
+        detail = self.client.get(product.get_absolute_url())
+        self.assertContains(detail, "TSh 125,000")
+        self.assertContains(detail, "TSh 118,500")
+        self.assertNotContains(detail, "125000.00")
+        self.assertNotContains(detail, "TSh 125000")
+        listing = self.client.get(category.get_absolute_url())
+        self.assertContains(listing, "TSh 125,000")
+        self.assertNotContains(listing, "125000.00")

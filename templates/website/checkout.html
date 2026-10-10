@@ -1,4 +1,5 @@
 {% extends 'website/base.html' %}
+{% load money %}
 {% load static product_filters humanize %}
 
 {% block title %}Checkout - Mkulima Smart{% endblock %}
@@ -464,7 +465,7 @@
                                     </div>
                                     
                                     <div class="product-price">
-                                        <p class="mb-0">TSh {{ item.get_total_price }}</p>
+                                        <p class="mb-0">TSh {{ item.get_total_price|tzs }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -474,22 +475,22 @@
                     <!-- Cost Breakdown -->
                     <div class="summary-item">
                         <span>Subtotal</span>
-                        <span>TSh {{ cart_subtotal|intcomma }}</span>
+                        <span>TSh {{ cart_subtotal|tzs }}</span>
                     </div>
                     
                     <div class="summary-item">
                         <span>Delivery Fee</span>
-                        <span id="delivery-fee">TSh {{ cart_delivery_fee|intcomma }}</span>
+                        <span id="delivery-fee">TSh {{ cart_delivery_fee|tzs }}</span>
                     </div>
                     
                     <div class="summary-item">
                         <span>Tax (16% VAT)</span>
-                        <span>TSh {{ cart_tax|intcomma }}</span>
+                        <span>TSh {{ cart_tax|tzs }}</span>
                     </div>
                     
                     <div class="summary-item summary-total">
                         <span>Total</span>
-                        <span id="order-total">TSh {{ cart_total_with_fees|intcomma }}</span>
+                        <span id="order-total">TSh {{ cart_total_with_fees|tzs }}</span>
                     </div>
                     
                     <div class="d-grid gap-2 mt-4">
@@ -604,7 +605,7 @@
                 }
                 
                 const total = subtotal + deliveryFee + tax;
-                orderTotalElement.textContent = 'TSh ' + Math.round(total);
+                orderTotalElement.textContent = 'TSh ' + Math.round(total).toLocaleString('en-US');
             });
         });
     });

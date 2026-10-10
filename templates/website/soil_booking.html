@@ -1,4 +1,5 @@
 {% extends "website/base.html" %}
+{% load money %}
 {% load static %}
 
 {% block title %}Soil Services - Mkulima Smart{% endblock %}
@@ -179,7 +180,7 @@
         <div class="service-card">
           <div class="service-name">{{ service.name }}</div>
           <div class="service-price">
-            <span class="price-amount">TZS {{ service.price }}</span>
+            <span class="price-amount">TZS {{ service.price|tzs }}</span>
             <span class="price-unit">{{ service.unit }}</span>
           </div>
           <button class="book-btn" onclick="bookService('{{ service.name }}', '{{ service.price }}')">

@@ -1,4 +1,5 @@
 {% extends "website/base.html" %}
+{% load money %}
 {% load static %}
 
 {% block title %}Agricultural Marketplace - Mkulima Smart{% endblock %}
@@ -195,7 +196,7 @@
         <div class="card-body">
           <div class="meta">
             <h4><a href="{% url 'website:product_detail' product.slug %}" style="color:inherit;text-decoration:none">{{ product.name }}</a></h4>
-            <div style="color:#2D5A27;font-weight:800">TZS {{ product.price|floatformat:0 }}</div>
+            <div style="color:#2D5A27;font-weight:800">TZS {{ product.price|tzs }}</div>
           </div>
           <div class="sub">{{ product.category.name }} · {{ product.description|truncatewords:8 }}</div>
           {% if product.stock > 0 %}

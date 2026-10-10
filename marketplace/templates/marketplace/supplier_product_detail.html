@@ -1,4 +1,5 @@
 {% extends "marketplace/supplier_base.html" %}
+{% load money %}
 
 {% block supplier_title %}{{ product.name }}{% endblock %}
 {% block supplier_subtitle %}Review exactly how this listing is set up before buyers see it in the marketplace.{% endblock %}
@@ -37,12 +38,12 @@
       <div class="supplier-stats" style="margin-top:1.5rem;">
         <article class="supplier-stat">
           <div class="supplier-stat-label">Price</div>
-          <div class="supplier-stat-value" style="font-size:1.45rem;">TZS {{ product.price|floatformat:0 }}</div>
+          <div class="supplier-stat-value" style="font-size:1.45rem;">TZS {{ product.price|tzs }}</div>
         </article>
         <article class="supplier-stat">
           <div class="supplier-stat-label">Discount</div>
           <div class="supplier-stat-value" style="font-size:1.45rem;">
-            {% if product.discount_price %}TZS {{ product.discount_price|floatformat:0 }}{% else %}-{% endif %}
+            {% if product.discount_price %}TZS {{ product.discount_price|tzs }}{% else %}-{% endif %}
           </div>
         </article>
         <article class="supplier-stat">
