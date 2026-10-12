@@ -39,7 +39,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.197', 'mkulimasmart.co.tz', 'www.mkulimasmart.co.tz', '192.168.100.130', '192.168.199.98','192.168.100.118','192.168.100.114','192.168.1.104']
 SITE_BASE_URL = os.environ.get('SITE_BASE_URL', 'https://www.mkulimasmart.co.tz')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.197', 'mkulimasmart.co.tz', 'www.mkulimasmart.co.tz']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.197', 'mkulimasmart.co.tz', 'www.mkulimasmart.co.tz','10.152.67.70']
 
 
 
