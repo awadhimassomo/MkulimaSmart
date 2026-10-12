@@ -50,6 +50,9 @@ def company_required(view_func):
         if company is None:
             messages.info(request, "Set up your business profile first.")
             return redirect("marketplace:supplier_onboarding")
+        if not company.can_have_agronomists:
+            messages.info(request, "Agronomists are for manufacturers and suppliers. Your agrovet dashboard has the POS, your stock, and ordering stock from suppliers.")
+            return redirect("inputs:home")
         request.company = company
         return view_func(request, *args, **kwargs)
 

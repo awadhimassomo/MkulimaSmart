@@ -7,6 +7,17 @@
 
 {% block supplier_content %}
 <div class="in-stack">
+  {% if seller.can_have_agronomists %}
+  {% with agronomist_total=seller.agronomists.count %}
+  <div class="in-panel"><div class="in-panel-body in-panel-head">
+    <div>
+      <h2 class="in-panel-title">Your agronomists</h2>
+      <div class="in-muted">{% if agronomist_total %}{{ agronomist_total }} agronomist{{ agronomist_total|pluralize }} can answer farmers' questions on WhatsApp for you.{% else %}Invite your agronomists so they can answer farmers' questions on WhatsApp under your company's name.{% endif %}</div>
+    </div>
+    <a class="in-btn in-btn-primary" href="{% url 'callcenter:team' %}">{% if agronomist_total %}Manage agronomists{% else %}Invite agronomists{% endif %}</a>
+  </div></div>
+  {% endwith %}
+  {% endif %}
   <div class="in-kpis">
     <div class="in-kpi in-kpi-primary">
       <div class="in-kpi-label">Sales today</div>

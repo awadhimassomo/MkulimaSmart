@@ -136,7 +136,7 @@ def agronomists(request):
         {"invite": invite, "link": request.build_absolute_uri(reverse("callcenter:join", args=[invite.token]))}
         for invite in Invite.objects.filter(used_at__isnull=True, expires_at__gt=timezone.now()).select_related("company")
     ]
-    companies = InputSeller.objects.filter(is_active=True, onboarding_completed=True).order_by("business_name", "seller_name")
+    companies = InputSeller.objects.filter(is_active=True, onboarding_completed=True).exclude(seller_type="agro_input_dealer").order_by("business_name", "seller_name")
     return render(request, "opsdash/agronomists.html", {"rows": rows, "invites": invites, "companies": companies, "nav": "agronomists"})
 
 
@@ -144,9 +144,12 @@ def agronomists(request):
 @require_POST
 def invite_create(request):
     """An administrator invites an agronomist on behalf of an input company or shop."""
-    company = InputSeller.objects.filter(pk=request.POST.get("company") or 0, is_active=True, onboarding_completed=True).first()
+    company = (
+        InputSeller.objects.filter(pk=request.POST.get("company") or 0, is_active=True, onboarding_completed=True)
+        .exclude(seller_type="agro_input_dealer").first()
+    )
     if company is None:
-        messages.error(request, "Choose the company this agronomist works for.")
+        messages.error(request, "Choose the manufacturer or supplier this agronomist works for. Agrovets (retail shops) do not have agronomists.")
         return redirect("ops:agronomists")
     Invite.objects.create(company=company, name=request.POST.get("name", "").strip()[:120], created_by=request.user)
     messages.success(request, "Invite link created. Copy it from the list below and send it to the agronomist.")

@@ -48,8 +48,8 @@ class InputSeller(models.Model):
     SELLER_TYPE_CHOICES = [
         ("seedling_seller", "Seedling Seller"),
         ("nursery_operator", "Nursery Operator"),
-        ("agro_input_dealer", "Agro-Input Dealer"),
-        ("manufacturer", "Input Manufacturer / Distributor"),
+        ("agro_input_dealer", "Agrovet (retail shop)"),
+        ("manufacturer", "Supplier (manufacturer / producer / industry)"),
     ]
     PRODUCT_CATEGORY_CHOICES = [
         ("seedlings", "Seedlings"),
@@ -103,6 +103,16 @@ class InputSeller(models.Model):
 
     def __str__(self):
         return self.business_name or self.seller_name
+
+    @property
+    def is_agrovet(self):
+        """A retail shop: sells to farmers (POS, stock) and orders stock from suppliers; it has no agronomists."""
+        return self.seller_type == "agro_input_dealer"
+
+    @property
+    def can_have_agronomists(self):
+        """Manufacturers, producers and other suppliers answer farmers through their own agronomists; agrovets do not."""
+        return not self.is_agrovet
 
     @classmethod
     def get_or_create_for_user(cls, user):

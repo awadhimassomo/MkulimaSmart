@@ -408,3 +408,63 @@ class WorkerCommandTests(CallcenterBase):
         self.assertEqual(post.call_count, 1)
         self.assertEqual(self.case().status, Case.AI)
         self.assertIsNotNone(ReplyDelivery.objects.get().delivered_at)
+
+
+class AgrovetAndSupplierTests(CallcenterBase):
+    def setUp(self):
+        super().setUp()
+        self.shop_owner, self.shop = make_seller("0712000009", "agro_input_dealer", "Mama Neema Agrovet")
+        self.seedling_owner, self.seedling = make_seller("0712000010", "seedling_seller", "Green Seedlings")
+        self.nursery_owner, self.nursery = make_seller("0712000011", "nursery_operator", "Kilimo Nursery")
+
+    def login(self, user):
+        client = Client()
+        client.force_login(user)
+        return client
+
+    def test_manufacturers_producers_and_suppliers_get_the_agronomist_page(self):
+        for owner in (self.owner, self.seedling_owner, self.nursery_owner):
+            client = self.login(owner)
+            self.assertEqual(client.get(reverse("callcenter:team")).status_code, 200, owner.phone_number)
+            client.post(reverse("callcenter:team_invite"), {"name": "Neema"})
+        self.assertEqual(Invite.objects.count(), 3)
+
+    def test_agrovets_do_not_get_it_and_are_told_why(self):
+        client = self.login(self.shop_owner)
+        response = client.get(reverse("callcenter:team"), follow=True)
+        self.assertEqual(response.redirect_chain[-1][0], reverse("inputs:shop_dashboard"))
+        self.assertContains(response, "Agronomists are for manufacturers and suppliers")
+
+    def test_an_agrovet_cannot_invite_anyone_by_posting_directly(self):
+        client = self.login(self.shop_owner)
+        client.post(reverse("callcenter:team_invite"), {"name": "Neema"})
+        self.assertFalse(Invite.objects.filter(company=self.shop).exists())
+
+    def test_agrovets_have_the_pos_stock_and_stock_requests_but_no_agronomists_tab(self):
+        page = self.login(self.shop_owner).get(reverse("inputs:shop_dashboard"))
+        self.assertEqual(page.status_code, 200)
+        self.assertNotContains(page, reverse("callcenter:team"))
+        self.assertNotContains(page, "Your agronomists")
+        self.assertContains(page, reverse("inputs:pos"))
+        self.assertContains(page, reverse("inputs:stock_list"))
+        self.assertContains(page, "Request Stock")
+        self.assertContains(page, "My Stock Requests")
+        self.assertContains(page, reverse("inputs:catalog"))  # where stock is requested from suppliers
+
+    def test_suppliers_see_the_tab_and_an_invitation_on_their_dashboard(self):
+        manufacturer = self.login(self.owner).get(reverse("inputs:manufacturer_dashboard"))
+        self.assertContains(manufacturer, reverse("callcenter:team"))
+        self.assertContains(manufacturer, "Manage agronomists")  # setUp already gave this company an agronomist
+        self.assertContains(manufacturer, "1 agronomist can answer farmers")
+        seedling = self.login(self.seedling_owner).get(reverse("inputs:shop_dashboard"))
+        self.assertContains(seedling, reverse("callcenter:team"))
+        self.assertContains(seedling, "Invite agronomists")
+
+    def test_the_seller_type_is_called_agrovet_in_registration(self):
+        from website.forms import FarmerRegistrationForm
+
+        labels = dict(FarmerRegistrationForm().fields["supplier_seller_type"].choices)
+        self.assertEqual(labels["agro_input_dealer"], "Agrovet (retail shop)")
+        self.assertEqual(labels["manufacturer"], "Supplier (manufacturer / producer / industry)")
+        self.assertTrue(self.shop.is_agrovet and not self.shop.can_have_agronomists)
+        self.assertTrue(self.company.can_have_agronomists and self.seedling.can_have_agronomists)

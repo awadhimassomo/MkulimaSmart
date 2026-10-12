@@ -96,10 +96,10 @@
     <a href="{% url 'inputs:farmer_order_list' %}" class="supplier-nav-secondary {% if active_nav == 'farmer_orders' %}is-active{% endif %}"><i class="fa-brands fa-whatsapp"></i>&nbsp;Farmer Orders{% if farmer_orders_badge %} <span class="in-badge">{{ farmer_orders_badge }}</span>{% endif %}</a>
     <a href="{% url 'inputs:stock_list' %}" class="supplier-nav-secondary {% if active_nav == 'stock' %}is-active{% endif %}"><i class="fa-solid fa-warehouse"></i>&nbsp;Stock</a>
     <a href="{% url 'inputs:sale_list' %}" class="supplier-nav-secondary {% if active_nav == 'sales' %}is-active{% endif %}"><i class="fa-solid fa-receipt"></i>&nbsp;Sales</a>
-    <a href="{% url 'inputs:catalog' %}" class="supplier-nav-secondary {% if active_nav == 'catalog' %}is-active{% endif %}"><i class="fa-solid fa-store"></i>&nbsp;Order Stock</a>
-    <a href="{% url 'inputs:order_list' %}" class="supplier-nav-secondary {% if active_nav == 'orders' %}is-active{% endif %}"><i class="fa-solid fa-truck"></i>&nbsp;My Orders</a>
+    <a href="{% url 'inputs:catalog' %}" class="supplier-nav-secondary {% if active_nav == 'catalog' %}is-active{% endif %}"><i class="fa-solid fa-store"></i>&nbsp;Request Stock</a>
+    <a href="{% url 'inputs:order_list' %}" class="supplier-nav-secondary {% if active_nav == 'orders' %}is-active{% endif %}"><i class="fa-solid fa-truck"></i>&nbsp;My Stock Requests</a>
     <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-nav-secondary"><i class="fa-solid fa-shop"></i>&nbsp;Marketplace Listings</a>
   {% endif %}
-  <a href="{% url 'callcenter:team' %}" class="supplier-nav-secondary"><i class="fa-solid fa-headset"></i>&nbsp;Agronomists</a>
+  {% if seller.can_have_agronomists %}<a href="{% url 'callcenter:team' %}" class="supplier-nav-secondary"><i class="fa-solid fa-headset"></i>&nbsp;Agronomists</a>{% endif %}
   <a href="{% url 'marketplace:supplier_onboarding' %}" class="supplier-nav-secondary"><i class="fa-solid fa-id-card"></i>&nbsp;Profile</a>
 {% endblock %}

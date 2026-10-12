@@ -141,7 +141,7 @@ class InviteTests(OpsBase):
         )
 
     def test_the_page_offers_every_active_company(self):
-        self.assertContains(self.client.get(reverse("ops:agronomists")), "Zamseed Tanzania (Input Manufacturer / Distributor)")
+        self.assertContains(self.client.get(reverse("ops:agronomists")), "Zamseed Tanzania (Supplier (manufacturer / producer / industry))")
 
     def test_an_administrator_creates_a_link_for_a_company(self):
         response = self.client.post(reverse("ops:invite_create"), {"company": self.company.pk, "name": "Neema"})
@@ -385,3 +385,26 @@ class AccountEmailTests(OpsBase):
         staff.force_login(User.objects.create_user(password="pass12345", email="staff@gov.test", is_staff=True))
         self.assertEqual(staff.post(reverse("ops:account_reset_email", args=[self.person.pk])).status_code, 403)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class AgrovetInviteRulesTests(OpsBase):
+    def setUp(self):
+        super().setUp()
+        from operations.models import InputSeller
+
+        def seller(email, kind, name):
+            owner = User.objects.create_user(password="pass12345", email=email, is_supplier=True)
+            return InputSeller.objects.create(
+                user=owner, seller_name=name, business_name=name, phone_number="0712000000", seller_type=kind, location="Arusha", onboarding_completed=True,
+            )
+
+        self.shop = seller("shop@x.test", "agro_input_dealer", "Mama Neema Agrovet")
+        self.supplier = seller("sup@x.test", "manufacturer", "Zamseed Tanzania")
+
+    def test_agrovets_are_not_offered_and_cannot_be_chosen(self):
+        page = self.client.get(reverse("ops:agronomists"))
+        self.assertContains(page, "Zamseed Tanzania")
+        self.assertNotContains(page, "Mama Neema Agrovet")
+        response = self.client.post(reverse("ops:invite_create"), {"company": self.shop.pk}, follow=True)
+        self.assertContains(response, "Agrovets (retail shops) do not have agronomists")
+        self.assertFalse(Invite.objects.exists())
