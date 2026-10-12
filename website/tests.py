@@ -85,3 +85,47 @@ class PriceFormattingTests(TestCase):
         listing = self.client.get(category.get_absolute_url())
         self.assertContains(listing, "TSh 125,000")
         self.assertNotContains(listing, "125000.00")
+
+
+class UserAdminTests(TestCase):
+    def setUp(self):
+        translation.activate("en")
+        self.addCleanup(translation.deactivate)
+        self.admin = User.objects.create_superuser(password="pass12345", email="admin@mkulima.test")
+        self.client.force_login(self.admin)
+        self.person = User.objects.create_user(password="old-pass-123", email="neema@zamseed.test", first_name="Neema")
+
+    def test_the_account_page_offers_a_password_change_form(self):
+        page = self.client.get(reverse("admin:website_user_change", args=[self.person.pk]))
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Reset password")
+        self.assertContains(page, "../password/")
+        self.assertNotContains(page, "pbkdf2_sha256$")  # the hash is no longer an editable text box
+
+    def test_an_administrator_can_set_a_new_password(self):
+        url = reverse("admin:auth_user_password_change", args=[self.person.pk])
+        page = self.client.get(url)
+        self.assertEqual(page.status_code, 200)
+        response = self.client.post(url, {"password1": "Brand-new-pass-77", "password2": "Brand-new-pass-77"})
+        self.assertEqual(response.status_code, 302)
+        self.person.refresh_from_db()
+        self.assertTrue(self.person.check_password("Brand-new-pass-77"))
+
+    def test_a_new_account_made_in_the_admin_has_a_hashed_password_and_can_sign_in(self):
+        response = self.client.post(reverse("admin:website_user_add"), {
+            "email": "New.Person@Zamseed.test", "phone_number": "", "first_name": "New", "last_name": "Person",
+            "password1": "Str0ng-pass-99", "password2": "Str0ng-pass-99",
+        })
+        self.assertEqual(response.status_code, 302, getattr(response, "context", None) and response.context["adminform"].form.errors)
+        created = User.objects.get(email="new.person@zamseed.test")
+        self.assertTrue(created.check_password("Str0ng-pass-99"))
+        self.assertNotEqual(created.password, "Str0ng-pass-99")
+        self.assertIsNone(created.phone_number)
+
+    def test_mismatched_or_weak_passwords_are_refused(self):
+        base = {"email": "x@y.test", "phone_number": "", "first_name": "X", "last_name": "Y"}
+        mismatch = self.client.post(reverse("admin:website_user_add"), {**base, "password1": "Str0ng-pass-99", "password2": "other"})
+        self.assertEqual(mismatch.status_code, 200)
+        weak = self.client.post(reverse("admin:website_user_add"), {**base, "password1": "12345678", "password2": "12345678"})
+        self.assertEqual(weak.status_code, 200)
+        self.assertFalse(User.objects.filter(email="x@y.test").exists())

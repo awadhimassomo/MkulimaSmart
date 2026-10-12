@@ -258,3 +258,68 @@ class HeartbeatTests(OpsBase):
         self.assertIsNone(Heartbeat.age_seconds())
         call_command("run_callcenter")
         self.assertLess(Heartbeat.age_seconds(), 5)
+
+
+class AccountsTests(OpsBase):
+    def setUp(self):
+        super().setUp()
+        self.person = User.objects.create_user(
+            password="old-pass-123", email="neema@zamseed.test", phone_number="+255712345678", first_name="Neema", last_name="Joseph",
+        )
+
+    def test_search_by_email_phone_or_name(self):
+        url = reverse("ops:accounts")
+        for term in ("neema@zamseed", "712345678", "Joseph"):
+            self.assertContains(self.client.get(url, {"q": term}), "Neema Joseph", msg_prefix=term)
+        self.assertContains(self.client.get(url, {"q": "nobody-like-this"}), "Nobody matches")
+        self.assertNotContains(self.client.get(url), "Results")  # nothing is listed until you search
+
+    def test_a_reset_link_is_created_and_shown_once(self):
+        response = self.client.post(reverse("ops:account_reset_link", args=[self.person.pk]))
+        self.assertEqual(response.status_code, 200)
+        link = response.context["link"]
+        self.assertIn("/reset/", link)
+        self.assertContains(response, link)
+        self.assertContains(response, "expires after 3 days")
+        self.assertNotContains(self.client.get(reverse("ops:accounts"), {"q": "neema"}), "/reset/")  # not stored or listed
+
+    def test_the_link_lets_the_person_choose_a_new_password(self):
+        link = self.client.post(reverse("ops:account_reset_link", args=[self.person.pk])).context["link"]
+        guest = Client()
+        opened = guest.get(link, follow=True)
+        self.assertEqual(opened.status_code, 200)
+        form_url = opened.redirect_chain[-1][0]
+        done = guest.post(form_url, {"new_password1": "Brand-new-pass-77", "new_password2": "Brand-new-pass-77"})
+        self.assertEqual(done.status_code, 302)
+        self.person.refresh_from_db()
+        self.assertTrue(self.person.check_password("Brand-new-pass-77"))
+        self.assertFalse(self.person.check_password("old-pass-123"))
+
+    def test_a_link_works_only_once(self):
+        link = self.client.post(reverse("ops:account_reset_link", args=[self.person.pk])).context["link"]
+        guest = Client()
+        form_url = guest.get(link, follow=True).redirect_chain[-1][0]
+        guest.post(form_url, {"new_password1": "Brand-new-pass-77", "new_password2": "Brand-new-pass-77"})
+        second = Client().get(link, follow=True)
+        self.assertEqual(second.status_code, 200)
+        self.assertFalse(second.context["validlink"])  # the used link no longer offers the password form
+        self.person.refresh_from_db()
+        self.assertTrue(self.person.check_password("Brand-new-pass-77"))
+
+    def test_the_accounts_page_marks_administrators_and_accounts_without_email(self):
+        phone_only = User.objects.create_user(password="pass12345", phone_number="+255799000111")
+        page = self.client.get(reverse("ops:accounts"), {"q": "admin@mkulima"})
+        self.assertContains(page, "Administrator")
+        page = self.client.get(reverse("ops:accounts"), {"q": "799000111"})
+        self.assertContains(page, "no email")
+        self.assertEqual(phone_only.email, None)
+
+    def test_only_administrators(self):
+        staff = Client()
+        staff.force_login(User.objects.create_user(password="pass12345", email="staff@gov.test", is_staff=True))
+        self.assertEqual(staff.get(reverse("ops:accounts")).status_code, 403)
+        self.assertEqual(staff.post(reverse("ops:account_reset_link", args=[self.person.pk])).status_code, 403)
+        self.assertEqual(Client().get(reverse("ops:accounts")).status_code, 302)
+
+    def test_it_is_in_the_navigation(self):
+        self.assertContains(self.client.get(reverse("ops:overview")), reverse("ops:accounts"))

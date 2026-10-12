@@ -3,17 +3,21 @@ Operations dashboard for administrators: one place to see what needs attention a
 the platform (government officers, agronomists, farmer chats, undelivered replies) without the Django admin.
 Superusers only.
 """
+import logging
 from datetime import timedelta
 from functools import wraps
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.views.decorators.http import require_POST
 
 from assistant.models import Conversation
@@ -23,6 +27,7 @@ from operations.models import InputSeller
 from kikapu_bridge.models import ReplyDelivery, WebhookDelivery
 
 User = get_user_model()
+logger = logging.getLogger("opsdash")
 WORKER_STALE_SECONDS = 90
 
 
@@ -233,3 +238,38 @@ def delivery_retry(request, kind, pk):
     model.objects.filter(pk=pk, delivered_at__isnull=True).update(gave_up=False, attempts=0, next_attempt_at=timezone.now())
     messages.success(request, "Queued to try again. The background worker sends it within a few seconds.")
     return redirect("ops:deliveries")
+
+
+# ---------------------------------------------------------------------------
+# Accounts: find someone and give them a link to set a new password
+# ---------------------------------------------------------------------------
+
+def _reset_link(request, user):
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    return request.build_absolute_uri(reverse("website:password_reset_confirm", kwargs={"uidb64": uid, "token": token}))
+
+
+@ops_required
+def accounts(request, reset_for=None, link=None):
+    term = request.GET.get("q", "").strip()
+    people = User.objects.none()
+    if term:
+        people = User.objects.filter(
+            Q(email__icontains=term) | Q(phone_number__icontains=term) | Q(first_name__icontains=term) | Q(last_name__icontains=term)
+        ).order_by("email")[:25]
+    return render(request, "opsdash/accounts.html", {
+        "nav": "accounts", "term": term, "people": people, "reset_for": reset_for, "link": link,
+        "valid_days": max(1, getattr(settings, "PASSWORD_RESET_TIMEOUT", 259200) // 86400),
+    })
+
+
+@ops_required
+@require_POST
+def account_reset_link(request, pk):
+    """A one-time link the person opens to choose a new password. The administrator never sees or sets the password."""
+    user = get_object_or_404(User, pk=pk)
+    logger.info("Password reset link created for user %s by %s", user.pk, request.user.pk)
+    request.GET = request.GET.copy()
+    request.GET["q"] = user.email or user.phone_number or ""
+    return accounts(request, reset_for=user, link=_reset_link(request, user))

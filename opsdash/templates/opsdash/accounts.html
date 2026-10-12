@@ -1,0 +1,42 @@
+{% extends "opsdash/base.html" %}
+{% block title %}Accounts{% endblock %}
+{% block content %}
+<h1>Accounts</h1>
+<p class="muted">Find someone by email, phone number or name, and give them a link to set a new password. You never see or choose their password.</p>
+
+<div class="panel">
+  <form method="get" class="filters">
+    <div><label for="q" style="margin-top:0">Email, phone number or name</label><input type="search" id="q" name="q" value="{{ term }}" autofocus></div>
+    <button class="btn" type="submit">Search</button>
+  </form>
+</div>
+
+{% if link %}
+<div class="panel">
+  <div class="panel-head"><h2>Reset link for {{ reset_for.get_full_name|default:reset_for.email|default:reset_for.phone_number }}</h2></div>
+  <p class="muted" style="margin:0">Copy this link and send it to them yourself, for example on WhatsApp. They open it and choose a new password. It works once and expires after {{ valid_days }} day{{ valid_days|pluralize }}. Creating a new link does not cancel older ones until they are used.</p>
+  <div class="row"><code class="link">{{ link }}</code></div>
+</div>
+{% endif %}
+
+{% if term %}
+<div class="panel">
+  <div class="panel-head"><h2>Results</h2></div>
+  {% for u in people %}
+    <div class="row"><div class="row-top">
+      <div>
+        <b>{{ u.get_full_name|default:u.email|default:u.phone_number }}
+          {% if u.is_superuser %}<span class="pill wait">Administrator</span>{% endif %}
+          {% if not u.is_active %}<span class="pill no">Switched off</span>{% endif %}</b>
+        <span class="muted">{{ u.email|default:"no email" }}{% if u.phone_number %} | {{ u.phone_number }}{% endif %}{% if u.last_login %} | last sign-in {{ u.last_login|timesince }} ago{% else %} | never signed in{% endif %}</span>
+        {% if not u.email %}<span class="muted">This account has no email, so it cannot sign in with a password until one is added.</span>{% endif %}
+      </div>
+      <form method="post" action="{% url 'ops:account_reset_link' u.pk %}">{% csrf_token %}
+        <button class="btn sm" type="submit">Create reset link</button></form>
+    </div></div>
+  {% empty %}
+    <p class="empty">Nobody matches "{{ term }}".</p>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -12,6 +12,8 @@ urlpatterns = [
     path("agronomists/invite/<int:pk>/revoke/", views.invite_revoke, name="invite_revoke"),
     path("chats/", views.chats, name="chats"),
     path("chats/<int:pk>/", views.chat_detail, name="chat"),
+    path("accounts/", views.accounts, name="accounts"),
+    path("accounts/<int:pk>/reset-link/", views.account_reset_link, name="account_reset_link"),
     path("deliveries/", views.deliveries, name="deliveries"),
     path("deliveries/<str:kind>/<int:pk>/retry/", views.delivery_retry, name="delivery_retry"),
 ]

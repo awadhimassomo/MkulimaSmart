@@ -1,5 +1,8 @@
 from django.contrib import admin
+from django import forms
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
+from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
 from .models import (User, Farm, Crop, Category, Product, ProductImage, Cart, CartItem, Order,
@@ -7,10 +10,50 @@ from .models import (User, Farm, Crop, Category, Product, ProductImage, Cart, Ca
                      WeatherData, RainForecast)
 
 
-class CustomUserAdmin(admin.ModelAdmin):
+class UserChangeForm(BaseUserChangeForm):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
+class UserAddForm(forms.ModelForm):
+    """Create an account with a password that is stored hashed (the account signs in with its email)."""
+    password1 = forms.CharField(label=_('Password'), widget=forms.PasswordInput)
+    password2 = forms.CharField(label=_('Password confirmation'), widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        fields = ('email', 'phone_number', 'first_name', 'last_name')
+
+    def clean_email(self):
+        return (self.cleaned_data.get('email') or '').strip().lower() or None
+
+    def clean_phone_number(self):
+        return self.cleaned_data.get('phone_number') or None
+
+    def clean_password2(self):
+        first, second = self.cleaned_data.get('password1'), self.cleaned_data.get('password2')
+        if first and second and first != second:
+            raise forms.ValidationError(_('The two password fields did not match.'))
+        if second:
+            validate_password(second)
+        return second
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+        if commit:
+            user.save()
+        return user
+
+
+class CustomUserAdmin(UserAdmin):
     """
-    Custom admin interface for the User model
+    Admin interface for the User model: a real user admin, so a password can be changed with the
+    "this form" link under the password and new accounts get a hashed password.
     """
+    form = UserChangeForm
+    add_form = UserAddForm
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         (_('Personal info'), {'fields': ('first_name', 'last_name', 'phone_number')}),
@@ -22,13 +65,14 @@ class CustomUserAdmin(admin.ModelAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'phone_number', 'password1', 'password2'),
+            'fields': ('email', 'phone_number', 'first_name', 'last_name', 'password1', 'password2'),
         }),
     )
     list_display = ('phone_number', 'email', 'first_name', 'last_name', 'is_farmer', 'is_staff')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups', 'is_farmer')
     search_fields = ('phone_number', 'first_name', 'last_name', 'email')
     ordering = ('email',)
+    filter_horizontal = ('groups', 'user_permissions')
 
 
 class FarmAdmin(admin.ModelAdmin):
