@@ -468,3 +468,58 @@ class AgrovetAndSupplierTests(CallcenterBase):
         self.assertEqual(labels["manufacturer"], "Supplier (manufacturer / producer / industry)")
         self.assertTrue(self.shop.is_agrovet and not self.shop.can_have_agronomists)
         self.assertTrue(self.company.can_have_agronomists and self.seedling.can_have_agronomists)
+
+
+class InviteReasonTests(CallcenterBase):
+    def setUp(self):
+        super().setUp()
+        self.client = Client()
+        self.client.force_login(self.owner)
+
+    def join_url(self, invite):
+        return reverse("callcenter:join", args=[invite.token])
+
+    def test_a_used_link_says_it_was_used_and_by_whom(self):
+        invite = Invite.objects.create(company=self.company, name="Neema")
+        data = {"full_name": "Neema Joseph", "email": "neema@zamseed.test", "password": "Str0ng-pass-99", "password2": "Str0ng-pass-99"}
+        Client().post(self.join_url(invite), data)
+        page = Client().get(self.join_url(invite))
+        self.assertContains(page, "already used", status_code=410)
+        self.assertContains(page, "Neema Joseph", status_code=410)
+        self.assertNotContains(page, "has expired", status_code=410)
+
+    def test_an_expired_link_says_when_it_expired(self):
+        invite = Invite.objects.create(company=self.company)
+        Invite.objects.filter(pk=invite.pk).update(expires_at=timezone.now() - timedelta(days=2))
+        page = Client().get(self.join_url(invite))
+        self.assertContains(page, "has expired", status_code=410)
+        self.assertNotContains(page, "already used", status_code=410)
+
+    def test_an_unknown_link_says_it_could_not_be_found_and_how_to_check(self):
+        page = Client().get(reverse("callcenter:join", args=["not-a-real-token"]))
+        self.assertContains(page, "could not find this invite link", status_code=410)
+        self.assertContains(page, "whole link was copied", status_code=410)
+
+    def test_punctuation_glued_on_by_a_chat_app_does_not_break_a_valid_link(self):
+        invite = Invite.objects.create(company=self.company)
+        for suffix in (".", ")", ",", "%20"):
+            page = Client().get(f"/en/call-center/join/{invite.token}{suffix}/")
+            self.assertEqual(page.status_code, 200, suffix)
+
+    def test_a_brand_new_link_is_valid_for_a_week(self):
+        self.client.post(reverse("callcenter:team_invite"), {"name": "Neema"})
+        invite = Invite.objects.get()
+        self.assertGreater(invite.expires_at, timezone.now() + timedelta(days=6, hours=23))
+        self.assertTrue(invite.usable)
+        self.assertEqual(Client().get(self.join_url(invite)).status_code, 200)
+
+    def test_the_team_page_lists_earlier_links_and_what_became_of_them(self):
+        Invite.objects.create(company=self.company, name="Active one")
+        expired = Invite.objects.create(company=self.company, name="Old one")
+        Invite.objects.filter(pk=expired.pk).update(expires_at=timezone.now() - timedelta(days=1))
+        used = Invite.objects.create(company=self.company, name="Used one", used_at=timezone.now())
+        page = self.client.get(reverse("callcenter:team"))
+        self.assertContains(page, "Earlier links")
+        self.assertContains(page, "Expired on")
+        self.assertContains(page, "Used on")
+        self.assertEqual(used.state, "used")

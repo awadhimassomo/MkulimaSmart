@@ -2,7 +2,16 @@
 {% block title %}Invite{% endblock %}
 {% block content %}
 <div class="panel">
-  <h1>This invite link no longer works</h1>
-  <p class="muted">It was already used, has expired, or was cancelled. Ask your company to send you a new link.</p>
+  {% if reason == "used" %}
+    <h1>This invite link was already used</h1>
+    <p class="muted">{% if invite.agronomist %}An account was created with it for {{ invite.agronomist.full_name }}{% if invite.used_at %} on {{ invite.used_at|date:"j M Y H:i" }}{% endif %}.{% else %}It was used{% if invite.used_at %} on {{ invite.used_at|date:"j M Y H:i" }}{% endif %}.{% endif %}
+      If that was you, <a href="{% url 'website:login' %}">sign in</a> with the email you chose. Otherwise ask your company for a new link.</p>
+  {% elif reason == "expired" %}
+    <h1>This invite link has expired</h1>
+    <p class="muted">It stopped working on {{ invite.expires_at|date:"j M Y H:i" }}. Ask your company to create a new link.</p>
+  {% else %}
+    <h1>We could not find this invite link</h1>
+    <p class="muted">Make sure the whole link was copied: it is long and ends with a slash. If it is complete, it may have been cancelled, so ask your company to send you a new one.</p>
+  {% endif %}
 </div>
 {% endblock %}

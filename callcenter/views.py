@@ -1,3 +1,5 @@
+import logging
+import re
 from datetime import timedelta
 from functools import wraps
 
@@ -21,6 +23,7 @@ from . import services
 from .models import Agronomist, Case, Invite
 
 User = get_user_model()
+logger = logging.getLogger("callcenter")
 
 
 # ---------------------------------------------------------------------------
@@ -244,17 +247,26 @@ class JoinForm(forms.Form):
         return data
 
 
+def _invalid_invite(request, invite, token):
+    """Say which of the three things went wrong, so the person (and the support team) can act on it."""
+    reason = "unknown" if invite is None else invite.state  # "used" or "expired"
+    logger.warning("Agronomist invite refused (%s): token starting %s", reason, (token or "")[:6])
+    return render(request, "callcenter/join_invalid.html", {"reason": reason, "invite": invite}, status=410)
+
+
 def join(request, token):
-    invite = Invite.objects.select_related("company").filter(token=token).first()
+    # Chat apps and email clients sometimes glue a full stop, bracket or space onto the end of a link.
+    clean = re.sub(r"[^A-Za-z0-9_-]", "", token or "")
+    invite = Invite.objects.select_related("company").filter(token=clean).first()
     if invite is None or not invite.usable:
-        return render(request, "callcenter/join_invalid.html", status=410)
+        return _invalid_invite(request, invite, clean)
 
     form = JoinForm(request.POST or None, initial={"full_name": invite.name})
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
         with transaction.atomic():
             if Invite.objects.filter(pk=invite.pk, used_at__isnull=True).update(used_at=timezone.now()) != 1:
-                return render(request, "callcenter/join_invalid.html", status=410)
+                return _invalid_invite(request, Invite.objects.filter(pk=invite.pk).first(), clean)
             first, _, last = data["full_name"].strip().partition(" ")
             user = User.objects.create_user(password=data["password"], email=data["email"], first_name=first, last_name=last)
             agronomist = Agronomist.objects.create(user=user, company=invite.company, full_name=data["full_name"].strip())
@@ -275,10 +287,15 @@ def team(request):
         {"invite": invite, "link": request.build_absolute_uri(reverse("callcenter:join", args=[invite.token]))}
         for invite in company.agronomist_invites.filter(used_at__isnull=True, expires_at__gt=timezone.now())
     ]
+    earlier = (
+        company.agronomist_invites.exclude(used_at__isnull=True, expires_at__gt=timezone.now())
+        .select_related("agronomist")[:10]
+    )
     return render(request, "callcenter/team.html", {
         "company": company,
         "agronomists": company.agronomists.select_related("user"),
         "invites": invites,
+        "earlier": earlier,
     })
 
 

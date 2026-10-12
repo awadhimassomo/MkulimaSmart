@@ -20,6 +20,19 @@
   {% endfor %}
 </div>
 
+{% if earlier %}
+<div class="panel">
+  <div class="panel-head"><h2>Earlier links</h2></div>
+  {% for invite in earlier %}
+    <div class="row"><div><b>{{ invite.name|default:"Invite link" }}</b>
+      <span class="muted">
+        {% if invite.used_at %}Used{% if invite.agronomist %} by {{ invite.agronomist.full_name }}{% endif %} on {{ invite.used_at|date:"j M Y" }}
+        {% else %}Expired on {{ invite.expires_at|date:"j M Y" }}{% endif %}
+      </span></div></div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="panel">
   <div class="panel-head"><h2>Your agronomists</h2></div>
   {% for a in agronomists %}
