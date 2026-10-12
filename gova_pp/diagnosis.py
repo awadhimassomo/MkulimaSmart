@@ -192,14 +192,15 @@ def request_diagnosis(image_for_openai, context=None, language="en"):
     return data
 
 
-def _as_text(value, bullets=False):
+def _as_text(value, bullets=False, sep=" "):
     """The model is asked for text but sometimes returns a JSON list: join it instead of printing "['a', 'b']"."""
     if isinstance(value, (list, tuple)):
         items = [str(item).strip() for item in value if str(item).strip()]
-        return "\n".join(f"- {item}" for item in items) if bullets else " ".join(items)
-    if isinstance(value, dict):
-        return "\n".join(f"- {key}: {item}" for key, item in value.items() if str(item).strip())
-    return str(value or "").strip()
+    elif isinstance(value, dict):
+        items = [f"{key}: {item}" for key, item in value.items() if str(item).strip()]
+    else:
+        return str(value or "").strip()
+    return "\n".join(f"- {item}" for item in items) if bullets else sep.join(items)
 
 
 def normalize_diagnosis(raw):
@@ -220,11 +221,11 @@ def normalize_diagnosis(raw):
     terms = terms[:6]
 
     return {
-        "crop": _as_text(raw.get("crop")).replace("\n- ", ", ").lstrip("- ")[:80],
+        "crop": _as_text(raw.get("crop"), sep=", ")[:80],
         "crop_confidence": level(raw.get("crop_confidence"), "medium"),
         "visible_features": str(raw.get("visible_features") or "").strip()[:300],
         "problem_type": problem_type,
-        "problem": _as_text(raw.get("problem")).replace("\n- ", ", ").lstrip("- ")[:120],
+        "problem": _as_text(raw.get("problem"), sep=", ")[:120],
         "confidence": level(raw.get("confidence"), "low"),
         "urgency": level(raw.get("urgency"), "medium"),
         "summary": _as_text(raw.get("summary"))[:600],
