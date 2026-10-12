@@ -282,6 +282,14 @@ def _active_catalog():
     return selectors.active_catalog()
 
 
+def _agent_regions(shop):
+    """{supplier id: "Arusha, Manyara"} for the suppliers this shop is a retail agent of."""
+    regions = {}
+    for supplier_id, region in RetailAgent.objects.filter(agent=shop).order_by("region").values_list("supplier_id", "region"):
+        regions.setdefault(supplier_id, []).append(region)
+    return {supplier_id: ", ".join(names) for supplier_id, names in regions.items()}
+
+
 @shop_required
 def catalog(request):
     q = (request.GET.get("q") or "").strip()
@@ -302,7 +310,7 @@ def catalog(request):
         **_nav_context(request, "catalog"),
         "page_obj": page,
         "stocked_ids": stocked,
-        "agent_for_ids": set(RetailAgent.objects.filter(agent=request.seller).values_list("supplier_id", flat=True)),
+        "agent_for": _agent_regions(request.seller),
         "cart": _order_cart(request),
         "cart_count": len(_order_cart(request)),
         "categories": InputSeller.PRODUCT_CATEGORY_CHOICES,
@@ -673,36 +681,53 @@ def retail_setting(request):
 
 
 # ---------------------------------------------------------------------------
-# Retail agents: a supplier appoints agrovets to retail its products to farmers
+# Retail agents: a supplier appoints agrovets to retail its products to farmers, region by region
 # ---------------------------------------------------------------------------
+
+REGION_NAMES = [name for name, _ in TANZANIA_REGIONS]
+
 
 @manufacturer_required
 def agents(request):
     supplier = request.seller
     term = (request.GET.get("q") or "").strip()
-    appointed = list(supplier.retail_agents.select_related("agent"))
-    for link in appointed:
-        stock = ShopStockItem.objects.filter(shop=link.agent, wholesale_product__manufacturer=supplier)
-        link.stocked = stock.count()
-        link.on_website = stock.filter(marketplace_product__is_active=True).count()
+    links = list(supplier.retail_agents.select_related("agent"))
+    stats = {}
+    for link in links:
+        if link.agent_id not in stats:
+            stock = ShopStockItem.objects.filter(shop=link.agent, wholesale_product__manufacturer=supplier)
+            stats[link.agent_id] = (stock.count(), stock.filter(marketplace_product__is_active=True).count())
+        link.stocked, link.on_website = stats[link.agent_id]
+    by_region = {}
+    for link in links:
+        by_region.setdefault(link.region, []).append(link)
+    covered = [(region, by_region[region]) for region in REGION_NAMES if region in by_region]
     found = []
     if term:
         found = list(
             InputSeller.objects.filter(seller_type="agro_input_dealer", is_active=True, onboarding_completed=True)
             .filter(Q(business_name__icontains=term) | Q(seller_name__icontains=term) | Q(district__icontains=term)
                     | Q(region__icontains=term) | Q(phone_number__icontains=term))
-            .exclude(pk__in=[link.agent_id for link in appointed])
             .order_by("business_name", "seller_name")[:15]
         )
-    return render(request, "inputs/agents.html", {**_nav_context(request, "agents"), "appointed": appointed, "found": found, "q": term})
+        for shop in found:
+            shop.default_region = shop.region_or_guess if shop.region_or_guess in REGION_NAMES else ""
+    return render(request, "inputs/agents.html", {
+        **_nav_context(request, "agents"), "covered": covered, "uncovered": [r for r in REGION_NAMES if r not in by_region],
+        "agent_count": len({link.agent_id for link in links}), "found": found, "q": term, "regions": REGION_NAMES,
+    })
 
 
 @manufacturer_required
 @require_POST
 def agent_add(request, pk):
     agent = get_object_or_404(InputSeller, pk=pk, seller_type="agro_input_dealer", is_active=True, onboarding_completed=True)
-    _, created = RetailAgent.objects.get_or_create(supplier=request.seller, agent=agent)
-    messages.success(request, f"{agent} is now your retail agent." if created else f"{agent} is already your retail agent.")
+    region = request.POST.get("region", "")
+    if region not in REGION_NAMES:
+        messages.error(request, "Choose the region this agent will sell in.")
+        return redirect("inputs:agents")
+    _, created = RetailAgent.objects.get_or_create(supplier=request.seller, agent=agent, region=region)
+    messages.success(request, f"{agent} is now your retail agent in {region}." if created else f"{agent} is already your retail agent in {region}.")
     return redirect("inputs:agents")
 
 
@@ -710,8 +735,11 @@ def agent_add(request, pk):
 @require_POST
 def agent_remove(request, pk):
     link = get_object_or_404(RetailAgent.objects.select_related("agent"), pk=pk, supplier=request.seller)
-    website_listing.hide_agent_listings(request.seller, link.agent)
-    name = str(link.agent)
+    agent, region = link.agent, link.region
     link.delete()
-    messages.success(request, f"{name} is no longer your retail agent." + ("" if request.seller.retails else " Their website listings of your products were hidden."))
+    hidden = False
+    if not request.seller.retail_agents.filter(agent=agent).exists():  # no region left: no longer an agent at all
+        website_listing.hide_agent_listings(request.seller, agent)
+        hidden = not request.seller.retails
+    messages.success(request, f"{agent} is no longer your retail agent in {region}." + (" Their website listings of your products were hidden." if hidden else ""))
     return redirect("inputs:agents")

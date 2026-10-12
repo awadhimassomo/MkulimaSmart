@@ -359,7 +359,7 @@ class WholesaleOnlyTests(ListingTestBase):
         self.assertTrue(type(self.shop).objects.get(pk=self.shop.pk).sells_to_farmers)
 
 
-class RetailAgentTests(ListingTestBase):
+class AgentTestBase(ListingTestBase):
     def setUp(self):
         super().setUp()
         self.agent_user, self.agent = make_seller("0700000066", "agro_input_dealer", "Moshi Agrovet")
@@ -375,21 +375,23 @@ class RetailAgentTests(ListingTestBase):
             cost_price=Decimal("60000"), selling_price=Decimal("75000"), quantity=Decimal("8"),
         )
 
-    def appoint(self, shop=None):
-        return self.mfr_client.post(reverse("inputs:agent_add", args=[(shop or self.agent).pk]), follow=True)
+    def appoint(self, shop=None, region="Kilimanjaro"):
+        return self.mfr_client.post(reverse("inputs:agent_add", args=[(shop or self.agent).pk]), {"region": region}, follow=True)
 
+
+
+class RetailAgentTests(AgentTestBase):
     def test_a_supplier_finds_a_registered_agrovet_and_appoints_it(self):
         page = self.mfr_client.get(reverse("inputs:agents"), {"q": "Moshi"})
         self.assertContains(page, "Moshi Agrovet")
-        self.assertContains(page, "Appoint as agent")
-        self.assertContains(self.appoint(), "is now your retail agent")
+        self.assertContains(page, "Appoint for this region")
+        self.assertContains(self.appoint(), "is now your retail agent in Kilimanjaro")
         self.assertEqual(self.mfr.retail_agents.count(), 1)
-        self.assertNotContains(self.mfr_client.get(reverse("inputs:agents"), {"q": "Moshi"}), "Appoint as agent")  # already appointed
         self.assertContains(self.mfr_client.get(reverse("inputs:agents")), "Moshi Agrovet")
 
     def test_appointing_twice_does_not_duplicate(self):
         self.appoint()
-        self.assertContains(self.appoint(), "already your retail agent")
+        self.assertContains(self.appoint(), "already your retail agent in Kilimanjaro")
         self.assertEqual(self.mfr.retail_agents.count(), 1)
 
     def test_only_registered_agrovets_can_be_appointed_and_only_by_suppliers(self):
@@ -397,7 +399,7 @@ class RetailAgentTests(ListingTestBase):
         self.assertEqual(self.mfr_client.post(reverse("inputs:agent_add", args=[other_maker.pk])).status_code, 404)
         self.assertEqual(self.agent_client.post(reverse("inputs:agent_add", args=[self.shop.pk])).status_code, 302)
         self.assertFalse(self.mfr.retail_agents.exists())
-        self.assertNotContains(self.mfr_client.get(reverse("inputs:agents"), {"q": "Other Maker"}), "Appoint as agent")
+        self.assertNotContains(self.mfr_client.get(reverse("inputs:agents"), {"q": "Other Maker"}), "Appoint for this region")
 
     def test_when_the_supplier_is_wholesale_only_only_its_agents_can_list_its_products_on_the_website(self):
         self.go_wholesale_only()
@@ -411,7 +413,7 @@ class RetailAgentTests(ListingTestBase):
         accepted = self.list_item(agent_item, client=self.agent_client)
         self.assertContains(accepted, "is now on the website marketplace")
         description = ShopStockItem.objects.get(pk=agent_item.pk).marketplace_product.description
-        self.assertIn("authorized retail agent of Kilimo Fertilizers Ltd", description)
+        self.assertIn("authorized retail agent of Kilimo Fertilizers Ltd in Kilimanjaro", description)
 
     def test_a_supplier_that_retails_needs_no_agents_for_shops_to_list_its_products(self):
         item = self.stock_of_urea(self.shop)
@@ -441,7 +443,7 @@ class RetailAgentTests(ListingTestBase):
 
     def test_one_supplier_cannot_remove_anothers_agent(self):
         other_user, other_maker = make_seller("0700000054", "manufacturer", "Other Maker")
-        link = RetailAgent.objects.create(supplier=other_maker, agent=self.agent)
+        link = RetailAgent.objects.create(supplier=other_maker, agent=self.agent, region="Arusha")
         self.assertEqual(self.mfr_client.post(reverse("inputs:agent_remove", args=[link.pk])).status_code, 404)
 
     def test_the_agents_page_counts_stock_and_website_listings(self):
@@ -451,12 +453,73 @@ class RetailAgentTests(ListingTestBase):
         self.list_item(item, client=self.agent_client)
         page = self.mfr_client.get(reverse("inputs:agents"))
         self.assertContains(page, "2 of your products in their stock, 1 on the website")
+        self.assertContains(page, "Kilimanjaro")
 
     def test_an_agent_sees_whose_agent_they_are_in_the_catalog(self):
         self.assertNotContains(self.agent_client.get(reverse("inputs:catalog"), {"region": ""}), "You are their retail agent")
         self.appoint()
-        self.assertContains(self.agent_client.get(reverse("inputs:catalog"), {"region": ""}), "You are their retail agent")
+        self.appoint(region="Arusha")
+        self.assertContains(self.agent_client.get(reverse("inputs:catalog"), {"region": ""}), "You are their retail agent in Arusha, Kilimanjaro")
 
     def test_the_agents_tab_is_for_suppliers(self):
         self.assertContains(self.mfr_client.get(reverse("inputs:manufacturer_dashboard")), reverse("inputs:agents"))
         self.assertNotContains(self.agent_client.get(reverse("inputs:shop_dashboard")), reverse("inputs:agents"))
+
+
+class AgentRegionTests(AgentTestBase):
+    """Agents are appointed region by region."""
+
+    def test_an_appointment_needs_a_valid_region(self):
+        for region in ("", "Atlantis"):
+            response = self.mfr_client.post(reverse("inputs:agent_add", args=[self.agent.pk]), {"region": region}, follow=True)
+            self.assertContains(response, "Choose the region this agent will sell in")
+        self.assertFalse(self.mfr.retail_agents.exists())
+
+    def test_the_search_preselects_the_shops_own_region(self):
+        type(self.agent).objects.filter(pk=self.agent.pk).update(region="Kilimanjaro")
+        page = self.mfr_client.get(reverse("inputs:agents"), {"q": "Moshi"})
+        self.assertContains(page, '<option value="Kilimanjaro" selected>Kilimanjaro</option>')
+
+    def test_the_same_agrovet_can_cover_several_regions_and_each_is_listed_under_its_region(self):
+        self.appoint(region="Kilimanjaro")
+        self.appoint(region="Manyara")
+        self.assertEqual(self.mfr.retail_agents.count(), 2)
+        page = self.mfr_client.get(reverse("inputs:agents"))
+        self.assertContains(page, "2 regions")
+        self.assertContains(page, "1 agent<")  # one agrovet, two regions
+        self.assertContains(page, "Regions without an agent (29)")
+        self.assertNotContains(page, "Manyara, ")  # a covered region is not in the open list
+
+    def test_several_agrovets_can_share_a_region(self):
+        other_user, other_agent = make_seller("0700000044", "agro_input_dealer", "Hai Agrovet")
+        self.appoint(region="Kilimanjaro")
+        self.appoint(other_agent, region="Kilimanjaro")
+        page = self.mfr_client.get(reverse("inputs:agents"))
+        self.assertContains(page, "Moshi Agrovet")
+        self.assertContains(page, "Hai Agrovet")
+        self.assertContains(page, "1 region")
+
+    def test_the_listing_names_every_region_the_agent_covers(self):
+        self.go_wholesale_only()
+        self.appoint(region="Kilimanjaro")
+        self.appoint(region="Arusha")
+        item = self.stock_of_urea(self.agent)
+        self.list_item(item, client=self.agent_client)
+        description = ShopStockItem.objects.get(pk=item.pk).marketplace_product.description
+        self.assertIn("authorized retail agent of Kilimo Fertilizers Ltd in Arusha, Kilimanjaro", description)
+
+    def test_removing_one_region_keeps_the_listings_while_another_region_remains(self):
+        self.go_wholesale_only()
+        self.appoint(region="Kilimanjaro")
+        self.appoint(region="Arusha")
+        item = self.stock_of_urea(self.agent)
+        self.list_item(item, client=self.agent_client)
+        listing = ShopStockItem.objects.get(pk=item.pk).marketplace_product
+        first = self.mfr.retail_agents.get(region="Arusha")
+        self.assertContains(self.mfr_client.post(reverse("inputs:agent_remove", args=[first.pk]), follow=True), "no longer your retail agent in Arusha")
+        listing.refresh_from_db()
+        self.assertTrue(listing.is_active)
+        last = self.mfr.retail_agents.get()
+        self.assertContains(self.mfr_client.post(reverse("inputs:agent_remove", args=[last.pk]), follow=True), "website listings of your products were hidden")
+        listing.refresh_from_db()
+        self.assertFalse(listing.is_active)

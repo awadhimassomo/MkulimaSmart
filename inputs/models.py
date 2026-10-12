@@ -445,17 +445,19 @@ class FarmerOrderItem(models.Model):
 
 class RetailAgent(models.Model):
     """
-    A supplier appointing an agrovet to retail its products to farmers. A supplier that only sells wholesale lets its
-    appointed agents (and nobody else) put its products on the website marketplace.
+    A supplier appointing an agrovet to retail its products to farmers in one region. The same agrovet can be appointed
+    for several regions (one row each). A supplier that only sells wholesale lets its appointed agents (and nobody else)
+    put its products on the website marketplace.
     """
 
     supplier = models.ForeignKey(InputSeller, on_delete=models.CASCADE, related_name="retail_agents")
     agent = models.ForeignKey(InputSeller, on_delete=models.CASCADE, related_name="agent_for")
+    region = models.CharField(max_length=40, choices=TANZANIA_REGIONS)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["agent__business_name", "agent__seller_name"]
-        constraints = [models.UniqueConstraint(fields=["supplier", "agent"], name="unique_retail_agent")]
+        ordering = ["region", "agent__business_name", "agent__seller_name"]
+        constraints = [models.UniqueConstraint(fields=["supplier", "agent", "region"], name="unique_retail_agent_region")]
 
     def __str__(self):
-        return f"{self.agent} is an agent of {self.supplier}"
+        return f"{self.agent} is an agent of {self.supplier} in {self.region}"

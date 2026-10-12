@@ -2,20 +2,21 @@
 
 {% block page_title %}Retail agents{% endblock %}
 {% block supplier_title %}Retail agents{% endblock %}
-{% block supplier_subtitle %}Agrovets you appoint to sell your products to farmers for you.{% endblock %}
+{% block supplier_subtitle %}Agrovets you appoint to sell your products to farmers, region by region.{% endblock %}
 
 {% block supplier_content %}
 <div class="in-stack">
   <section class="in-panel"><div class="in-panel-body">
     <h2 class="in-panel-title">{% if seller.retails %}You also sell to farmers directly{% else %}You sell wholesale only{% endif %}</h2>
     <p class="in-muted" style="margin:.3rem 0 0">
-      {% if seller.retails %}Appointed agents can also stock and sell your products. Appointing agents is optional.
+      {% if seller.retails %}Appointed agents can also stock and sell your products in their region. Appointing agents is optional.
       {% else %}Only the agents you appoint here can put your products on the website marketplace for farmers. Other shops can still buy from you wholesale and sell in their shops.{% endif %}
+      Each agent is appointed for a region; the same agrovet can cover several regions.
     </p>
   </div></section>
 
   <section class="in-panel"><div class="in-panel-body">
-    <div class="in-panel-head"><h2 class="in-panel-title">Add an agent</h2></div>
+    <div class="in-panel-head"><h2 class="in-panel-title">Appoint an agent</h2></div>
     <form method="get" class="in-toolbar">
       <div style="flex:1"><label for="agent-q">Find a registered agrovet</label>
         <input type="search" id="agent-q" name="q" value="{{ q }}" class="form-input" placeholder="Shop name, phone number, district or region"></div>
@@ -26,7 +27,13 @@
         {% for shop in found %}
           <div class="in-list-row">
             <div><strong>{{ shop }}</strong><div class="in-muted">{{ shop.region_or_guess }}{% if shop.district %}, {{ shop.district }}{% endif %} | {{ shop.phone_number }}</div></div>
-            <form method="post" action="{% url 'inputs:agent_add' shop.pk %}">{% csrf_token %}<button class="in-btn in-btn-primary in-btn-sm" type="submit">Appoint as agent</button></form>
+            <form method="post" action="{% url 'inputs:agent_add' shop.pk %}" class="in-toolbar">{% csrf_token %}
+              <select name="region" class="form-select" aria-label="Region for {{ shop }}" required>
+                <option value="">Region...</option>
+                {% for name in regions %}<option value="{{ name }}" {% if name == shop.default_region %}selected{% endif %}>{{ name }}</option>{% endfor %}
+              </select>
+              <button class="in-btn in-btn-primary in-btn-sm" type="submit">Appoint for this region</button>
+            </form>
           </div>
         {% empty %}
           <div class="in-muted">No registered agrovet matches "{{ q }}". They need to register on Mkulima Smart as an Agrovet (retail shop) first.</div>
@@ -36,20 +43,28 @@
   </div></section>
 
   <section class="in-panel"><div class="in-panel-body">
-    <div class="in-panel-head"><h2 class="in-panel-title">Your agents <span class="in-pill">{{ appointed|length }}</span></h2></div>
+    <div class="in-panel-head"><h2 class="in-panel-title">Your agents by region <span class="in-pill">{{ covered|length }} region{{ covered|length|pluralize }}</span> <span class="in-pill">{{ agent_count }} agent{{ agent_count|pluralize }}</span></h2></div>
     <div class="in-list">
-      {% for link in appointed %}
-        <div class="in-list-row">
-          <div><strong>{{ link.agent }}</strong>
-            <div class="in-muted">{{ link.agent.region_or_guess }}{% if link.agent.district %}, {{ link.agent.district }}{% endif %} | {{ link.agent.phone_number }}</div>
-            <div class="in-muted">{{ link.stocked }} of your product{{ link.stocked|pluralize }} in their stock, {{ link.on_website }} on the website</div></div>
-          <form method="post" action="{% url 'inputs:agent_remove' link.pk %}" onsubmit="return confirm('Remove this agent?{% if not seller.retails %} Their website listings of your products will be hidden.{% endif %}');">{% csrf_token %}
-            <button class="in-btn in-btn-danger in-btn-sm" type="submit">Remove</button></form>
+      {% for region, links in covered %}
+        <div>
+          <h3 style="margin:.6rem 0 .2rem;font-size:1rem">{{ region }}</h3>
+          {% for link in links %}
+            <div class="in-list-row">
+              <div><strong>{{ link.agent }}</strong>
+                <div class="in-muted">{{ link.agent.region_or_guess }}{% if link.agent.district %}, {{ link.agent.district }}{% endif %} | {{ link.agent.phone_number }}</div>
+                <div class="in-muted">{{ link.stocked }} of your product{{ link.stocked|pluralize }} in their stock, {{ link.on_website }} on the website</div></div>
+              <form method="post" action="{% url 'inputs:agent_remove' link.pk %}" onsubmit="return confirm('Remove this agent from {{ region }}?{% if not seller.retails %} If it is their last region, their website listings of your products will be hidden.{% endif %}');">{% csrf_token %}
+                <button class="in-btn in-btn-danger in-btn-sm" type="submit">Remove</button></form>
+            </div>
+          {% endfor %}
         </div>
       {% empty %}
-        <div class="in-muted">No agents yet. Search for an agrovet above to appoint one.</div>
+        <div class="in-muted">No agents yet. Search for an agrovet above and appoint it for a region.</div>
       {% endfor %}
     </div>
+    {% if covered and uncovered %}
+      <p class="in-muted" style="margin:1rem 0 0"><strong>Regions without an agent ({{ uncovered|length }}):</strong> {{ uncovered|join:", " }}</p>
+    {% endif %}
   </div></section>
 </div>
 {% endblock %}

@@ -76,7 +76,8 @@ def _description(name, wholesale, agent_of=None):
     if wholesale is not None and wholesale.usage_instructions:
         parts.append("How to use: " + wholesale.usage_instructions.strip())
     if agent_of is not None:
-        parts.append(f"Sold by an authorized retail agent of {agent_of}.")
+        maker, regions = agent_of
+        parts.append(f"Sold by an authorized retail agent of {maker} in {', '.join(regions)}.")
     return "\n\n".join(parts) or name
 
 
@@ -139,12 +140,12 @@ def publish_stock_item(item):
     agent_of = None
     if wholesale is not None:
         maker = wholesale.manufacturer
-        is_agent = maker.retail_agents.filter(agent=item.shop).exists()
-        if not maker.retails and not is_agent:
+        regions = list(maker.retail_agents.filter(agent=item.shop).values_list("region", flat=True))
+        if not maker.retails and not regions:
             raise ListingError(
-                f"{maker} sells wholesale only. Ask them to appoint you as a retail agent to list their products on the website."
+                f"{maker} sells wholesale only. Ask them to appoint you as a retail agent for your region to list their products on the website."
             )
-        agent_of = maker if is_agent else None
+        agent_of = (maker, regions) if regions else None
     photo = item.image or (wholesale.primary_image.image if wholesale and wholesale.primary_image else None)
     return _publish(
         item, user, item.name, item.brand or (wholesale.brand if wholesale else ""), item.category, _description(item.name, wholesale, agent_of),
