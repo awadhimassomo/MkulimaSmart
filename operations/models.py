@@ -86,6 +86,10 @@ class InputSeller(models.Model):
         "Accept farmer orders via Kikapu WhatsApp", default=True,
         help_text="Shows your in-stock inputs to farmers on Kikapu's WhatsApp number.",
     )
+    sells_to_farmers = models.BooleanField(
+        "I also sell directly to farmers (retail)", default=True,
+        help_text="Turn this off if you only sell wholesale to shops. Your products then stay off the farmer-facing website marketplace.",
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -108,6 +112,11 @@ class InputSeller(models.Model):
     def is_agrovet(self):
         """A retail shop: sells to farmers (POS, stock) and orders stock from suppliers; it has no agronomists."""
         return self.seller_type == "agro_input_dealer"
+
+    @property
+    def retails(self):
+        """Sells to farmers directly, so may list products on the website marketplace. Agrovets always do."""
+        return self.is_agrovet or self.sells_to_farmers
 
     @property
     def can_have_agronomists(self):

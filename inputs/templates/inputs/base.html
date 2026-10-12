@@ -89,6 +89,7 @@
   {% if seller.seller_type == "manufacturer" %}
     <a href="{% url 'inputs:manufacturer_dashboard' %}" class="supplier-nav-secondary {% if active_nav == 'dashboard' %}is-active{% endif %}"><i class="fa-solid fa-chart-line"></i>&nbsp;Dashboard</a>
     <a href="{% url 'inputs:manufacturer_products' %}" class="supplier-nav-secondary {% if active_nav == 'products' %}is-active{% endif %}"><i class="fa-solid fa-boxes-stacked"></i>&nbsp;Catalog</a>
+    <a href="{% url 'inputs:agents' %}" class="supplier-nav-secondary {% if active_nav == 'agents' %}is-active{% endif %}"><i class="fa-solid fa-handshake"></i>&nbsp;Retail Agents</a>
     <a href="{% url 'inputs:manufacturer_orders' %}" class="supplier-nav-secondary {% if active_nav == 'orders' %}is-active{% endif %}"><i class="fa-solid fa-truck"></i>&nbsp;Shop Orders</a>
   {% else %}
     <a href="{% url 'inputs:shop_dashboard' %}" class="supplier-nav-secondary {% if active_nav == 'dashboard' %}is-active{% endif %}"><i class="fa-solid fa-chart-line"></i>&nbsp;Dashboard</a>

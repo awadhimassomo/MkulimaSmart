@@ -33,6 +33,7 @@ from .models import (
     Sale,
     SaleItem,
     ShopStockItem,
+    RetailAgent,
     WholesaleProduct,
     WholesaleProductImage,
 )
@@ -301,6 +302,7 @@ def catalog(request):
         **_nav_context(request, "catalog"),
         "page_obj": page,
         "stocked_ids": stocked,
+        "agent_for_ids": set(RetailAgent.objects.filter(agent=request.seller).values_list("supplier_id", flat=True)),
         "cart": _order_cart(request),
         "cart_count": len(_order_cart(request)),
         "categories": InputSeller.PRODUCT_CATEGORY_CHOICES,
@@ -614,6 +616,9 @@ def _toggle_listing(request, obj, name):
 
 
 def _list_all(request):
+    if not request.seller.retails:
+        messages.error(request, website_listing.WHOLESALE_ONLY)
+        return
     listed, skipped = website_listing.publish_all(request.seller)
     if listed:
         messages.success(request, f"{listed} product{'s' if listed != 1 else ''} listed on the website marketplace.")
@@ -651,3 +656,62 @@ def product_listing(request, pk):
 def products_listing_all(request):
     _list_all(request)
     return _back(request, "inputs:manufacturer_products")
+
+
+@manufacturer_required
+@require_POST
+def retail_setting(request):
+    """Wholesale only, or also selling to farmers directly. Wholesale only takes the seller's products off the website."""
+    seller = request.seller
+    seller.sells_to_farmers = request.POST.get("sells_to_farmers") == "on"
+    seller.save()  # hides any website listings when wholesale only (see website_listing.hide_when_wholesale_only)
+    if seller.sells_to_farmers:
+        messages.success(request, "You now also sell to farmers. Use List on website to put products on the marketplace.")
+    else:
+        messages.success(request, "You are set as wholesale only. Your products are shown to shops, not to farmers on the website.")
+    return redirect("inputs:manufacturer_products")
+
+
+# ---------------------------------------------------------------------------
+# Retail agents: a supplier appoints agrovets to retail its products to farmers
+# ---------------------------------------------------------------------------
+
+@manufacturer_required
+def agents(request):
+    supplier = request.seller
+    term = (request.GET.get("q") or "").strip()
+    appointed = list(supplier.retail_agents.select_related("agent"))
+    for link in appointed:
+        stock = ShopStockItem.objects.filter(shop=link.agent, wholesale_product__manufacturer=supplier)
+        link.stocked = stock.count()
+        link.on_website = stock.filter(marketplace_product__is_active=True).count()
+    found = []
+    if term:
+        found = list(
+            InputSeller.objects.filter(seller_type="agro_input_dealer", is_active=True, onboarding_completed=True)
+            .filter(Q(business_name__icontains=term) | Q(seller_name__icontains=term) | Q(district__icontains=term)
+                    | Q(region__icontains=term) | Q(phone_number__icontains=term))
+            .exclude(pk__in=[link.agent_id for link in appointed])
+            .order_by("business_name", "seller_name")[:15]
+        )
+    return render(request, "inputs/agents.html", {**_nav_context(request, "agents"), "appointed": appointed, "found": found, "q": term})
+
+
+@manufacturer_required
+@require_POST
+def agent_add(request, pk):
+    agent = get_object_or_404(InputSeller, pk=pk, seller_type="agro_input_dealer", is_active=True, onboarding_completed=True)
+    _, created = RetailAgent.objects.get_or_create(supplier=request.seller, agent=agent)
+    messages.success(request, f"{agent} is now your retail agent." if created else f"{agent} is already your retail agent.")
+    return redirect("inputs:agents")
+
+
+@manufacturer_required
+@require_POST
+def agent_remove(request, pk):
+    link = get_object_or_404(RetailAgent.objects.select_related("agent"), pk=pk, supplier=request.seller)
+    website_listing.hide_agent_listings(request.seller, link.agent)
+    name = str(link.agent)
+    link.delete()
+    messages.success(request, f"{name} is no longer your retail agent." + ("" if request.seller.retails else " Their website listings of your products were hidden."))
+    return redirect("inputs:agents")

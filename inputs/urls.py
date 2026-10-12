@@ -38,6 +38,10 @@ urlpatterns = [
     path("manufacturer/images/<int:pk>/", views.manufacturer_image_action, name="manufacturer_image_action"),
     path("manufacturer/products/<int:pk>/listing/", views.product_listing, name="product_listing"),
     path("manufacturer/products/listing-all/", views.products_listing_all, name="products_listing_all"),
+    path("manufacturer/retail-setting/", views.retail_setting, name="retail_setting"),
+    path("manufacturer/agents/", views.agents, name="agents"),
+    path("manufacturer/agents/<int:pk>/add/", views.agent_add, name="agent_add"),
+    path("manufacturer/agents/<int:pk>/remove/", views.agent_remove, name="agent_remove"),
     path("manufacturer/orders/", views.manufacturer_orders, name="manufacturer_orders"),
     path("manufacturer/orders/<int:pk>/", views.manufacturer_order_detail, name="manufacturer_order_detail"),
 ]

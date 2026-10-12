@@ -12,5 +12,8 @@ class InputsConfig(AppConfig):
         from . import website_listing
         from .models import ShopStockItem, WholesaleProduct
 
+        from operations.models import InputSeller
+
+        post_save.connect(website_listing.hide_when_wholesale_only, sender=InputSeller, dispatch_uid="inputs.website_listing.wholesale_only")
         for model in (ShopStockItem, WholesaleProduct):
             post_save.connect(website_listing.sync_listing, sender=model, dispatch_uid=f"inputs.website_listing.{model.__name__}")

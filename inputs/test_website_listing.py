@@ -8,7 +8,7 @@ from django.utils import timezone
 from website.models import Product
 
 from . import services, website_listing
-from .models import ShopStockItem, WholesaleProduct, WholesaleProductImage
+from .models import RetailAgent, ShopStockItem, WholesaleProduct, WholesaleProductImage
 from .tests import InputsTestBase, make_seller, png
 
 
@@ -271,3 +271,192 @@ class BrandOnTheListingTests(ListingTestBase):
         WholesaleProduct.objects.filter(pk=self.urea.pk).update(brand="Yara")
         self.assertContains(self.shop_client.get(reverse("inputs:stock_list")), "<strong>Zamseed</strong>")
         self.assertContains(self.mfr_client.get(reverse("inputs:manufacturer_products")), "<strong>Yara</strong>")
+
+
+class WholesaleOnlyTests(ListingTestBase):
+    def go_wholesale_only(self):
+        return self.mfr_client.post(reverse("inputs:retail_setting"), follow=True)
+
+    def test_suppliers_sell_to_farmers_by_default_so_nothing_changes_for_existing_ones(self):
+        self.assertTrue(self.mfr.sells_to_farmers and self.mfr.retails)
+        self.assertContains(self.mfr_client.get(reverse("inputs:manufacturer_products")), "You also sell to farmers directly")
+
+    def test_switching_to_wholesale_only_takes_their_listings_off_the_website(self):
+        self.list_product()
+        listing = Product.objects.get()
+        self.assertEqual(self.client.get(listing.get_absolute_url()).status_code, 200)
+        response = self.go_wholesale_only()
+        self.assertContains(response, "wholesale only")
+        InputSellerModel = type(self.mfr)
+        self.assertFalse(InputSellerModel.objects.get(pk=self.mfr.pk).sells_to_farmers)
+        listing.refresh_from_db()
+        self.assertFalse(listing.is_active)
+        self.assertEqual(self.client.get(listing.get_absolute_url()).status_code, 404)
+        self.assertEqual(WholesaleProduct.objects.get(pk=self.urea.pk).is_active, True)  # shops still see it in the catalog
+
+    def test_the_catalog_page_then_has_no_website_buttons(self):
+        self.go_wholesale_only()
+        page = self.mfr_client.get(reverse("inputs:manufacturer_products"))
+        self.assertContains(page, "Wholesale only")
+        self.assertContains(page, "We also sell to farmers")
+        for text in ("List on website", "Hide from website", "List all on the website", "On the website"):
+            self.assertNotContains(page, text)
+
+    def test_listing_is_refused_with_an_explanation(self):
+        self.go_wholesale_only()
+        self.assertContains(self.list_product(), "wholesale only")
+        self.assertContains(self.mfr_client.post(reverse("inputs:products_listing_all"), follow=True), "wholesale only")
+        self.assertFalse(Product.objects.filter(is_active=True).exists())
+
+    def test_the_marketplace_pages_explain_instead_of_nagging(self):
+        self.go_wholesale_only()
+        page = self.mfr_client.get(reverse("marketplace:supplier_dashboard"))
+        self.assertContains(page, "You are set up as wholesale only")
+        self.assertNotContains(page, "not on the website yet")
+        blocked = self.mfr_client.get(reverse("marketplace:supplier_product_create"), follow=True)
+        self.assertEqual(blocked.redirect_chain[-1][0], reverse("marketplace:supplier_dashboard"))
+        self.assertContains(blocked, "wholesale only")
+
+    def test_switching_back_on_allows_listing_again_but_does_not_silently_republish(self):
+        self.list_product()
+        self.go_wholesale_only()
+        self.mfr_client.post(reverse("inputs:retail_setting"), {"sells_to_farmers": "on"})
+        self.assertTrue(type(self.mfr).objects.get(pk=self.mfr.pk).sells_to_farmers)
+        self.assertFalse(Product.objects.get().is_active)  # still hidden until they choose to list
+        self.assertContains(self.list_product(), "is now on the website marketplace")
+        self.assertTrue(Product.objects.get().is_active)
+
+    def test_agrovets_always_sell_to_farmers(self):
+        type(self.shop).objects.filter(pk=self.shop.pk).update(sells_to_farmers=False)
+        shop = type(self.shop).objects.get(pk=self.shop.pk)
+        self.assertTrue(shop.retails)
+        self.assertContains(self.list_item(), "is now on the website marketplace")
+
+    def test_a_wholesale_only_seedling_seller_has_no_website_column_in_stock(self):
+        user, seller = make_seller("0700000077", "seedling_seller", "Green Seedlings")
+        seller.sells_to_farmers = False
+        seller.save()
+        ShopStockItem.objects.create(shop=seller, name="Tomato seedlings", category="seedlings", cost_price=1, selling_price=2, quantity=3)
+        client = Client()
+        client.force_login(user)
+        page = client.get(reverse("inputs:stock_list"))
+        self.assertContains(page, "Tomato seedlings")
+        self.assertNotContains(page, "List on website")
+        self.assertNotContains(page, "<th>Website</th>")
+
+    def test_the_profile_form_and_the_mobile_api_carry_the_setting(self):
+        from marketplace.forms import SupplierOnboardingForm
+
+        form = SupplierOnboardingForm(instance=self.mfr)
+        self.assertIn("sells_to_farmers", form.fields)
+        self.assertEqual(form.fields["sells_to_farmers"].label, "I also sell directly to farmers (retail)")
+        from .serializers import SellerSerializer
+
+        self.assertTrue(SellerSerializer(self.mfr).data["sells_to_farmers"])
+
+    def test_only_manufacturers_can_use_the_switch(self):
+        self.assertEqual(self.shop_client.post(reverse("inputs:retail_setting")).status_code, 302)
+        self.assertTrue(type(self.shop).objects.get(pk=self.shop.pk).sells_to_farmers)
+
+
+class RetailAgentTests(ListingTestBase):
+    def setUp(self):
+        super().setUp()
+        self.agent_user, self.agent = make_seller("0700000066", "agro_input_dealer", "Moshi Agrovet")
+        self.agent_client = Client()
+        self.agent_client.force_login(self.agent_user)
+
+    def go_wholesale_only(self):
+        self.mfr_client.post(reverse("inputs:retail_setting"))
+
+    def stock_of_urea(self, shop=None):
+        return ShopStockItem.objects.create(
+            shop=shop or self.shop, wholesale_product=WholesaleProduct.objects.get(pk=self.urea.pk), name="Urea 46% 50kg", category="fertilizer",
+            cost_price=Decimal("60000"), selling_price=Decimal("75000"), quantity=Decimal("8"),
+        )
+
+    def appoint(self, shop=None):
+        return self.mfr_client.post(reverse("inputs:agent_add", args=[(shop or self.agent).pk]), follow=True)
+
+    def test_a_supplier_finds_a_registered_agrovet_and_appoints_it(self):
+        page = self.mfr_client.get(reverse("inputs:agents"), {"q": "Moshi"})
+        self.assertContains(page, "Moshi Agrovet")
+        self.assertContains(page, "Appoint as agent")
+        self.assertContains(self.appoint(), "is now your retail agent")
+        self.assertEqual(self.mfr.retail_agents.count(), 1)
+        self.assertNotContains(self.mfr_client.get(reverse("inputs:agents"), {"q": "Moshi"}), "Appoint as agent")  # already appointed
+        self.assertContains(self.mfr_client.get(reverse("inputs:agents")), "Moshi Agrovet")
+
+    def test_appointing_twice_does_not_duplicate(self):
+        self.appoint()
+        self.assertContains(self.appoint(), "already your retail agent")
+        self.assertEqual(self.mfr.retail_agents.count(), 1)
+
+    def test_only_registered_agrovets_can_be_appointed_and_only_by_suppliers(self):
+        other_user, other_maker = make_seller("0700000055", "manufacturer", "Other Maker")
+        self.assertEqual(self.mfr_client.post(reverse("inputs:agent_add", args=[other_maker.pk])).status_code, 404)
+        self.assertEqual(self.agent_client.post(reverse("inputs:agent_add", args=[self.shop.pk])).status_code, 302)
+        self.assertFalse(self.mfr.retail_agents.exists())
+        self.assertNotContains(self.mfr_client.get(reverse("inputs:agents"), {"q": "Other Maker"}), "Appoint as agent")
+
+    def test_when_the_supplier_is_wholesale_only_only_its_agents_can_list_its_products_on_the_website(self):
+        self.go_wholesale_only()
+        stranger_item = self.stock_of_urea(self.shop)
+        refused = self.list_item(stranger_item)
+        self.assertContains(refused, "sells wholesale only. Ask them to appoint you as a retail agent")
+        self.assertFalse(Product.objects.filter(is_active=True).exists())
+
+        agent_item = self.stock_of_urea(self.agent)
+        self.appoint()
+        accepted = self.list_item(agent_item, client=self.agent_client)
+        self.assertContains(accepted, "is now on the website marketplace")
+        description = ShopStockItem.objects.get(pk=agent_item.pk).marketplace_product.description
+        self.assertIn("authorized retail agent of Kilimo Fertilizers Ltd", description)
+
+    def test_a_supplier_that_retails_needs_no_agents_for_shops_to_list_its_products(self):
+        item = self.stock_of_urea(self.shop)
+        self.assertContains(self.list_item(item), "is now on the website marketplace")
+
+    def test_removing_an_agent_takes_its_listings_of_that_supplier_off_the_website(self):
+        self.go_wholesale_only()
+        self.appoint()
+        item = self.stock_of_urea(self.agent)
+        self.list_item(item, client=self.agent_client)
+        listing = ShopStockItem.objects.get(pk=item.pk).marketplace_product
+        self.assertTrue(listing.is_active)
+        link = self.mfr.retail_agents.get()
+        response = self.mfr_client.post(reverse("inputs:agent_remove", args=[link.pk]), follow=True)
+        self.assertContains(response, "no longer your retail agent")
+        listing.refresh_from_db()
+        self.assertFalse(listing.is_active)
+        self.assertEqual(self.client.get(listing.get_absolute_url()).status_code, 404)
+        self.assertFalse(self.mfr.retail_agents.exists())
+
+    def test_removing_an_agent_does_not_hide_anything_when_the_supplier_retails(self):
+        self.appoint()
+        item = self.stock_of_urea(self.agent)
+        self.list_item(item, client=self.agent_client)
+        self.mfr_client.post(reverse("inputs:agent_remove", args=[self.mfr.retail_agents.get().pk]))
+        self.assertTrue(ShopStockItem.objects.get(pk=item.pk).marketplace_product.is_active)
+
+    def test_one_supplier_cannot_remove_anothers_agent(self):
+        other_user, other_maker = make_seller("0700000054", "manufacturer", "Other Maker")
+        link = RetailAgent.objects.create(supplier=other_maker, agent=self.agent)
+        self.assertEqual(self.mfr_client.post(reverse("inputs:agent_remove", args=[link.pk])).status_code, 404)
+
+    def test_the_agents_page_counts_stock_and_website_listings(self):
+        self.appoint()
+        item = self.stock_of_urea(self.agent)
+        self.stock_of_urea(self.agent)
+        self.list_item(item, client=self.agent_client)
+        page = self.mfr_client.get(reverse("inputs:agents"))
+        self.assertContains(page, "2 of your products in their stock, 1 on the website")
+
+    def test_an_agent_sees_whose_agent_they_are_in_the_catalog(self):
+        self.assertNotContains(self.agent_client.get(reverse("inputs:catalog"), {"region": ""}), "You are their retail agent")
+        self.appoint()
+        self.assertContains(self.agent_client.get(reverse("inputs:catalog"), {"region": ""}), "You are their retail agent")
+
+    def test_the_agents_tab_is_for_suppliers(self):
+        self.assertContains(self.mfr_client.get(reverse("inputs:manufacturer_dashboard")), reverse("inputs:agents"))
+        self.assertNotContains(self.agent_client.get(reverse("inputs:shop_dashboard")), reverse("inputs:agents"))

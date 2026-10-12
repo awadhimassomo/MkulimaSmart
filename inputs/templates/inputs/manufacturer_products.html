@@ -7,9 +7,19 @@
 
 {% block supplier_content %}
 <div class="in-stack">
+  <section class="in-panel"><div class="in-panel-body in-panel-head">
+    <div>
+      <h2 class="in-panel-title">{% if seller.retails %}You also sell to farmers directly{% else %}Wholesale only{% endif %}</h2>
+      <div class="in-muted">{% if seller.retails %}Your products can be put on the website marketplace at the suggested retail price. If you only sell to shops, switch this off and farmers will not see your products on the website.{% else %}Your products are shown to input shops only, not to farmers on the website. Switch this on if you also sell to farmers directly.{% endif %}</div>
+    </div>
+    <form method="post" action="{% url 'inputs:retail_setting' %}"{% if seller.retails %} onsubmit="return confirm('Switching this off hides your products from the website marketplace. Continue?');"{% endif %}>{% csrf_token %}
+      {% if not seller.retails %}<input type="hidden" name="sells_to_farmers" value="on">{% endif %}
+      <button class="in-btn in-btn-secondary" type="submit">{% if seller.retails %}We only sell wholesale{% else %}We also sell to farmers{% endif %}</button>
+    </form>
+  </div></section>
   <div class="in-toolbar">
     <a href="{% url 'inputs:manufacturer_product_create' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-plus"></i> Add a product</a>
-    {% if unlisted_count %}<form method="post" action="{% url 'inputs:products_listing_all' %}">{% csrf_token %}
+    {% if seller.retails and unlisted_count %}<form method="post" action="{% url 'inputs:products_listing_all' %}">{% csrf_token %}
       <button class="in-btn in-btn-secondary" type="submit">List all on the website ({{ unlisted_count }})</button></form>{% endif %}
   </div>
   {% if products %}
@@ -26,15 +36,15 @@
             <div><strong class="in-money">TZS {{ product.wholesale_price|floatformat:0|intcomma }}</strong> <span class="in-muted">/ {{ product.get_unit_display|lower }}</span></div>
             <div class="in-muted">{{ product.stock_available|intcomma }} available · {{ product.images.all|length }} photo{{ product.images.all|length|pluralize }}</div>
             <div>{% if product.is_active %}<span class="in-pill in-pill-ok">Visible to shops</span>{% else %}<span class="in-pill">Hidden from shops</span>{% endif %}
-              {% if product.marketplace_product and product.marketplace_product.is_active %}<span class="in-pill in-pill-ok">On the website</span>{% else %}<span class="in-pill">Not on the website</span>{% endif %}</div>
-            <form method="post" action="{% url 'inputs:product_listing' product.pk %}">{% csrf_token %}
+              {% if seller.retails %}{% if product.marketplace_product and product.marketplace_product.is_active %}<span class="in-pill in-pill-ok">On the website</span>{% else %}<span class="in-pill">Not on the website</span>{% endif %}{% endif %}</div>
+            {% if seller.retails %}<form method="post" action="{% url 'inputs:product_listing' product.pk %}">{% csrf_token %}
               {% if product.marketplace_product and product.marketplace_product.is_active %}
                 <input type="hidden" name="action" value="hide">
                 <button class="in-btn in-btn-secondary in-btn-sm" type="submit">Hide from website</button>
               {% else %}
                 <button class="in-btn in-btn-primary in-btn-sm" type="submit">List on website</button>
               {% endif %}
-            </form>
+            </form>{% endif %}
           </div>
         </article>
         {% endwith %}

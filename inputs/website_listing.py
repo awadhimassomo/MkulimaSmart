@@ -66,7 +66,7 @@ def _facts(wholesale):
     return facts
 
 
-def _description(name, wholesale):
+def _description(name, wholesale, agent_of=None):
     parts = []
     if wholesale is not None and wholesale.description:
         parts.append(wholesale.description.strip())
@@ -75,6 +75,8 @@ def _description(name, wholesale):
         parts.append("\n".join(facts))
     if wholesale is not None and wholesale.usage_instructions:
         parts.append("How to use: " + wholesale.usage_instructions.strip())
+    if agent_of is not None:
+        parts.append(f"Sold by an authorized retail agent of {agent_of}.")
     return "\n\n".join(parts) or name
 
 
@@ -116,8 +118,16 @@ def _publish(obj, user, name, brand, category_key, description, price, stock, ph
 # One product
 # ---------------------------------------------------------------------------
 
+WHOLESALE_ONLY = (
+    "You are set up as wholesale only, so your products are not shown to farmers on the website. "
+    "If you also sell to farmers directly, switch that on first."
+)
+
+
 def publish_stock_item(item):
     """List a shop's stock item on the marketplace."""
+    if not item.shop.retails:
+        raise ListingError(WHOLESALE_ONLY)
     user = item.shop.user
     if user is None:
         raise ListingError("This shop has no login account, so it cannot list products on the website.")
@@ -126,15 +136,26 @@ def publish_stock_item(item):
     if item.is_expired:
         raise ListingError(f"{item.name} is past its expiry date, so it was not listed.")
     wholesale = item.wholesale_product
+    agent_of = None
+    if wholesale is not None:
+        maker = wholesale.manufacturer
+        is_agent = maker.retail_agents.filter(agent=item.shop).exists()
+        if not maker.retails and not is_agent:
+            raise ListingError(
+                f"{maker} sells wholesale only. Ask them to appoint you as a retail agent to list their products on the website."
+            )
+        agent_of = maker if is_agent else None
     photo = item.image or (wholesale.primary_image.image if wholesale and wholesale.primary_image else None)
     return _publish(
-        item, user, item.name, item.brand or (wholesale.brand if wholesale else ""), item.category, _description(item.name, wholesale),
+        item, user, item.name, item.brand or (wholesale.brand if wholesale else ""), item.category, _description(item.name, wholesale, agent_of),
         item.selling_price, max(0, int(item.quantity)), photo,
     )
 
 
 def publish_wholesale(product):
     """List a manufacturer's catalog product on the marketplace, at its suggested retail price."""
+    if not product.manufacturer.retails:
+        raise ListingError(WHOLESALE_ONLY)
     user = product.manufacturer.user
     if user is None:
         raise ListingError("This company has no login account, so it cannot list products on the website.")
@@ -177,7 +198,9 @@ def unlisted_wholesale(manufacturer):
 
 
 def unlisted_for(seller):
-    """The products of this seller that are not on the website yet (their catalog, or their stock for a shop)."""
+    """The products of this seller that are not on the website yet (their catalog, or their stock for a shop). None if wholesale only."""
+    if not seller.retails:
+        return unlisted_wholesale(seller).none() if seller.seller_type == "manufacturer" else unlisted_stock(seller).none()
     return unlisted_wholesale(seller) if seller.seller_type == "manufacturer" else unlisted_stock(seller)
 
 
@@ -207,3 +230,21 @@ def sync_listing(sender, instance, **kwargs):
     else:
         price, stock = instance.suggested_retail_price or instance.wholesale_price, instance.stock_available
     Product.objects.filter(pk=instance.marketplace_product_id).update(price=price, stock=max(0, stock))
+
+
+def hide_when_wholesale_only(sender, instance, **kwargs):
+    """post_save receiver for InputSeller: someone who does not sell to farmers has nothing on the farmer-facing website."""
+    if instance.retails or instance.user_id is None:
+        return
+    Product.objects.filter(supplier_id=instance.user_id, is_active=True).update(is_active=False)
+
+
+def hide_agent_listings(supplier, agent):
+    """When an agent is removed, the website listings it made from the supplier's products come down."""
+    from .models import ShopStockItem
+
+    ids = ShopStockItem.objects.filter(shop=agent, wholesale_product__manufacturer=supplier, marketplace_product__isnull=False).values_list(
+        "marketplace_product_id", flat=True
+    )
+    if not supplier.retails:
+        Product.objects.filter(pk__in=list(ids)).update(is_active=False)

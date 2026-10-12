@@ -441,3 +441,21 @@ class FarmerOrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product_name}"
+
+
+class RetailAgent(models.Model):
+    """
+    A supplier appointing an agrovet to retail its products to farmers. A supplier that only sells wholesale lets its
+    appointed agents (and nobody else) put its products on the website marketplace.
+    """
+
+    supplier = models.ForeignKey(InputSeller, on_delete=models.CASCADE, related_name="retail_agents")
+    agent = models.ForeignKey(InputSeller, on_delete=models.CASCADE, related_name="agent_for")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["agent__business_name", "agent__seller_name"]
+        constraints = [models.UniqueConstraint(fields=["supplier", "agent"], name="unique_retail_agent")]
+
+    def __str__(self):
+        return f"{self.agent} is an agent of {self.supplier}"

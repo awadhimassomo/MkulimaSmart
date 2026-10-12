@@ -155,6 +155,7 @@ class SupplierOnboardingForm(forms.ModelForm):
             "products_offered",
             "certification_details",
             "certificate_file",
+            "sells_to_farmers",
             "list_on_kikapu",
         ]
         widgets = {

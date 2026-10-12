@@ -275,6 +275,13 @@
 {% endblock %}
 
 {% block supplier_content %}
+{% if wholesale_only %}
+<div style="background:#eef4e6;border:1px solid #cfe0bd;border-radius:1rem;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap">
+  <div><strong>You are set up as wholesale only.</strong>
+    <div style="color:#3b4c40">Your products are shown to input shops, not to farmers on the website. If you also sell to farmers directly, turn that on in your profile.</div></div>
+  <a href="{% url 'marketplace:supplier_onboarding' %}" class="supplier-nav-primary" style="padding:.6rem 1rem;border-radius:999px;text-decoration:none;font-weight:700">Open my profile</a>
+</div>
+{% endif %}
 {% if unlisted_inputs %}
 <div style="background:#fef3c7;border:1px solid #f5d98b;border-radius:1rem;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap">
   <div><strong>{{ unlisted_inputs.count }} product{{ unlisted_inputs.count|pluralize }} in your {{ unlisted_inputs.where }} {{ unlisted_inputs.count|pluralize:"is,are" }} not on the website yet.</strong>

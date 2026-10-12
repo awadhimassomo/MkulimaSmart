@@ -54,7 +54,7 @@ class SellerSerializer(BaseSerializer):
         fields = [
             "id", "business_name", "seller_name", "phone_number", "location", "region", "district",
             "latitude", "longitude", "seller_type", "seller_type_display", "role", "products_offered",
-            "certification_details", "certificate_file", "list_on_kikapu", "onboarding_completed",
+            "certification_details", "certificate_file", "sells_to_farmers", "list_on_kikapu", "onboarding_completed",
         ]
 
     def get_role(self, obj):

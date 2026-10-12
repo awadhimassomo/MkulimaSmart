@@ -56,7 +56,7 @@
             {% if image %}<img src="{{ image.image.url }}" alt="{{ product.name }}" loading="lazy">{% else %}<i class="fa-solid fa-seedling"></i>{% endif %}
           </a>
           <div class="in-product-body">
-            <div class="in-muted">{% if product.brand %}<strong>{{ product.brand }}</strong> · {% endif %}{{ product.manufacturer }}</div>
+            <div class="in-muted">{% if product.brand %}<strong>{{ product.brand }}</strong> · {% endif %}{{ product.manufacturer }}{% if product.manufacturer_id in agent_for_ids %} <span class="in-pill in-pill-ok">You are their retail agent</span>{% endif %}</div>
             <a href="{% url 'inputs:catalog_product' product.pk %}" class="in-product-name in-link">{{ product.name }}</a>
             <div class="in-muted">{% if product.pack_size %}{{ product.pack_size }} · {% endif %}{{ product.get_category_display }}{% if product.composition %} · {{ product.composition }}{% endif %}</div>
             {% if product.suitable_regions or product.soil_type %}
