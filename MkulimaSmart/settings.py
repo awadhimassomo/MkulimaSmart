@@ -314,3 +314,16 @@ CALLCENTER_REPLY_SECONDS = int(os.environ.get('CALLCENTER_REPLY_SECONDS', '600')
 CALLCENTER_ONLINE_SECONDS = int(os.environ.get('CALLCENTER_ONLINE_SECONDS', '60'))  # console open in the last minute = online
 CALLCENTER_AI_STICKY_MINUTES = int(os.environ.get('CALLCENTER_AI_STICKY_MINUTES', '30'))  # after the AI answers, it keeps the chat this long
 CALLCENTER_INVITE_DAYS = int(os.environ.get('CALLCENTER_INVITE_DAYS', '7'))
+
+
+# Email (password reset links and notices). The values live in the server's .env, nothing is set here:
+# EMAIL_HOST, EMAIL_PORT, EMAIL_USE_SSL, EMAIL_USE_TLS, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '465'))
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1', 'yes')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_TIMEOUT = 15  # seconds; a mail server that does not answer must not hang the page

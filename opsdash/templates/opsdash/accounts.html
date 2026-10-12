@@ -2,7 +2,7 @@
 {% block title %}Accounts{% endblock %}
 {% block content %}
 <h1>Accounts</h1>
-<p class="muted">Find someone by email, phone number or name, and give them a link to set a new password. You never see or choose their password.</p>
+<p class="muted">Find someone by email, phone number or name, and send them a link to set a new password, by email or by copying the link yourself. You never see or choose their password.</p>
 
 <div class="panel">
   <form method="get" class="filters">
@@ -31,8 +31,12 @@
         <span class="muted">{{ u.email|default:"no email" }}{% if u.phone_number %} | {{ u.phone_number }}{% endif %}{% if u.last_login %} | last sign-in {{ u.last_login|timesince }} ago{% else %} | never signed in{% endif %}</span>
         {% if not u.email %}<span class="muted">This account has no email, so it cannot sign in with a password until one is added.</span>{% endif %}
       </div>
-      <form method="post" action="{% url 'ops:account_reset_link' u.pk %}">{% csrf_token %}
-        <button class="btn sm" type="submit">Create reset link</button></form>
+      <div class="actions" style="margin-top:0">
+        {% if u.email %}<form method="post" action="{% url 'ops:account_reset_email' u.pk %}">{% csrf_token %}
+          <button class="btn sm" type="submit">Email the link</button></form>{% endif %}
+        <form method="post" action="{% url 'ops:account_reset_link' u.pk %}">{% csrf_token %}
+          <button class="btn sm secondary" type="submit">Show a link to copy</button></form>
+      </div>
     </div></div>
   {% empty %}
     <p class="empty">Nobody matches "{{ term }}".</p>

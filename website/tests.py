@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -129,3 +131,36 @@ class UserAdminTests(TestCase):
         weak = self.client.post(reverse("admin:website_user_add"), {**base, "password1": "12345678", "password2": "12345678"})
         self.assertEqual(weak.status_code, 200)
         self.assertFalse(User.objects.filter(email="x@y.test").exists())
+
+
+class ForgotPasswordTests(TestCase):
+    def setUp(self):
+        translation.activate("en")
+        self.addCleanup(translation.deactivate)
+        self.person = User.objects.create_user(password="old-pass-123", email="neema@zamseed.test")
+
+    def test_the_forgot_password_page_emails_a_working_link(self):
+        from django.core import mail
+
+        response = self.client.post(reverse("website:password_reset"), {"email": "neema@zamseed.test"})
+        self.assertRedirects(response, reverse("website:password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["neema@zamseed.test"])
+        link = next(word for word in mail.outbox[0].body.split() if "/reset/" in word)
+        opened = self.client.get(link.replace("http://testserver", ""), follow=True)
+        form_url = opened.redirect_chain[-1][0]
+        self.client.post(form_url, {"new_password1": "Brand-new-pass-77", "new_password2": "Brand-new-pass-77"})
+        self.person.refresh_from_db()
+        self.assertTrue(self.person.check_password("Brand-new-pass-77"))
+
+    def test_an_unknown_email_looks_the_same_and_sends_nothing(self):
+        from django.core import mail
+
+        response = self.client.post(reverse("website:password_reset"), {"email": "nobody@nowhere.test"})
+        self.assertRedirects(response, reverse("website:password_reset_done"))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_a_broken_mail_server_does_not_crash_the_page(self):
+        with mock.patch("django.contrib.auth.forms.PasswordResetForm.send_mail", side_effect=OSError("down")):
+            response = self.client.post(reverse("website:password_reset"), {"email": "neema@zamseed.test"})
+        self.assertRedirects(response, reverse("website:password_reset_done"))

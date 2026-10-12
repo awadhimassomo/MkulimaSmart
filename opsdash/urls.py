@@ -14,6 +14,7 @@ urlpatterns = [
     path("chats/<int:pk>/", views.chat_detail, name="chat"),
     path("accounts/", views.accounts, name="accounts"),
     path("accounts/<int:pk>/reset-link/", views.account_reset_link, name="account_reset_link"),
+    path("accounts/<int:pk>/reset-email/", views.account_reset_email, name="account_reset_email"),
     path("deliveries/", views.deliveries, name="deliveries"),
     path("deliveries/<str:kind>/<int:pk>/retry/", views.delivery_retry, name="delivery_retry"),
 ]

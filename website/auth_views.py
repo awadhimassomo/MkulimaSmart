@@ -200,9 +200,18 @@ def logout_view(request):
 
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'auth/password_reset.html'
-    email_template_name = 'auth/emails/password_reset_email.html'
+    email_template_name = 'auth/emails/password_reset_email.txt'
     subject_template_name = 'auth/emails/password_reset_subject.txt'
     success_url = reverse_lazy('website:password_reset_done')
+
+    def form_valid(self, form):
+        # If the mail server is down or not set up, do not crash the page and do not reveal whether the account exists:
+        # show the same "check your email" page and record the problem for the administrators.
+        try:
+            return super().form_valid(form)
+        except Exception:
+            logger.exception('Password reset email could not be sent')
+            return redirect(self.get_success_url())
 
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):

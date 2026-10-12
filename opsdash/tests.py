@@ -323,3 +323,65 @@ class AccountsTests(OpsBase):
 
     def test_it_is_in_the_navigation(self):
         self.assertContains(self.client.get(reverse("ops:overview")), reverse("ops:accounts"))
+
+
+class AccountEmailTests(OpsBase):
+    def setUp(self):
+        super().setUp()
+        self.person = User.objects.create_user(password="old-pass-123", email="neema@zamseed.test", first_name="Neema")
+
+    def send(self, user=None):
+        return self.client.post(reverse("ops:account_reset_email", args=[(user or self.person).pk]), follow=True)
+
+    def test_the_email_goes_to_the_person_with_a_working_link(self):
+        from django.core import mail
+
+        response = self.send()
+        self.assertContains(response, "A reset email was sent to neema@zamseed.test")
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["neema@zamseed.test"])
+        self.assertIn("Reset your Mkulima Smart password", message.subject)
+        self.assertIn("Weka upya nenosiri", message.subject)
+        self.assertEqual(len(message.subject.splitlines()), 1)
+        link = next(word for word in message.body.split() if "/reset/" in word)
+        self.assertTrue(link.startswith("http"))
+        guest = Client()
+        form_url = guest.get(link.replace("http://testserver", ""), follow=True).redirect_chain[-1][0]
+        guest.post(form_url, {"new_password1": "Brand-new-pass-77", "new_password2": "Brand-new-pass-77"})
+        self.person.refresh_from_db()
+        self.assertTrue(self.person.check_password("Brand-new-pass-77"))
+
+    def test_the_email_is_in_english_and_swahili(self):
+        from django.core import mail
+
+        self.send()
+        self.assertIn("Someone asked to reset the password", mail.outbox[0].body)
+        self.assertIn("Kuna mtu ameomba kuweka upya nenosiri", mail.outbox[0].body)
+
+    def test_an_account_without_email_gets_a_helpful_message(self):
+        from django.core import mail
+
+        phone_only = User.objects.create_user(password="pass12345", phone_number="+255799000111")
+        self.assertContains(self.send(phone_only), "has no email address")
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_a_mail_server_problem_is_reported_not_a_crash(self):
+        with mock.patch("opsdash.views.send_mail", side_effect=OSError("connection refused")):
+            response = self.send()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "could not be sent")
+
+    def test_the_email_button_is_only_offered_when_there_is_an_address(self):
+        User.objects.create_user(password="pass12345", phone_number="+255799000111", first_name="Phoneonly")
+        page = self.client.get(reverse("ops:accounts"), {"q": "Phoneonly"})
+        self.assertNotContains(page, "Email the link")
+        self.assertContains(self.client.get(reverse("ops:accounts"), {"q": "neema"}), "Email the link")
+
+    def test_only_administrators_can_send(self):
+        from django.core import mail
+
+        staff = Client()
+        staff.force_login(User.objects.create_user(password="pass12345", email="staff@gov.test", is_staff=True))
+        self.assertEqual(staff.post(reverse("ops:account_reset_email", args=[self.person.pk])).status_code, 403)
+        self.assertEqual(len(mail.outbox), 0)

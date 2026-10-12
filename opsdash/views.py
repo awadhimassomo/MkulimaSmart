@@ -11,7 +11,10 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.template.loader import render_to_string
+from urllib.parse import quote
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -273,3 +276,32 @@ def account_reset_link(request, pk):
     request.GET = request.GET.copy()
     request.GET["q"] = user.email or user.phone_number or ""
     return accounts(request, reset_for=user, link=_reset_link(request, user))
+
+
+@ops_required
+@require_POST
+def account_reset_email(request, pk):
+    """Email the person a one-time link to choose a new password (the same email the Forgot password page sends)."""
+    user = get_object_or_404(User, pk=pk)
+    back = f"{reverse('ops:accounts')}?q={quote(user.email or user.phone_number or '')}"
+    if not user.email:
+        messages.error(request, "This account has no email address. Copy a reset link instead and send it yourself.")
+        return redirect(back)
+    context = {
+        "user": user,
+        "protocol": "https" if request.is_secure() else "http",
+        "domain": request.get_host(),
+        "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+        "token": default_token_generator.make_token(user),
+    }
+    subject = "".join(render_to_string("auth/emails/password_reset_subject.txt", context).splitlines())
+    body = render_to_string("auth/emails/password_reset_email.txt", context)
+    try:
+        send_mail(subject, body, None, [user.email], fail_silently=False)
+    except Exception:
+        logger.exception("Reset email to user %s could not be sent", user.pk)
+        messages.error(request, "The email could not be sent. Check the email settings on the server, or copy a reset link and send it yourself.")
+    else:
+        logger.info("Password reset email sent to user %s by %s", user.pk, request.user.pk)
+        messages.success(request, f"A reset email was sent to {user.email}.")
+    return redirect(back)
