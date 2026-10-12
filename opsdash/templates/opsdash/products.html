@@ -1,0 +1,48 @@
+{% extends "opsdash/base.html" %}
+{% load money %}
+{% block title %}Listings{% endblock %}
+{% block content %}
+<h1>Marketplace listings</h1>
+<p class="muted">Every listing sellers have added, and whether it shows on the website. A listing is hidden when it is switched off, its category is switched off, or the seller's account is switched off.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">Listings</div><div class="value">{{ total }}</div></div>
+  <div class="kpi"><div class="label">Hidden on the website</div><div class="value">{{ hidden }}</div><div class="note">{{ switched_off }} switched off by the seller</div></div>
+  <div class="kpi"><div class="label">Out of stock</div><div class="value">{{ out_of_stock }}</div><div class="note">still shown, marked Out of Stock</div></div>
+</div>
+
+<div class="panel">
+  <form method="get" class="filters">
+    <div><label for="q" style="margin-top:0">Product, seller email, phone or name</label><input type="search" id="q" name="q" value="{{ term }}"></div>
+    <div><label for="show" style="margin-top:0">Show</label>
+      <select id="show" name="show"><option value="">All listings</option><option value="hidden" {% if show == "hidden" %}selected{% endif %}>Only hidden ones</option></select></div>
+    <button class="btn" type="submit">Filter</button>
+  </form>
+</div>
+
+<div class="panel">
+  {% for p in page %}
+    <div class="row"><div class="row-top">
+      <div>
+        <b>{{ p.name }}
+          {% if p.reasons %}<span class="pill no">Hidden</span>{% else %}<span class="pill ok">Shown</span>{% endif %}
+          {% if p.stock == 0 %}<span class="pill wait">Out of stock</span>{% endif %}</b>
+        <span class="muted">TSh {{ p.price|tzs }} | {{ p.category.name }} | {{ p.supplier.get_full_name|default:p.supplier.email|default:p.supplier.phone_number }}{% if p.supplier.email %} ({{ p.supplier.email }}){% endif %} | added {{ p.created_at|date:"j M Y" }}</span>
+        {% for reason in p.reasons %}<span class="muted" style="color:#991b1b">{{ reason }}</span>{% endfor %}
+      </div>
+      <form method="post" action="{% url 'ops:product_toggle' p.pk %}">{% csrf_token %}
+        <input type="hidden" name="back" value="{{ request.GET.urlencode }}">
+        <button class="btn sm {% if p.is_active %}danger{% else %}secondary{% endif %}" type="submit">{% if p.is_active %}Hide from website{% else %}Show on website{% endif %}</button></form>
+    </div></div>
+  {% empty %}
+    <p class="empty">No listings match.</p>
+  {% endfor %}
+  {% if page.paginator.num_pages > 1 %}
+    <div class="pager">
+      {% if page.has_previous %}<a class="btn sm secondary" href="?page={{ page.previous_page_number }}{% if page_query %}&{{ page_query }}{% endif %}">Previous</a>{% endif %}
+      <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a class="btn sm secondary" href="?page={{ page.next_page_number }}{% if page_query %}&{{ page_query }}{% endif %}">Next</a>{% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

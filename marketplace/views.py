@@ -34,6 +34,12 @@ def supplier_can_manage_qr(seller_profile):
     return seller_profile.seller_type in seedling_ready_sellers or bool(supplier_products & seedling_product_tags)
 
 
+def _without_page(request):
+    params = request.GET.copy()
+    params.pop("page", None)
+    return params.urlencode()
+
+
 def home(request):
     """
     Main marketplace page with categories and featured products
@@ -47,7 +53,7 @@ def home(request):
     page_num   = request.GET.get("page", 1)
     order      = request.GET.get("order") or "-created_at"  # e.g. -created_at, price, -price
 
-    qs = Product.objects.select_related("category", "supplier").prefetch_related("images")
+    qs = Product.objects.filter(is_active=True).select_related("category", "supplier").prefetch_related("images")
 
     # search
     if q:
@@ -89,6 +95,7 @@ def home(request):
         "products": page_obj.object_list,
         "page_obj": page_obj,
         "is_paginated": page_obj.has_other_pages(),
+        "page_query": _without_page(request),
         "categories": categories,
         "regions": regions,
         "featured_products": featured_products,

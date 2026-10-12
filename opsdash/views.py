@@ -26,6 +26,7 @@ from django.views.decorators.http import require_POST
 from assistant.models import Conversation
 from callcenter.models import Agronomist, Case, Heartbeat, Invite
 from gova_pp.models import FarmerMessage, GovernmentOfficial
+from website.models import Product
 from operations.models import InputSeller
 from kikapu_bridge.models import ReplyDelivery, WebhookDelivery
 
@@ -308,3 +309,58 @@ def account_reset_email(request, pk):
         logger.info("Password reset email sent to user %s by %s", user.pk, request.user.pk)
         messages.success(request, f"A reset email was sent to {user.email}.")
     return redirect(back)
+
+
+# ---------------------------------------------------------------------------
+# Marketplace listings: what shows on the website and why something does not
+# ---------------------------------------------------------------------------
+
+HIDDEN = Q(is_active=False) | Q(category__is_active=False) | Q(supplier__is_active=False)
+
+
+def hidden_reasons(product):
+    """Why a listing does not show on the website (empty when it does)."""
+    reasons = []
+    if not product.is_active:
+        reasons.append("Switched off on the listing")
+    if not product.category.is_active:
+        reasons.append("Its category is switched off")
+    if not product.supplier.is_active:
+        reasons.append("The seller's account is switched off")
+    return reasons
+
+
+@ops_required
+def products(request):
+    term = request.GET.get("q", "").strip()
+    show = request.GET.get("show", "")
+    rows = Product.objects.select_related("category", "supplier").order_by("-created_at")
+    if term:
+        rows = rows.filter(
+            Q(name__icontains=term) | Q(supplier__email__icontains=term) | Q(supplier__phone_number__icontains=term)
+            | Q(supplier__first_name__icontains=term) | Q(supplier__last_name__icontains=term)
+        )
+    if show == "hidden":
+        rows = rows.filter(HIDDEN)
+    page = Paginator(rows, 25).get_page(request.GET.get("page"))
+    for product in page:
+        product.reasons = hidden_reasons(product)
+    query = request.GET.copy()
+    query.pop("page", None)
+    return render(request, "opsdash/products.html", {
+        "nav": "products", "page": page, "term": term, "show": show, "page_query": query.urlencode(),
+        "total": Product.objects.count(), "hidden": Product.objects.filter(HIDDEN).count(),
+        "switched_off": Product.objects.filter(is_active=False).count(),
+        "out_of_stock": Product.objects.filter(is_active=True, stock=0).count(),
+    })
+
+
+@ops_required
+@require_POST
+def product_toggle(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    product.is_active = not product.is_active
+    product.save(update_fields=["is_active", "updated_at"])
+    messages.success(request, f"{product.name} is now {'shown' if product.is_active else 'hidden'} on the website.")
+    back = request.POST.get("back", "")
+    return redirect(f"{reverse('ops:products')}?{back}" if back else "ops:products")

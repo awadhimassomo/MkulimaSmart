@@ -40,8 +40,8 @@ def home(request):
     # Try/except to handle potential missing tables for other models
     try:
         # Get featured products for different sections
-        hydroponics = Product.objects.filter(is_hydroponics=True, is_active=True)[:3]
-        featured_products = Product.objects.filter(is_active=True)[:4]  # For services overview
+        hydroponics = Product.objects.filter(is_hydroponics=True, is_active=True).order_by("-created_at")[:3]
+        featured_products = Product.objects.filter(is_active=True).order_by("-created_at")[:4]  # For services overview
     except Exception as e:
         print(f"Error loading products: {e}")
         hydroponics = []
@@ -206,6 +206,13 @@ def crop_edit(request, farm_id, crop_id):
     return render(request, 'website/crop_form.html', context)
 
 
+def _without_page(request):
+    """The current filters as a query string, without the page number, for the paging links."""
+    params = request.GET.copy()
+    params.pop("page", None)
+    return params.urlencode()
+
+
 # Marketplace Views
 def marketplace(request):
     """
@@ -220,7 +227,7 @@ def marketplace(request):
     page_num   = request.GET.get("page", 1)
     order      = request.GET.get("order") or "-created_at"  # e.g. -created_at, price, -price
 
-    qs = Product.objects.select_related("category").prefetch_related("images")
+    qs = Product.objects.filter(is_active=True).select_related("category").prefetch_related("images")
 
     # search
     if q:
@@ -238,7 +245,7 @@ def marketplace(request):
     if max_price:
         qs = qs.filter(price__lte=max_price)
     if region:
-        qs = qs.filter(location__icontains=region)  # or region__iexact if you have a Region model
+        qs = qs.filter(supplier__address__icontains=region)
     if in_stock:
         qs = qs.filter(stock__gt=0)
 
@@ -266,6 +273,7 @@ def marketplace(request):
         "regions": regions,
         "featured_products": featured_products,
         "query": q,
+        "page_query": _without_page(request),
     }
     return render(request, "website/marketplace.html", context)
 
@@ -275,7 +283,7 @@ def category_detail(request, slug):
     Display products in a specific category
     """
     category = get_object_or_404(Category, slug=slug, is_active=True)
-    products = Product.objects.filter(category=category, is_active=True).select_related('category', 'supplier').prefetch_related('images')
+    products = Product.objects.filter(category=category, is_active=True).select_related('category', 'supplier').prefetch_related('images').order_by('-created_at')
     
     context = {
         'category': category,

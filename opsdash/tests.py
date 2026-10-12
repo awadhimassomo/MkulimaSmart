@@ -408,3 +408,68 @@ class AgrovetInviteRulesTests(OpsBase):
         response = self.client.post(reverse("ops:invite_create"), {"company": self.shop.pk}, follow=True)
         self.assertContains(response, "Agrovets (retail shops) do not have agronomists")
         self.assertFalse(Invite.objects.exists())
+
+
+class ListingsTests(OpsBase):
+    def setUp(self):
+        super().setUp()
+        from website.models import Category, Product
+
+        self.live_cat = Category.objects.create(name="Live Cat", slug="live-cat")
+        self.off_cat = Category.objects.create(name="Off Cat", slug="off-cat", is_active=False)
+        self.seller = User.objects.create_user(password="pass12345", email="seller@zamseed.test", phone_number="0713000001", first_name="Seller")
+        self.sleeping = User.objects.create_user(password="pass12345", email="sleeping@x.test", is_active=False)
+
+        def make(name, **fields):
+            fields.setdefault("category", self.live_cat)
+            fields.setdefault("supplier", self.seller)
+            fields.setdefault("stock", 4)
+            return Product.objects.create(name=name, slug=name.lower().replace(" ", "-"), description="d", price=18000, **fields)
+
+        self.shown = make("Shown seed")
+        self.off = make("Switched off seed", is_active=False)
+        self.cat_off = make("Category off seed", category=self.off_cat)
+        self.seller_off = make("Seller off seed", supplier=self.sleeping)
+        self.empty = make("Empty shelf seed", stock=0)
+
+    def test_every_listing_is_listed_with_the_reason_it_is_hidden(self):
+        page = self.client.get(reverse("ops:products"))
+        for name in ("Shown seed", "Switched off seed", "Category off seed", "Seller off seed"):
+            self.assertContains(page, name)
+        self.assertContains(page, "Switched off on the listing")
+        self.assertContains(page, "Its category is switched off")
+        self.assertContains(page, "The seller&#x27;s account is switched off")
+        self.assertContains(page, "TSh 18,000")
+
+    def test_the_counts(self):
+        page = self.client.get(reverse("ops:products"))
+        self.assertEqual((page.context["total"], page.context["hidden"], page.context["switched_off"], page.context["out_of_stock"]), (5, 3, 1, 1))
+
+    def test_only_hidden_ones_and_search(self):
+        hidden = self.client.get(reverse("ops:products"), {"show": "hidden"})
+        self.assertContains(hidden, "Switched off seed")
+        self.assertNotContains(hidden, "Shown seed")
+        self.assertNotContains(hidden, "Empty shelf seed")  # out of stock is still shown on the website
+        found = self.client.get(reverse("ops:products"), {"q": "seller@zamseed"})
+        self.assertContains(found, "Shown seed")
+        self.assertNotContains(found, "Seller off seed")
+
+    def test_an_administrator_can_show_or_hide_a_listing(self):
+        self.client.post(reverse("ops:product_toggle", args=[self.off.pk]))
+        self.off.refresh_from_db()
+        self.assertTrue(self.off.is_active)
+        self.assertEqual(self.client.get(self.off.get_absolute_url()).status_code, 200)
+        self.client.post(reverse("ops:product_toggle", args=[self.off.pk]))
+        self.off.refresh_from_db()
+        self.assertFalse(self.off.is_active)
+
+    def test_only_administrators(self):
+        staff = Client()
+        staff.force_login(User.objects.create_user(password="pass12345", email="staff@gov.test", is_staff=True))
+        self.assertEqual(staff.get(reverse("ops:products")).status_code, 403)
+        self.assertEqual(staff.post(reverse("ops:product_toggle", args=[self.shown.pk])).status_code, 403)
+        self.shown.refresh_from_db()
+        self.assertTrue(self.shown.is_active)
+
+    def test_it_is_in_the_navigation(self):
+        self.assertContains(self.client.get(reverse("ops:overview")), reverse("ops:products"))

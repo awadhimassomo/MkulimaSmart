@@ -213,13 +213,13 @@
     {% if is_paginated %}
     <div style="display:flex;justify-content:center;gap:8px;margin:40px 0">
       {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" style="padding:8px 16px;background:white;border:2px solid #e9ecef;border-radius:8px;text-decoration:none;color:#2D5A27;font-weight:600">← Previous</a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if page_query %}&{{ page_query }}{% endif %}" style="padding:8px 16px;background:white;border:2px solid #e9ecef;border-radius:8px;text-decoration:none;color:#2D5A27;font-weight:600">← Previous</a>
       {% endif %}
       
       <span style="padding:8px 16px;background:#2D5A27;color:white;border-radius:8px;font-weight:600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
       
       {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" style="padding:8px 16px;background:white;border:2px solid #e9ecef;border-radius:8px;text-decoration:none;color:#2D5A27;font-weight:600">Next →</a>
+      <a href="?page={{ page_obj.next_page_number }}{% if page_query %}&{{ page_query }}{% endif %}" style="padding:8px 16px;background:white;border:2px solid #e9ecef;border-radius:8px;text-decoration:none;color:#2D5A27;font-weight:600">Next →</a>
       {% endif %}
     </div>
     {% endif %}

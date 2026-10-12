@@ -181,3 +181,58 @@ class FooterLinksTests(TestCase):
         admin = User.objects.create_superuser(password="pass12345", email="admin@mkulima.test")
         self.client.force_login(admin)
         self.assertEqual(self.client.get(reverse("ops:overview")).status_code, 200)
+
+
+class ListingVisibilityTests(TestCase):
+    def setUp(self):
+        translation.activate("en")
+        self.addCleanup(translation.deactivate)
+        self.category = Category.objects.create(name="Visibility Seeds", slug="visibility-seeds")
+        self.sellers = []
+        for i in range(6):
+            seller = User.objects.create_user(phone_number=f"07100000{i:02d}", password="pass12345", is_supplier=True, address="Mbeya town" if i == 0 else "Arusha")
+            self.sellers.append(seller)
+
+    def product(self, seller, name, **fields):
+        fields.setdefault("price", 5000)
+        fields.setdefault("stock", 3)
+        return Product.objects.create(
+            name=name, slug=name.lower().replace(" ", "-"), category=self.category, description="Seed.", supplier=seller, **fields,
+        )
+
+    def test_newest_listings_show_on_the_home_page_not_just_the_oldest(self):
+        names = [f"Listing number {i}" for i in range(6)]
+        for seller, name in zip(self.sellers, names):
+            self.product(seller, name)
+        page = self.client.get(reverse("website:home"))
+        shown = [p.name for p in page.context["featured_products"]]
+        self.assertEqual(shown, ["Listing number 5", "Listing number 4", "Listing number 3", "Listing number 2"])
+
+    def test_the_marketplace_grid_hides_switched_off_listings_so_no_link_leads_to_a_404(self):
+        live = self.product(self.sellers[0], "Live listing")
+        off = self.product(self.sellers[1], "Switched off listing", is_active=False)
+        page = self.client.get(reverse("website:marketplace"))
+        self.assertContains(page, live.name)
+        self.assertNotContains(page, off.name)
+        self.assertEqual(self.client.get(off.get_absolute_url()).status_code, 404)
+
+    def test_the_region_filter_works_and_does_not_crash(self):
+        self.product(self.sellers[0], "Mbeya seed")
+        self.product(self.sellers[1], "Arusha seed")
+        page = self.client.get(reverse("website:marketplace"), {"region": "Mbeya"})
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Mbeya seed")
+        self.assertNotContains(page, "Arusha seed")
+
+    def test_paging_links_keep_the_filters(self):
+        for i in range(14):
+            self.product(self.sellers[i % 6], f"Filtered item {i}", price=1000 + i)
+        page = self.client.get(reverse("website:marketplace"), {"category": self.category.pk, "order": "price"})
+        self.assertContains(page, f"?page=2&category={self.category.pk}&amp;order=price")
+
+    def test_the_marketplace_app_page_also_hides_switched_off_listings(self):
+        self.product(self.sellers[0], "Live listing")
+        self.product(self.sellers[1], "Switched off listing", is_active=False)
+        page = self.client.get(reverse("marketplace:home"))
+        self.assertContains(page, "Live listing")
+        self.assertNotContains(page, "Switched off listing")
