@@ -114,6 +114,10 @@ class WholesaleProduct(models.Model):
     min_order_quantity = models.PositiveIntegerField(default=1)
     stock_available = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    marketplace_product = models.OneToOneField(
+        "website.Product", on_delete=models.SET_NULL, blank=True, null=True, related_name="+",
+        help_text="The listing on the website marketplace made from this product, if any.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -178,6 +182,10 @@ class ShopStockItem(models.Model):
     quantity = models.DecimalField(max_digits=12, decimal_places=2, default=ZERO, validators=[MinValueValidator(ZERO)])
     reorder_level = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("5"))
     is_active = models.BooleanField(default=True)
+    marketplace_product = models.OneToOneField(
+        "website.Product", on_delete=models.SET_NULL, blank=True, null=True, related_name="+",
+        help_text="The listing on the website marketplace made from this product, if any.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

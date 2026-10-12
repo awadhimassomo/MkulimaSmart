@@ -34,6 +34,17 @@ def supplier_can_manage_qr(seller_profile):
     return seller_profile.seller_type in seedling_ready_sellers or bool(supplier_products & seedling_product_tags)
 
 
+def _unlisted_inputs(seller_profile):
+    """Products already in the seller's Catalog or Stock that are not on the website yet: how many, and where to list them."""
+    from inputs import website_listing
+
+    count = website_listing.unlisted_for(seller_profile).count()
+    if not count:
+        return None
+    return {"count": count, "url": "inputs:manufacturer_products" if seller_profile.seller_type == "manufacturer" else "inputs:stock_list",
+            "where": "Catalog" if seller_profile.seller_type == "manufacturer" else "Stock"}
+
+
 def _without_page(request):
     params = request.GET.copy()
     params.pop("page", None)
@@ -246,6 +257,7 @@ def supplier_dashboard(request):
         "seller_product_labels": [label for value, label in InputSeller.PRODUCT_CATEGORY_CHOICES if value in supplier_products],
         "has_certificates": bool(seller_profile.certificate_file or seller_profile.certification_details),
         "revenue_available": False,
+        "unlisted_inputs": _unlisted_inputs(seller_profile),
     }
     return render(request, "marketplace/supplier_dashboard.html", context)
 

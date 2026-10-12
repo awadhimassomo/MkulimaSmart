@@ -17,6 +17,8 @@ urlpatterns = [
     path("shop/stock/new/", views.stock_create, name="stock_create"),
     path("shop/stock/<int:pk>/", views.stock_edit, name="stock_edit"),
     path("shop/stock/<int:pk>/adjust/", views.stock_adjust, name="stock_adjust"),
+    path("shop/stock/<int:pk>/listing/", views.stock_listing, name="stock_listing"),
+    path("shop/stock/listing-all/", views.stock_listing_all, name="stock_listing_all"),
     path("shop/catalog/", views.catalog, name="catalog"),
     path("shop/catalog/<int:pk>/", views.catalog_product, name="catalog_product"),
     path("shop/order-list/", views.order_cart, name="order_cart"),
@@ -34,6 +36,8 @@ urlpatterns = [
     path("manufacturer/products/new/", views.manufacturer_product_form, name="manufacturer_product_create"),
     path("manufacturer/products/<int:pk>/", views.manufacturer_product_form, name="manufacturer_product_edit"),
     path("manufacturer/images/<int:pk>/", views.manufacturer_image_action, name="manufacturer_image_action"),
+    path("manufacturer/products/<int:pk>/listing/", views.product_listing, name="product_listing"),
+    path("manufacturer/products/listing-all/", views.products_listing_all, name="products_listing_all"),
     path("manufacturer/orders/", views.manufacturer_orders, name="manufacturer_orders"),
     path("manufacturer/orders/<int:pk>/", views.manufacturer_order_detail, name="manufacturer_order_detail"),
 ]

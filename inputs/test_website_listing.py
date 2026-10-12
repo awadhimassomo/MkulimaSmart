@@ -1,0 +1,225 @@
+from datetime import timedelta
+from decimal import Decimal
+
+from django.test import Client
+from django.urls import reverse
+from django.utils import timezone
+
+from website.models import Product
+
+from . import services, website_listing
+from .models import ShopStockItem, WholesaleProduct, WholesaleProductImage
+from .tests import InputsTestBase, make_seller, png
+
+
+class ListingTestBase(InputsTestBase):
+    def setUp(self):
+        super().setUp()
+        self.shop_client = Client()
+        self.shop_client.force_login(self.shop_user)
+        self.mfr_client = Client()
+        self.mfr_client.force_login(self.mfr_user)
+
+    def list_item(self, item=None, client=None, **extra):
+        item = item or self.item
+        return (client or self.shop_client).post(reverse("inputs:stock_listing", args=[item.pk]), extra, follow=True)
+
+    def list_product(self, product=None, **extra):
+        product = product or self.urea
+        return self.mfr_client.post(reverse("inputs:product_listing", args=[product.pk]), extra, follow=True)
+
+
+class ShopListingTests(ListingTestBase):
+    def test_one_click_lists_the_stock_item_on_the_website_with_its_details(self):
+        self.item.image.save("seed.png", png(), save=True)
+        response = self.list_item()
+        self.assertContains(response, "is now on the website marketplace")
+        self.item.refresh_from_db()
+        product = self.item.marketplace_product
+        self.assertEqual((product.name, product.price, product.stock, product.supplier), ("Maize seed 2kg", Decimal("10000"), 10, self.shop_user))
+        self.assertEqual(product.category.slug, "seeds")
+        self.assertTrue(product.is_active)
+        self.assertTrue(product.description)
+        self.assertEqual(product.images.filter(is_primary=True).count(), 1)  # the photo came along
+
+    def test_it_then_shows_on_the_website(self):
+        self.list_item()
+        product = self.item.__class__.objects.get(pk=self.item.pk).marketplace_product
+        self.assertEqual(self.client.get(product.get_absolute_url()).status_code, 200)
+        self.assertContains(self.client.get(reverse("website:category_detail", args=[product.category.slug])), "Maize seed 2kg")
+        self.assertContains(self.client.get(reverse("website:marketplace")), "Maize seed 2kg")
+        self.assertContains(self.client.get(reverse("website:marketplace")), "10,000")
+
+    def test_listing_again_does_not_make_a_second_listing(self):
+        self.list_item()
+        self.list_item()
+        self.assertEqual(Product.objects.filter(supplier=self.shop_user).count(), 1)
+
+    def test_hide_switches_it_off_and_listing_again_switches_the_same_one_back_on(self):
+        self.list_item()
+        product = ShopStockItem.objects.get(pk=self.item.pk).marketplace_product
+        self.assertContains(self.list_item(action="hide"), "hidden from the website")
+        product.refresh_from_db()
+        self.assertFalse(product.is_active)
+        self.assertEqual(self.client.get(product.get_absolute_url()).status_code, 404)
+        self.list_item()
+        product.refresh_from_db()
+        self.assertTrue(product.is_active)
+        self.assertEqual(Product.objects.filter(supplier=self.shop_user).count(), 1)
+
+    def test_price_and_stock_changes_follow_to_the_listing(self):
+        self.list_item()
+        services.record_sale(self.shop, [{"stock_item": self.item.pk, "quantity": 4}], user=self.shop_user, amount_paid=100000)
+        product = ShopStockItem.objects.get(pk=self.item.pk).marketplace_product
+        self.assertEqual(product.stock, 6)
+        item = ShopStockItem.objects.get(pk=self.item.pk)
+        item.selling_price = Decimal("12500")
+        item.save()
+        product.refresh_from_db()
+        self.assertEqual(product.price, Decimal("12500"))
+
+    def test_the_sellers_edits_to_the_listing_text_are_kept_when_listing_again(self):
+        self.list_item()
+        product = ShopStockItem.objects.get(pk=self.item.pk).marketplace_product
+        Product.objects.filter(pk=product.pk).update(description="My own words about this seed.")
+        self.list_item(action="hide")
+        self.list_item()
+        product.refresh_from_db()
+        self.assertEqual(product.description, "My own words about this seed.")
+
+    def test_an_expired_or_switched_off_item_is_refused_with_a_reason(self):
+        self.item.expiry_date = timezone.localdate() - timedelta(days=2)
+        self.item.save()
+        self.assertContains(self.list_item(), "past its expiry date")
+        self.item.expiry_date = None
+        self.item.is_active = False
+        self.item.save()
+        self.assertContains(self.list_item(), "switched off in your stock")
+        self.assertFalse(Product.objects.exists())
+
+    def test_the_details_of_a_linked_catalog_product_are_used(self):
+        WholesaleProduct.objects.filter(pk=self.urea.pk).update(description="Nitrogen fertilizer.", composition="46% N", target_crops=["Maize", "Rice"])
+        item = ShopStockItem.objects.create(
+            shop=self.shop, wholesale_product=WholesaleProduct.objects.get(pk=self.urea.pk), name="Urea 46% 50kg", brand="Kilimo", category="fertilizer",
+            unit="bag", cost_price=Decimal("60000"), selling_price=Decimal("75000"), quantity=Decimal("8"),
+        )
+        self.list_item(item)
+        description = ShopStockItem.objects.get(pk=item.pk).marketplace_product.description
+        for text in ("Nitrogen fertilizer.", "Brand: Kilimo", "Pack size: 50 kg", "Composition: 46% N", "Suitable crops: Maize, Rice"):
+            self.assertIn(text, description)
+
+    def test_a_shop_cannot_list_another_shops_item(self):
+        other_user, other_shop = make_seller("0700000099", "agro_input_dealer", "Other Shop")
+        theirs = ShopStockItem.objects.create(shop=other_shop, name="Theirs", category="seeds", cost_price=1, selling_price=2, quantity=1)
+        self.assertEqual(self.shop_client.post(reverse("inputs:stock_listing", args=[theirs.pk])).status_code, 404)
+        self.assertFalse(Product.objects.exists())
+
+    def test_list_all_lists_what_can_be_listed_and_reports_the_rest(self):
+        ShopStockItem.objects.create(shop=self.shop, name="Second item", category="pesticides", cost_price=1, selling_price=2, quantity=3)
+        ShopStockItem.objects.create(shop=self.shop, name="Old stock", category="seeds", cost_price=1, selling_price=2, quantity=3, expiry_date=timezone.localdate() - timedelta(days=1))
+        ShopStockItem.objects.create(shop=self.shop, name="Switched off", category="seeds", cost_price=1, selling_price=2, quantity=3, is_active=False)
+        response = self.shop_client.post(reverse("inputs:stock_listing_all"), follow=True)
+        self.assertContains(response, "2 products listed")  # the two good ones
+        self.assertContains(response, "1 could not be listed")
+        self.assertEqual(sorted(Product.objects.values_list("name", flat=True)), ["Maize seed 2kg", "Second item"])
+        again = self.shop_client.post(reverse("inputs:stock_listing_all"), follow=True)
+        self.assertContains(again, "1 could not be listed")  # still the expired one
+
+    def test_the_stock_page_shows_the_button_and_the_status(self):
+        page = self.shop_client.get(reverse("inputs:stock_list"))
+        self.assertContains(page, "List on website")
+        self.assertContains(page, "Not listed")
+        self.assertContains(page, "List all on the website (1)")
+        self.list_item()
+        page = self.shop_client.get(reverse("inputs:stock_list"))
+        self.assertContains(page, "On the website")
+        self.assertNotContains(page, "List all on the website")
+
+    def test_the_marketplace_listings_page_points_to_unlisted_stock(self):
+        page = self.shop_client.get(reverse("marketplace:supplier_dashboard"))
+        self.assertContains(page, "1 product in your Stock is not on the website yet")
+        self.assertContains(page, reverse("inputs:stock_list"))
+        self.list_item()
+        self.assertNotContains(self.shop_client.get(reverse("marketplace:supplier_dashboard")), "not on the website yet")
+
+    def test_the_other_category_is_created_when_needed(self):
+        item = ShopStockItem.objects.create(shop=self.shop, name="Odd thing", category="other", cost_price=1, selling_price=2, quantity=1)
+        self.list_item(item)
+        self.assertEqual(ShopStockItem.objects.get(pk=item.pk).marketplace_product.category.name, "Other Inputs")
+
+    def test_a_shop_without_a_login_account_gets_a_clear_message(self):
+        self.shop.user = None
+        self.shop.save()
+        with self.assertRaises(website_listing.ListingError):
+            website_listing.publish_stock_item(ShopStockItem.objects.select_related("shop").get(pk=self.item.pk))
+
+    def test_the_next_link_only_goes_to_this_site(self):
+        response = self.shop_client.post(reverse("inputs:stock_listing", args=[self.item.pk]), {"next": "https://evil.example/steal"})
+        self.assertEqual(response["Location"], reverse("inputs:stock_list"))
+
+
+class ManufacturerListingTests(ListingTestBase):
+    def test_a_catalog_product_is_listed_at_its_retail_price(self):
+        WholesaleProductImage.objects.create(product=self.urea, image=png("urea.png"), is_primary=True)
+        WholesaleProduct.objects.filter(pk=self.urea.pk).update(description="High nitrogen top dressing.", composition="46% N")
+        self.assertContains(self.list_product(), "is now on the website marketplace")
+        product = WholesaleProduct.objects.get(pk=self.urea.pk).marketplace_product
+        self.assertEqual((product.name, product.price, product.stock, product.supplier), ("Urea 46%", Decimal("72000"), 100, self.mfr_user))
+        self.assertEqual(product.category.slug, "fertilizers")
+        self.assertIn("High nitrogen top dressing.", product.description)
+        self.assertIn("Composition: 46% N", product.description)
+        self.assertEqual(product.images.count(), 1)
+        self.assertEqual(self.client.get(product.get_absolute_url()).status_code, 200)
+
+    def test_without_a_retail_price_the_wholesale_price_is_used(self):
+        WholesaleProduct.objects.filter(pk=self.urea.pk).update(suggested_retail_price=None)
+        self.list_product()
+        self.assertEqual(WholesaleProduct.objects.get(pk=self.urea.pk).marketplace_product.price, Decimal("60000"))
+
+    def test_hide_and_list_again(self):
+        self.list_product()
+        self.list_product(action="hide")
+        self.assertFalse(WholesaleProduct.objects.get(pk=self.urea.pk).marketplace_product.is_active)
+        self.list_product()
+        self.assertTrue(WholesaleProduct.objects.get(pk=self.urea.pk).marketplace_product.is_active)
+        self.assertEqual(Product.objects.count(), 1)
+
+    def test_stock_and_price_follow_the_catalog_product(self):
+        self.list_product()
+        product = WholesaleProduct.objects.get(pk=self.urea.pk)
+        product.stock_available = 40
+        product.suggested_retail_price = Decimal("70000")
+        product.save()
+        listing = Product.objects.get()
+        self.assertEqual((listing.stock, listing.price), (40, Decimal("70000")))
+
+    def test_a_hidden_catalog_product_cannot_be_listed(self):
+        WholesaleProduct.objects.filter(pk=self.urea.pk).update(is_active=False)
+        self.assertContains(self.list_product(), "hidden in your catalog")
+        self.assertFalse(Product.objects.exists())
+
+    def test_the_catalog_page_shows_the_button_the_status_and_list_all(self):
+        page = self.mfr_client.get(reverse("inputs:manufacturer_products"))
+        self.assertContains(page, "Not on the website")
+        self.assertContains(page, "List on website")
+        self.assertContains(page, "List all on the website (1)")
+        self.mfr_client.post(reverse("inputs:products_listing_all"))
+        page = self.mfr_client.get(reverse("inputs:manufacturer_products"))
+        self.assertContains(page, "On the website")
+        self.assertContains(page, "Hide from website")
+        self.assertEqual(Product.objects.count(), 1)
+
+    def test_the_marketplace_listings_page_points_to_the_catalog(self):
+        page = self.mfr_client.get(reverse("marketplace:supplier_dashboard"))
+        self.assertContains(page, "1 product in your Catalog is not on the website yet")
+        self.assertContains(page, reverse("inputs:manufacturer_products"))
+
+    def test_shops_cannot_use_the_manufacturer_buttons_and_vice_versa(self):
+        self.assertEqual(self.shop_client.post(reverse("inputs:product_listing", args=[self.urea.pk])).status_code, 302)
+        self.assertEqual(self.mfr_client.post(reverse("inputs:stock_listing", args=[self.item.pk])).status_code, 302)
+        self.assertFalse(Product.objects.exists())
+
+    def test_one_manufacturer_cannot_list_anothers_product(self):
+        other_user, other = make_seller("0700000098", "manufacturer", "Other Maker")
+        theirs = WholesaleProduct.objects.create(manufacturer=other, name="Theirs", category="seeds", wholesale_price=Decimal("100"))
+        self.assertEqual(self.mfr_client.post(reverse("inputs:product_listing", args=[theirs.pk])).status_code, 404)

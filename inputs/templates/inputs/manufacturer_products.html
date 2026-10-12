@@ -7,7 +7,11 @@
 
 {% block supplier_content %}
 <div class="in-stack">
-  <div><a href="{% url 'inputs:manufacturer_product_create' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-plus"></i> List a product</a></div>
+  <div class="in-toolbar">
+    <a href="{% url 'inputs:manufacturer_product_create' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-plus"></i> Add a product</a>
+    {% if unlisted_count %}<form method="post" action="{% url 'inputs:products_listing_all' %}">{% csrf_token %}
+      <button class="in-btn in-btn-secondary" type="submit">List all on the website ({{ unlisted_count }})</button></form>{% endif %}
+  </div>
   {% if products %}
     <div class="in-product-grid">
       {% for product in products %}
@@ -21,7 +25,16 @@
             <div class="in-muted">{% if product.brand %}{{ product.brand }} · {% endif %}{% if product.pack_size %}{{ product.pack_size }} · {% endif %}{{ product.get_category_display }}</div>
             <div><strong class="in-money">TZS {{ product.wholesale_price|floatformat:0|intcomma }}</strong> <span class="in-muted">/ {{ product.get_unit_display|lower }}</span></div>
             <div class="in-muted">{{ product.stock_available|intcomma }} available · {{ product.images.all|length }} photo{{ product.images.all|length|pluralize }}</div>
-            <div>{% if product.is_active %}<span class="in-pill in-pill-ok">Visible</span>{% else %}<span class="in-pill">Hidden</span>{% endif %}</div>
+            <div>{% if product.is_active %}<span class="in-pill in-pill-ok">Visible to shops</span>{% else %}<span class="in-pill">Hidden from shops</span>{% endif %}
+              {% if product.marketplace_product and product.marketplace_product.is_active %}<span class="in-pill in-pill-ok">On the website</span>{% else %}<span class="in-pill">Not on the website</span>{% endif %}</div>
+            <form method="post" action="{% url 'inputs:product_listing' product.pk %}">{% csrf_token %}
+              {% if product.marketplace_product and product.marketplace_product.is_active %}
+                <input type="hidden" name="action" value="hide">
+                <button class="in-btn in-btn-secondary in-btn-sm" type="submit">Hide from website</button>
+              {% else %}
+                <button class="in-btn in-btn-primary in-btn-sm" type="submit">List on website</button>
+              {% endif %}
+            </form>
           </div>
         </article>
         {% endwith %}

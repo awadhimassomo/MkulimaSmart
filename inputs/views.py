@@ -11,13 +11,14 @@ from django.db.models import Count, DecimalField, ExpressionWrapper, F, Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from community.utils import discussions_for_names
 from operations.models import TANZANIA_REGIONS, InputSeller
 
-from . import selectors, services
+from . import selectors, services, website_listing
 from .forms import (
     CATEGORY_REQUIRED_FIELDS,
     CROP_SUGGESTIONS,
@@ -204,7 +205,8 @@ def stock_list(request):
     view = request.GET.get("view") or ""
     context = {
         **_nav_context(request, "stock"),
-        "items": selectors.filter_stock(request.seller, q, view),
+        "items": selectors.filter_stock(request.seller, q, view).select_related("marketplace_product"),
+        "unlisted_count": website_listing.unlisted_stock(request.seller).count(),
         "summary": selectors.stock_summary(request.seller),
         "q": q,
         "view": view,
@@ -451,8 +453,14 @@ def manufacturer_dashboard(request):
 
 @manufacturer_required
 def manufacturer_products(request):
-    products = WholesaleProduct.objects.filter(manufacturer=request.seller).prefetch_related("images").order_by("name")
-    return render(request, "inputs/manufacturer_products.html", {**_nav_context(request, "products"), "products": products})
+    products = (
+        WholesaleProduct.objects.filter(manufacturer=request.seller).select_related("marketplace_product")
+        .prefetch_related("images").order_by("name")
+    )
+    return render(request, "inputs/manufacturer_products.html", {
+        **_nav_context(request, "products"), "products": products,
+        "unlisted_count": website_listing.unlisted_wholesale(request.seller).count(),
+    })
 
 
 def _save_new_images(product, images):
@@ -580,3 +588,66 @@ def farmer_order_detail(request, pk):
     last_webhook = order.kikapu_webhooks.order_by("-created_at").first() if hasattr(order, "kikapu_webhooks") else None
     context = {**_nav_context(request, "farmer_orders"), "order": order, "last_webhook": last_webhook}
     return render(request, "inputs/farmer_order_detail.html", context)
+
+
+# ---------------------------------------------------------------------------
+# Put existing products on the website marketplace
+# ---------------------------------------------------------------------------
+
+def _back(request, default):
+    target = request.POST.get("next", "")
+    if target and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
+        return redirect(target)
+    return redirect(default)
+
+
+def _toggle_listing(request, obj, name):
+    try:
+        if request.POST.get("action") == "hide":
+            website_listing.hide(obj)
+            messages.success(request, f"{name} is hidden from the website. You can list it again any time.")
+        else:
+            website_listing.publish_stock_item(obj) if hasattr(obj, "selling_price") else website_listing.publish_wholesale(obj)
+            messages.success(request, f"{name} is now on the website marketplace.")
+    except website_listing.ListingError as exc:
+        messages.error(request, str(exc))
+
+
+def _list_all(request):
+    listed, skipped = website_listing.publish_all(request.seller)
+    if listed:
+        messages.success(request, f"{listed} product{'s' if listed != 1 else ''} listed on the website marketplace.")
+    if skipped:
+        messages.warning(request, f"{skipped} could not be listed (expired or switched off). Open them to fix.")
+    if not listed and not skipped:
+        messages.info(request, "Everything is already on the website.")
+
+
+@shop_required
+@require_POST
+def stock_listing(request, pk):
+    item = get_object_or_404(ShopStockItem.objects.select_related("shop", "wholesale_product", "marketplace_product"), pk=pk, shop=request.seller)
+    _toggle_listing(request, item, item.name)
+    return _back(request, "inputs:stock_list")
+
+
+@shop_required
+@require_POST
+def stock_listing_all(request):
+    _list_all(request)
+    return _back(request, "inputs:stock_list")
+
+
+@manufacturer_required
+@require_POST
+def product_listing(request, pk):
+    product = get_object_or_404(WholesaleProduct.objects.select_related("manufacturer", "marketplace_product"), pk=pk, manufacturer=request.seller)
+    _toggle_listing(request, product, product.name)
+    return _back(request, "inputs:manufacturer_products")
+
+
+@manufacturer_required
+@require_POST
+def products_listing_all(request):
+    _list_all(request)
+    return _back(request, "inputs:manufacturer_products")
