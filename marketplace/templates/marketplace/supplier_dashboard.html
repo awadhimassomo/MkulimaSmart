@@ -462,7 +462,7 @@
               <tbody>
                 {% for product in product_table_rows %}
                   <tr>
-                    <td><a href="{% url 'marketplace:supplier_product_detail' product.pk %}" class="supplier-product-link">{{ product.name }}</a></td>
+                    <td>{% if product.brand %}<strong>{{ product.brand }}</strong> {% endif %}<a href="{% url 'marketplace:supplier_product_detail' product.pk %}" class="supplier-product-link">{{ product.name }}</a></td>
                     <td>{{ product.category.name }}</td>
                     <td>TZS {{ product.price|tzs }}</td>
                     <td>{{ product.stock }}</td>

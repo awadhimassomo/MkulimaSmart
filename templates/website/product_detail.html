@@ -155,6 +155,7 @@
             
             <!-- Product Info -->
             <div class="col-lg-6">
+                {% if product.brand %}<div class="product-brand mb-1"><strong>{{ product.brand }}</strong></div>{% endif %}
                 <h1 class="mb-2">{{ product.name }}</h1>
                 <p class="text-muted mb-3">Category: <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></p>
                 
@@ -346,6 +347,7 @@
                             {% endwith %}
                             
                             <div class="card-body">
+                                {% if related_product.brand %}<div class="small"><strong>{{ related_product.brand }}</strong></div>{% endif %}
                                 <h5 class="card-title">{{ related_product.name|truncatechars:30 }}</h5>
                                 
                                 <div class="mb-2">

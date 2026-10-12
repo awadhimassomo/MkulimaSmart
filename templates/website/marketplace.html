@@ -521,6 +521,7 @@
             
             <div class="product-content">
               <div class="product-category">{{ product.category.name }}</div>
+              {% if product.brand %}<div class="product-brand"><strong>{{ product.brand }}</strong></div>{% endif %}
               <h3 class="product-name">
                 <a href="{% url 'website:product_detail' product.slug %}" style="color: inherit; text-decoration: none;">
                   {{ product.name }}

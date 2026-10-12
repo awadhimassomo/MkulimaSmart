@@ -214,6 +214,7 @@
                                 {% endwith %}
                                 
                                 <div class="card-body">
+                                    {% if product.brand %}<div class="small"><strong>{{ product.brand }}</strong></div>{% endif %}
                                     <h5 class="card-title">{{ product.name|truncatechars:40 }}</h5>
                                     
                                     <div class="price-section mb-3">

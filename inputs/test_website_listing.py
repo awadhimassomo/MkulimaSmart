@@ -105,8 +105,10 @@ class ShopListingTests(ListingTestBase):
         )
         self.list_item(item)
         description = ShopStockItem.objects.get(pk=item.pk).marketplace_product.description
-        for text in ("Nitrogen fertilizer.", "Brand: Kilimo", "Pack size: 50 kg", "Composition: 46% N", "Suitable crops: Maize, Rice"):
+        for text in ("Nitrogen fertilizer.", "Pack size: 50 kg", "Composition: 46% N", "Suitable crops: Maize, Rice"):
             self.assertIn(text, description)
+        self.assertNotIn("Brand:", description)  # the brand is its own bold line, not repeated in the text
+        self.assertEqual(ShopStockItem.objects.get(pk=item.pk).marketplace_product.brand, "Kilimo")
 
     def test_a_shop_cannot_list_another_shops_item(self):
         other_user, other_shop = make_seller("0700000099", "agro_input_dealer", "Other Shop")
@@ -223,3 +225,49 @@ class ManufacturerListingTests(ListingTestBase):
         other_user, other = make_seller("0700000098", "manufacturer", "Other Maker")
         theirs = WholesaleProduct.objects.create(manufacturer=other, name="Theirs", category="seeds", wholesale_price=Decimal("100"))
         self.assertEqual(self.mfr_client.post(reverse("inputs:product_listing", args=[theirs.pk])).status_code, 404)
+
+
+class BrandOnTheListingTests(ListingTestBase):
+    def test_the_brand_is_copied_from_the_stock_item_or_its_catalog_product(self):
+        ShopStockItem.objects.filter(pk=self.item.pk).update(brand="Zamseed")
+        self.list_item()
+        self.assertEqual(Product.objects.get().brand, "Zamseed")
+        WholesaleProduct.objects.filter(pk=self.urea.pk).update(brand="Yara")
+        self.list_product()
+        self.assertEqual(Product.objects.get(name="Urea 46%").brand, "Yara")
+        linked = ShopStockItem.objects.create(
+            shop=self.shop, wholesale_product=WholesaleProduct.objects.get(pk=self.urea.pk), name="Urea shop pack", category="fertilizer",
+            cost_price=1, selling_price=2, quantity=3,
+        )
+        self.list_item(linked)
+        self.assertEqual(ShopStockItem.objects.get(pk=linked.pk).marketplace_product.brand, "Yara")  # falls back to the catalog brand
+
+    def test_the_brand_is_bold_on_every_page_a_listing_appears(self):
+        ShopStockItem.objects.filter(pk=self.item.pk).update(brand="Zamseed")
+        self.list_item()
+        product = Product.objects.get()
+        self.assertContains(self.client.get(product.get_absolute_url()), "<strong>Zamseed</strong>")
+        self.assertContains(self.client.get(reverse("website:category_detail", args=[product.category.slug])), "<strong>Zamseed</strong>")
+        self.assertContains(self.client.get(reverse("website:marketplace")), "<strong>Zamseed</strong>")
+
+    def test_nothing_is_shown_when_there_is_no_brand(self):
+        self.list_item()
+        self.assertNotContains(self.client.get(reverse("website:marketplace")), "<strong></strong>")
+        self.assertNotContains(self.client.get(Product.objects.get().get_absolute_url()), "product-brand")
+
+    def test_a_seller_can_set_the_brand_on_a_new_listing(self):
+        from website.models import Category
+
+        category = Category.objects.create(name="Brand Test", slug="brand-test")
+        response = self.shop_client.post(reverse("marketplace:supplier_product_create"), {
+            "category": category.pk, "name": "Hand hoe", "brand": "Tramontina", "description": "Strong hoe.", "price": "9000", "stock": "5", "is_active": "on",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Product.objects.get(name="Hand hoe").brand, "Tramontina")
+        self.assertContains(self.client.get(Product.objects.get(name="Hand hoe").get_absolute_url()), "<strong>Tramontina</strong>")
+
+    def test_the_stock_and_catalog_pages_show_the_brand_in_bold(self):
+        ShopStockItem.objects.filter(pk=self.item.pk).update(brand="Zamseed")
+        WholesaleProduct.objects.filter(pk=self.urea.pk).update(brand="Yara")
+        self.assertContains(self.shop_client.get(reverse("inputs:stock_list")), "<strong>Zamseed</strong>")
+        self.assertContains(self.mfr_client.get(reverse("inputs:manufacturer_products")), "<strong>Yara</strong>")

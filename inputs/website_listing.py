@@ -46,10 +46,8 @@ def is_listed(obj):
 # What the listing says
 # ---------------------------------------------------------------------------
 
-def _facts(wholesale, brand=""):
+def _facts(wholesale):
     facts = []
-    if brand:
-        facts.append(f"Brand: {brand}")
     if wholesale is not None:
         if wholesale.pack_size:
             facts.append(f"Pack size: {wholesale.pack_size}")
@@ -68,11 +66,11 @@ def _facts(wholesale, brand=""):
     return facts
 
 
-def _description(name, wholesale, brand=""):
+def _description(name, wholesale):
     parts = []
     if wholesale is not None and wholesale.description:
         parts.append(wholesale.description.strip())
-    facts = _facts(wholesale, brand)
+    facts = _facts(wholesale)
     if facts:
         parts.append("\n".join(facts))
     if wholesale is not None and wholesale.usage_instructions:
@@ -95,11 +93,11 @@ def _copy_image(product, source):
 
 
 @transaction.atomic
-def _publish(obj, user, name, category_key, description, price, stock, photo):
+def _publish(obj, user, name, brand, category_key, description, price, stock, photo):
     product = obj.marketplace_product
     if product is None:
         product = Product(
-            name=name[:200], category=_category(category_key), description=description, price=price, stock=stock,
+            name=name[:200], brand=(brand or "")[:120], category=_category(category_key), description=description, price=price, stock=stock,
             supplier=user, is_active=True,
         )
         product.slug = generate_unique_slug(product.name, product)
@@ -130,7 +128,7 @@ def publish_stock_item(item):
     wholesale = item.wholesale_product
     photo = item.image or (wholesale.primary_image.image if wholesale and wholesale.primary_image else None)
     return _publish(
-        item, user, item.name, item.category, _description(item.name, wholesale, item.brand),
+        item, user, item.name, item.brand or (wholesale.brand if wholesale else ""), item.category, _description(item.name, wholesale),
         item.selling_price, max(0, int(item.quantity)), photo,
     )
 
@@ -145,7 +143,7 @@ def publish_wholesale(product):
     price = product.suggested_retail_price or product.wholesale_price
     image = product.primary_image
     return _publish(
-        product, user, product.name, product.category, _description(product.name, product, product.brand),
+        product, user, product.name, product.brand, product.category, _description(product.name, product),
         price, product.stock_available, image.image if image else None,
     )
 

@@ -46,7 +46,7 @@
                     {% if item.image %}<img src="{{ item.image.url }}" alt="" class="in-thumb">{% else %}<span class="in-thumb"><i class="fa-solid fa-seedling"></i></span>{% endif %}
                     <div>
                       <a href="{% url 'inputs:stock_edit' item.pk %}" class="in-link">{{ item.name }}</a>
-                      <div class="in-muted">{{ item.brand }}{% if item.brand and item.sku %} · {% endif %}{{ item.sku }}</div>
+                      <div class="in-muted">{% if item.brand %}<strong>{{ item.brand }}</strong>{% endif %}{% if item.brand and item.sku %} · {% endif %}{{ item.sku }}</div>
                     </div>
                   </div>
                 </td>

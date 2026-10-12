@@ -22,7 +22,7 @@
           </a>
           <div class="in-product-body">
             <a href="{% url 'inputs:manufacturer_product_edit' product.pk %}" class="in-product-name in-link">{{ product.name }}</a>
-            <div class="in-muted">{% if product.brand %}{{ product.brand }} · {% endif %}{% if product.pack_size %}{{ product.pack_size }} · {% endif %}{{ product.get_category_display }}</div>
+            <div class="in-muted">{% if product.brand %}<strong>{{ product.brand }}</strong> · {% endif %}{% if product.pack_size %}{{ product.pack_size }} · {% endif %}{{ product.get_category_display }}</div>
             <div><strong class="in-money">TZS {{ product.wholesale_price|floatformat:0|intcomma }}</strong> <span class="in-muted">/ {{ product.get_unit_display|lower }}</span></div>
             <div class="in-muted">{{ product.stock_available|intcomma }} available · {{ product.images.all|length }} photo{{ product.images.all|length|pluralize }}</div>
             <div>{% if product.is_active %}<span class="in-pill in-pill-ok">Visible to shops</span>{% else %}<span class="in-pill">Hidden from shops</span>{% endif %}

@@ -39,6 +39,15 @@
         </div>
 
         <div class="supplier-field">
+          <label for="{{ form.brand.id_for_label }}">Brand</label>
+          {{ form.brand }}
+          <span class="helptext">The maker's brand name, shown in bold on your listing. Leave empty if there is none.</span>
+          {% if form.brand.errors %}
+            <div class="supplier-errors">{{ form.brand.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="supplier-field">
           <label for="{{ form.description.id_for_label }}">Description</label>
           {{ form.description }}
           {% if form.description.errors %}

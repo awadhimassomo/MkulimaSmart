@@ -450,6 +450,7 @@ class Product(models.Model):
     Products in the marketplace (tools, seeds, fertilizers, etc.)
     """
     name = models.CharField(_("Product Name"), max_length=200)
+    brand = models.CharField(_("Brand"), max_length=120, blank=True)
     slug = models.SlugField(_("Slug"), unique=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
     description = models.TextField(_("Description"))

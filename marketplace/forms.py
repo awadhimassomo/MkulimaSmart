@@ -29,6 +29,7 @@ class SupplierProductForm(forms.ModelForm):
         fields = [
             "category",
             "name",
+            "brand",
             "description",
             "price",
             "discount_price",
