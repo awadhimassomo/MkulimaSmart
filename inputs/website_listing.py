@@ -112,6 +112,8 @@ def _publish(obj, user, name, brand, category_key, description, price, stock, ph
         Product.objects.filter(pk=product.pk).update(
             price=price, stock=stock, is_active=True, sold_through_agents=through_agents, min_order_quantity=min_order,
         )
+        if brand:
+            Product.objects.filter(pk=product.pk, brand="").update(brand=brand[:120])
         product.refresh_from_db()
     _copy_image(product, photo)
     return product

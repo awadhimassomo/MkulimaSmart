@@ -558,3 +558,25 @@ class AgentRegionTests(AgentTestBase):
         self.assertContains(self.mfr_client.post(reverse("inputs:agent_remove", args=[last.pk]), follow=True), "website listings of your products were hidden")
         listing.refresh_from_db()
         self.assertFalse(listing.is_active)
+
+
+class RelistingFillsInAMissingBrand(ListingTestBase):
+    def test_listing_again_gives_an_older_listing_its_brand(self):
+        ShopStockItem.objects.filter(pk=self.item.pk).update(brand="STAHA")
+        self.list_item()
+        listing = Product.objects.get()
+        Product.objects.filter(pk=listing.pk).update(brand="")  # as an older listing made before brands existed
+        self.list_item(action="hide")
+        self.list_item()
+        listing.refresh_from_db()
+        self.assertEqual(listing.brand, "STAHA")
+
+    def test_a_brand_the_seller_changed_is_not_overwritten(self):
+        ShopStockItem.objects.filter(pk=self.item.pk).update(brand="STAHA")
+        self.list_item()
+        listing = Product.objects.get()
+        Product.objects.filter(pk=listing.pk).update(brand="My brand")
+        self.list_item(action="hide")
+        self.list_item()
+        listing.refresh_from_db()
+        self.assertEqual(listing.brand, "My brand")

@@ -9,7 +9,7 @@ from inputs import website_listing
 from inputs.models import RetailAgent, ShopStockItem, WholesaleProduct
 from inputs.tests import InputsTestBase, make_seller
 
-from .models import Cart, CartItem, Order, OrderLine, Product
+from website.models import Cart, CartItem, Order, OrderLine, Product
 
 User = get_user_model()
 

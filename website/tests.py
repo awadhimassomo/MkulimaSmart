@@ -236,3 +236,63 @@ class ListingVisibilityTests(TestCase):
         page = self.client.get(reverse("marketplace:home"))
         self.assertContains(page, "Live listing")
         self.assertNotContains(page, "Switched off listing")
+
+
+class BrandBackfillAndNavTests(TestCase):
+    def setUp(self):
+        translation.activate("en")
+        self.addCleanup(translation.deactivate)
+        self.category = Category.objects.create(name="Backfill Seeds", slug="backfill-seeds")
+        self.seller = User.objects.create_user(phone_number="0700000090", password="pass12345", is_supplier=True)
+
+    def product(self, name, description, brand=""):
+        return Product.objects.create(name=name, slug=name.lower().replace(" ", "-"), category=self.category, description=description,
+                                      price=3500, stock=5, supplier=self.seller, brand=brand)
+
+    def run_migration(self):
+        import importlib
+
+        from django.apps import apps
+
+        module = importlib.import_module("website.migrations.0010_backfill_brand_from_description")
+        module.move_brand_out_of_the_description(apps, None)
+
+    def test_a_brand_written_into_the_description_moves_into_the_brand_field(self):
+        old = self.product("Mahindi", "Brand: STAHA\n\nPack size: 1 kg\nSuitable crops: Maize")
+        self.run_migration()
+        old.refresh_from_db()
+        self.assertEqual(old.brand, "STAHA")
+        self.assertEqual(old.description, "Pack size: 1 kg\nSuitable crops: Maize")
+
+    def test_brands_with_commas_and_digits_are_kept_whole(self):
+        old = self.product("Mtama", "Brand: 1,MACIA\n\nPack size: 500 g")
+        self.run_migration()
+        old.refresh_from_db()
+        self.assertEqual(old.brand, "1,MACIA")
+
+    def test_a_description_that_was_only_the_brand_falls_back_to_the_name(self):
+        old = self.product("Alizeti (sunflower)", "Brand: Record")
+        self.run_migration()
+        old.refresh_from_db()
+        self.assertEqual((old.brand, old.description), ("Record", "Alizeti (sunflower)"))
+
+    def test_listings_that_already_have_a_brand_or_no_brand_line_are_left_alone(self):
+        keep = self.product("Kept", "Brand: Other\n\nText", brand="Mine")
+        none = self.product("None", "A seed with no brand mentioned. Brand new variety.")
+        self.run_migration()
+        keep.refresh_from_db()
+        none.refresh_from_db()
+        self.assertEqual((keep.brand, keep.description), ("Mine", "Brand: Other\n\nText"))
+        self.assertEqual((none.brand, none.description), ("", "A seed with no brand mentioned. Brand new variety."))
+
+    def test_the_brand_is_then_bold_on_the_cards(self):
+        self.product("Mahindi", "Brand: STAHA\n\nPack size: 1 kg")
+        self.run_migration()
+        self.assertContains(self.client.get(reverse("website:marketplace")), "<strong>STAHA</strong>")
+        self.assertNotContains(self.client.get(reverse("website:marketplace")), "Brand: STAHA")
+
+    def test_farmer_talk_is_not_in_the_navigation_but_its_pages_still_exist(self):
+        page = self.client.get(reverse("website:home"))
+        self.assertNotContains(page, "Farmer Talk")
+        self.assertNotContains(page, f'href="{reverse("community:discussion_list")}"')
+        self.assertEqual(self.client.get(reverse("community:discussion_list")).status_code, 200)
