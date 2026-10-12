@@ -1,0 +1,56 @@
+{% extends "opsdash/base.html" %}
+{% load money %}
+{% block title %}Website orders{% endblock %}
+{% block content %}
+<h1>Website orders</h1>
+<p class="muted">Orders farmers placed on the website and who has to deliver each item. Items in a region where the supplier has no agent are demand: the supplier was told, and can ask Mkulima Smart to deliver.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">Waiting for Mkulima Smart</div><div class="value">{{ via_platform }}</div><div class="note">suppliers asked us to deliver</div></div>
+  <div class="kpi"><div class="label">Demand, no agent</div><div class="value">{{ no_agent }}</div><div class="note">not delivered yet</div></div>
+  <div class="kpi"><div class="label">All open</div><div class="value">{{ open_lines }}</div></div>
+</div>
+
+<div class="panel">
+  <form method="get" class="filters">
+    <div><label for="show" style="margin-top:0">Show</label>
+      <select id="show" name="show">
+        <option value="" {% if not show %}selected{% endif %}>Waiting for Mkulima Smart</option>
+        <option value="no_agent" {% if show == "no_agent" %}selected{% endif %}>Demand with no agent</option>
+        <option value="open" {% if show == "open" %}selected{% endif %}>All open items</option>
+        <option value="all" {% if show == "all" %}selected{% endif %}>Everything</option>
+      </select></div>
+    <button class="btn" type="submit">Filter</button>
+  </form>
+</div>
+
+<div class="panel">
+  {% for line in page %}
+    <div class="row"><div class="row-top">
+      <div>
+        <b>{% if line.brand %}{{ line.brand }} {% endif %}{{ line.product_name }} <span class="pill">{{ line.get_status_display }}</span>
+          {% if line.route == "no_agent" %}<span class="pill wait">No agent in {{ line.region }}</span>{% endif %}
+          {% if line.via_platform %}<span class="pill ok">Asked us to deliver</span>{% endif %}</b>
+        <span class="muted">{{ line.quantity }} x TSh {{ line.unit_price|tzs }} | order #{{ line.order_id }}, {{ line.created_at|date:"j M Y H:i" }} | supplier {{ line.seller.email|default:line.seller.phone_number }}</span>
+        <span class="muted">Buyer {{ line.order.buyer_name|default:"customer" }}, {{ line.order.phone_number }}, deliver to {{ line.order.shipping_address }}</span>
+        <span class="muted">Delivered by: {{ line.deliverer_name|default:"nobody yet" }}</span>
+      </div>
+      {% if line.status != "delivered" and line.status != "cancelled" %}
+      <form method="post" action="{% url 'ops:web_order_update' line.pk %}">{% csrf_token %}
+        <input type="hidden" name="back" value="{{ request.GET.urlencode }}">
+        <button class="btn sm" type="submit" name="action" value="deliver">Mark delivered</button>
+      </form>
+      {% endif %}
+    </div></div>
+  {% empty %}
+    <p class="empty">Nothing here.</p>
+  {% endfor %}
+  {% if page.paginator.num_pages > 1 %}
+    <div class="pager">
+      {% if page.has_previous %}<a class="btn sm secondary" href="?show={{ show }}&page={{ page.previous_page_number }}">Previous</a>{% endif %}
+      <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a class="btn sm secondary" href="?show={{ show }}&page={{ page.next_page_number }}">Next</a>{% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

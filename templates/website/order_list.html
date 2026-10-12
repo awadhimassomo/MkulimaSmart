@@ -1,0 +1,30 @@
+{% extends 'website/base.html' %}
+{% load money %}
+
+{% block title %}My orders - Mkulima Smart{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background:#f5f7f2">
+  <div class="container" style="max-width:960px">
+    <h1 class="h3 mb-3">My orders</h1>
+    {% for order in orders %}
+      <a href="{% url 'website:order_detail' order.id %}" class="text-decoration-none text-reset">
+        <div class="card shadow-sm mb-3" style="border-radius:16px;border:1px solid #e3e9e0">
+          <div class="card-body d-flex justify-content-between flex-wrap gap-2">
+            <div>
+              <div class="fw-semibold">Order #{{ order.id }}</div>
+              <div class="text-muted small">{{ order.created_at|date:"j M Y" }} | {{ order.lines.count }} item{{ order.lines.count|pluralize }}{% if order.delivery_region %} | deliver to {{ order.delivery_region }}{% endif %}</div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold">TSh {{ order.total_amount|tzs }}</div>
+              <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+            </div>
+          </div>
+        </div>
+      </a>
+    {% empty %}
+      <p class="text-muted">You have not placed an order yet. <a href="{% url 'website:marketplace' %}">Browse the marketplace</a>.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

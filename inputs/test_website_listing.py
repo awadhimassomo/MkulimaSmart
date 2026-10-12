@@ -274,6 +274,8 @@ class BrandOnTheListingTests(ListingTestBase):
 
 
 class WholesaleOnlyTests(ListingTestBase):
+    """A supplier that sells wholesale only: its products stay on the website, sold through its agents, with a minimum order."""
+
     def go_wholesale_only(self):
         return self.mfr_client.post(reverse("inputs:retail_setting"), follow=True)
 
@@ -281,58 +283,91 @@ class WholesaleOnlyTests(ListingTestBase):
         self.assertTrue(self.mfr.sells_to_farmers and self.mfr.retails)
         self.assertContains(self.mfr_client.get(reverse("inputs:manufacturer_products")), "You also sell to farmers directly")
 
-    def test_switching_to_wholesale_only_takes_their_listings_off_the_website(self):
+    def test_a_retailing_supplier_lists_for_everyone_with_no_minimum(self):
         self.list_product()
         listing = Product.objects.get()
-        self.assertEqual(self.client.get(listing.get_absolute_url()).status_code, 200)
+        self.assertFalse(listing.sold_through_agents)
+        self.assertEqual(listing.min_order_quantity, 1)
+        self.assertFalse(listing.is_wholesale)
+
+    def test_a_wholesale_only_supplier_lists_its_products_sold_through_agents_with_the_catalog_minimum_order(self):
+        self.go_wholesale_only()
+        self.assertContains(self.list_product(), "is now on the website marketplace")
+        listing = Product.objects.get()
+        self.assertTrue(listing.sold_through_agents and listing.is_active)
+        self.assertEqual(listing.min_order_quantity, 5)  # the catalog's minimum order for shops
+        self.assertTrue(listing.is_wholesale)
+
+    def test_switching_to_wholesale_only_keeps_listings_but_routes_them_through_agents_with_the_minimum(self):
+        self.list_product()
+        listing = Product.objects.get()
+        self.assertEqual((listing.sold_through_agents, listing.min_order_quantity), (False, 1))
         response = self.go_wholesale_only()
         self.assertContains(response, "wholesale only")
-        InputSellerModel = type(self.mfr)
-        self.assertFalse(InputSellerModel.objects.get(pk=self.mfr.pk).sells_to_farmers)
+        self.assertContains(response, "retail agent for the buyer")
         listing.refresh_from_db()
-        self.assertFalse(listing.is_active)
-        self.assertEqual(self.client.get(listing.get_absolute_url()).status_code, 404)
-        self.assertEqual(WholesaleProduct.objects.get(pk=self.urea.pk).is_active, True)  # shops still see it in the catalog
+        self.assertTrue(listing.is_active)  # still on the website
+        self.assertEqual((listing.sold_through_agents, listing.min_order_quantity), (True, 5))
+        self.assertEqual(self.client.get(listing.get_absolute_url()).status_code, 200)
 
-    def test_the_catalog_page_then_has_no_website_buttons(self):
+    def test_switching_back_to_retail_removes_the_routing_and_the_minimum(self):
+        self.go_wholesale_only()
+        self.list_product()
+        self.mfr_client.post(reverse("inputs:retail_setting"), {"sells_to_farmers": "on"})
+        listing = Product.objects.get()
+        self.assertEqual((listing.sold_through_agents, listing.min_order_quantity), (False, 1))
+
+    def test_a_change_to_the_catalog_minimum_reaches_a_wholesale_listing(self):
+        self.go_wholesale_only()
+        self.list_product()
+        product = WholesaleProduct.objects.get(pk=self.urea.pk)
+        product.min_order_quantity = 20
+        product.save()
+        self.assertEqual(Product.objects.get().min_order_quantity, 20)
+
+    def test_the_product_page_says_wholesale_and_shows_the_minimum_order(self):
+        self.go_wholesale_only()
+        self.list_product()
+        page = self.client.get(Product.objects.get().get_absolute_url())
+        self.assertContains(page, "Wholesale")
+        self.assertContains(page, "Minimum order: 5")
+        self.assertContains(page, "Sold through our authorized agents")
+        self.assertContains(self.client.get(reverse("website:marketplace")), "min order 5")
+
+    def test_the_catalog_page_explains_where_orders_go(self):
         self.go_wholesale_only()
         page = self.mfr_client.get(reverse("inputs:manufacturer_products"))
         self.assertContains(page, "Wholesale only")
-        self.assertContains(page, "We also sell to farmers")
-        for text in ("List on website", "Hide from website", "List all on the website", "On the website"):
-            self.assertNotContains(page, text)
+        self.assertContains(page, "goes to your retail agent for the farmer")
+        self.assertContains(page, "List on website")  # still available
 
-    def test_listing_is_refused_with_an_explanation(self):
-        self.go_wholesale_only()
-        self.assertContains(self.list_product(), "wholesale only")
-        self.assertContains(self.mfr_client.post(reverse("inputs:products_listing_all"), follow=True), "wholesale only")
-        self.assertFalse(Product.objects.filter(is_active=True).exists())
-
-    def test_the_marketplace_pages_explain_instead_of_nagging(self):
+    def test_the_marketplace_listings_page_points_to_retail_agents(self):
         self.go_wholesale_only()
         page = self.mfr_client.get(reverse("marketplace:supplier_dashboard"))
         self.assertContains(page, "You are set up as wholesale only")
-        self.assertNotContains(page, "not on the website yet")
-        blocked = self.mfr_client.get(reverse("marketplace:supplier_product_create"), follow=True)
-        self.assertEqual(blocked.redirect_chain[-1][0], reverse("marketplace:supplier_dashboard"))
-        self.assertContains(blocked, "wholesale only")
+        self.assertContains(page, reverse("inputs:agents"))
 
-    def test_switching_back_on_allows_listing_again_but_does_not_silently_republish(self):
-        self.list_product()
+    def test_a_manual_listing_by_a_wholesale_only_supplier_is_sold_through_agents(self):
+        from website.models import Category
+
         self.go_wholesale_only()
-        self.mfr_client.post(reverse("inputs:retail_setting"), {"sells_to_farmers": "on"})
-        self.assertTrue(type(self.mfr).objects.get(pk=self.mfr.pk).sells_to_farmers)
-        self.assertFalse(Product.objects.get().is_active)  # still hidden until they choose to list
-        self.assertContains(self.list_product(), "is now on the website marketplace")
-        self.assertTrue(Product.objects.get().is_active)
+        category = Category.objects.create(name="Wholesale Test", slug="wholesale-test")
+        response = self.mfr_client.post(reverse("marketplace:supplier_product_create"), {
+            "category": category.pk, "name": "Bulk maize seed", "brand": "Zamseed", "description": "Seed.", "price": "9000", "stock": "500",
+            "min_order_quantity": "50", "is_active": "on",
+        })
+        self.assertEqual(response.status_code, 302)
+        listing = Product.objects.get(name="Bulk maize seed")
+        self.assertEqual((listing.sold_through_agents, listing.min_order_quantity), (True, 50))
 
     def test_agrovets_always_sell_to_farmers(self):
         type(self.shop).objects.filter(pk=self.shop.pk).update(sells_to_farmers=False)
         shop = type(self.shop).objects.get(pk=self.shop.pk)
         self.assertTrue(shop.retails)
         self.assertContains(self.list_item(), "is now on the website marketplace")
+        self.assertFalse(Product.objects.get().sold_through_agents)
 
-    def test_a_wholesale_only_seedling_seller_has_no_website_column_in_stock(self):
+    def test_a_wholesale_only_seedling_seller_still_has_the_website_buttons(self):
         user, seller = make_seller("0700000077", "seedling_seller", "Green Seedlings")
         seller.sells_to_farmers = False
         seller.save()
@@ -340,9 +375,9 @@ class WholesaleOnlyTests(ListingTestBase):
         client = Client()
         client.force_login(user)
         page = client.get(reverse("inputs:stock_list"))
-        self.assertContains(page, "Tomato seedlings")
-        self.assertNotContains(page, "List on website")
-        self.assertNotContains(page, "<th>Website</th>")
+        self.assertContains(page, "List on website")
+        client.post(reverse("inputs:stock_listing_all"))
+        self.assertTrue(Product.objects.get().sold_through_agents)
 
     def test_the_profile_form_and_the_mobile_api_carry_the_setting(self):
         from marketplace.forms import SupplierOnboardingForm

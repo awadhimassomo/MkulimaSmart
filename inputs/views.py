@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 
 from community.utils import discussions_for_names
 from operations.models import TANZANIA_REGIONS, InputSeller
+from website.models import Order, OrderLine
 
 from . import selectors, services, website_listing
 from .forms import (
@@ -69,6 +70,22 @@ def _role_required(role):
     return decorator
 
 
+def any_seller_required(view_func):
+    """Any seller with a finished business profile (a manufacturer, an agrovet or another supplier)."""
+
+    @wraps(view_func)
+    @login_required
+    def wrapped(request, *args, **kwargs):
+        profile = _profile_for(request.user)
+        if profile is None:
+            messages.info(request, "Set up your business profile first.")
+            return redirect("marketplace:supplier_onboarding")
+        request.seller = profile
+        return view_func(request, *args, **kwargs)
+
+    return wrapped
+
+
 shop_required = _role_required("shop")
 manufacturer_required = _role_required("manufacturer")
 
@@ -85,7 +102,10 @@ def home(request):
 
 
 def _nav_context(request, active):
-    context = {"seller": request.seller, "active_nav": active}
+    context = {
+        "seller": request.seller, "active_nav": active,
+        "web_orders_badge": OrderLine.objects.filter(fulfilled_by=request.user, status="new").count(),
+    }
     if request.seller.seller_type != "manufacturer":
         context["farmer_orders_badge"] = FarmerOrder.objects.filter(shop=request.seller, status="pending").count()
     return context
@@ -624,9 +644,6 @@ def _toggle_listing(request, obj, name):
 
 
 def _list_all(request):
-    if not request.seller.retails:
-        messages.error(request, website_listing.WHOLESALE_ONLY)
-        return
     listed, skipped = website_listing.publish_all(request.seller)
     if listed:
         messages.success(request, f"{listed} product{'s' if listed != 1 else ''} listed on the website marketplace.")
@@ -672,11 +689,15 @@ def retail_setting(request):
     """Wholesale only, or also selling to farmers directly. Wholesale only takes the seller's products off the website."""
     seller = request.seller
     seller.sells_to_farmers = request.POST.get("sells_to_farmers") == "on"
-    seller.save()  # hides any website listings when wholesale only (see website_listing.hide_when_wholesale_only)
+    seller.save()  # re-routes their website listings (see website_listing.sync_routing)
     if seller.sells_to_farmers:
-        messages.success(request, "You now also sell to farmers. Use List on website to put products on the marketplace.")
+        messages.success(request, "You now also deliver to farmers yourself. Orders for your products on the website come to you.")
     else:
-        messages.success(request, "You are set as wholesale only. Your products are shown to shops, not to farmers on the website.")
+        messages.success(
+            request,
+            "You are set as wholesale only. Your products stay on the website, and an order goes to your retail agent for the buyer's region. "
+            "Where you have no agent you are told about the demand. Appoint agents under Retail Agents.",
+        )
     return redirect("inputs:manufacturer_products")
 
 
@@ -743,3 +764,55 @@ def agent_remove(request, pk):
         hidden = not request.seller.retails
     messages.success(request, f"{agent} is no longer your retail agent in {region}." + (" Their website listings of your products were hidden." if hidden else ""))
     return redirect("inputs:agents")
+
+
+# ---------------------------------------------------------------------------
+# Website orders: what the Mkulima Smart website asks this seller to deliver
+# ---------------------------------------------------------------------------
+
+LINE_ACTIONS = {"confirm": "confirmed", "deliver": "delivered", "cancel": "cancelled"}
+
+
+def sync_order_status(order):
+    """Keep the buyer-facing order status in step with its lines."""
+    statuses = set(order.lines.values_list("status", flat=True))
+    if statuses and statuses <= {"cancelled"}:
+        new = "cancelled"
+    elif statuses and statuses <= {"delivered", "cancelled"}:
+        new = "delivered"
+    elif statuses & {"confirmed", "delivered"}:
+        new = "processing"
+    else:
+        new = "pending"
+    if order.status != new:
+        Order.objects.filter(pk=order.pk).update(status=new)
+
+
+@any_seller_required
+def web_orders(request):
+    show = request.GET.get("show", "")
+    lines = OrderLine.objects.filter(fulfilled_by=request.user).select_related("order", "fulfilled_by").order_by("-created_at")
+    if show != "all":
+        lines = lines.filter(status__in=["new", "confirmed"])
+    page = Paginator(lines, 25).get_page(request.GET.get("page"))
+    return render(request, "inputs/web_orders.html", {**_nav_context(request, "web_orders"), "page": page, "show": show})
+
+
+@any_seller_required
+@require_POST
+def web_order_update(request, pk):
+    line = get_object_or_404(OrderLine.objects.select_related("order"), pk=pk, fulfilled_by=request.user)
+    action = request.POST.get("action", "")
+    if action == "via_platform" and line.route == OrderLine.ROUTE_NO_AGENT and line.status == "new":
+        line.via_platform = True
+        line.status = "confirmed"
+        line.save(update_fields=["via_platform", "status", "updated_at"])
+        messages.success(request, "Mkulima Smart has been asked to deliver this order to the buyer.")
+    elif action in LINE_ACTIONS:
+        line.status = LINE_ACTIONS[action]
+        line.save(update_fields=["status", "updated_at"])
+        messages.success(request, f"{line.product_name}: {line.get_status_display().lower()}.")
+    else:
+        messages.error(request, "That action is not available for this order.")
+    sync_order_status(line.order)
+    return _back(request, "inputs:web_orders")

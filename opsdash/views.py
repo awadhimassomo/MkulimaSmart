@@ -26,7 +26,7 @@ from django.views.decorators.http import require_POST
 from assistant.models import Conversation
 from callcenter.models import Agronomist, Case, Heartbeat, Invite
 from gova_pp.models import FarmerMessage, GovernmentOfficial
-from website.models import Product
+from website.models import OrderLine, Product
 from operations.models import InputSeller
 from kikapu_bridge.models import ReplyDelivery, WebhookDelivery
 
@@ -92,6 +92,12 @@ def overview(request):
         attention.append({"level": "bad", "text": f"{failed_replies.count() + failed_orders.count()} message(s) to Kikapu failed for good", "url": "ops:deliveries"})
     elif stuck_replies.exists():
         attention.append({"level": "warn", "text": f"{stuck_replies.count()} reply(ies) not yet delivered to Kikapu", "url": "ops:deliveries"})
+    waiting_for_us = OrderLine.objects.filter(via_platform=True, status__in=OPEN_STATUSES).count()
+    if waiting_for_us:
+        attention.append({"level": "bad", "text": f"{waiting_for_us} website order item(s) suppliers asked Mkulima Smart to deliver", "url": "ops:web_orders"})
+    demand = OrderLine.objects.filter(route=OrderLine.ROUTE_NO_AGENT, via_platform=False, status="new").count()
+    if demand:
+        attention.append({"level": "warn", "text": f"{demand} website order item(s) in regions where the supplier has no agent", "url": "ops:web_orders", "query": "?show=no_agent"})
     if unanswered_experts.exists():
         attention.append({"level": "warn", "text": f"{unanswered_experts.count()} farmer(s) in the last 24 hours were told to see an expert", "url": "ops:chats", "query": "?state=expert"})
 
@@ -364,3 +370,44 @@ def product_toggle(request, pk):
     messages.success(request, f"{product.name} is now {'shown' if product.is_active else 'hidden'} on the website.")
     back = request.POST.get("back", "")
     return redirect(f"{reverse('ops:products')}?{back}" if back else "ops:products")
+
+
+# ---------------------------------------------------------------------------
+# Website orders: demand in regions with no agent, and deliveries Mkulima Smart was asked to make
+# ---------------------------------------------------------------------------
+
+OPEN_STATUSES = ["new", "confirmed"]
+
+
+@ops_required
+def web_orders(request):
+    show = request.GET.get("show", "")
+    lines = OrderLine.objects.select_related("order", "seller", "fulfilled_by").order_by("-created_at")
+    if show == "no_agent":
+        lines = lines.filter(route=OrderLine.ROUTE_NO_AGENT, status__in=OPEN_STATUSES)
+    elif show == "open":
+        lines = lines.filter(status__in=OPEN_STATUSES)
+    elif show != "all":
+        lines = lines.filter(via_platform=True, status__in=OPEN_STATUSES)
+    page = Paginator(lines, 25).get_page(request.GET.get("page"))
+    return render(request, "opsdash/web_orders.html", {
+        "nav": "web_orders", "page": page, "show": show,
+        "via_platform": OrderLine.objects.filter(via_platform=True, status__in=OPEN_STATUSES).count(),
+        "no_agent": OrderLine.objects.filter(route=OrderLine.ROUTE_NO_AGENT, status__in=OPEN_STATUSES).count(),
+        "open_lines": OrderLine.objects.filter(status__in=OPEN_STATUSES).count(),
+    })
+
+
+@ops_required
+@require_POST
+def web_order_update(request, pk):
+    from inputs.views import sync_order_status
+
+    line = get_object_or_404(OrderLine.objects.select_related("order"), pk=pk)
+    if request.POST.get("action") == "deliver":
+        line.status = "delivered"
+        line.save(update_fields=["status", "updated_at"])
+        sync_order_status(line.order)
+        messages.success(request, f"{line.product_name} marked as delivered.")
+    back = request.POST.get("back", "")
+    return redirect(f"{reverse('ops:web_orders')}?{back}" if back else "ops:web_orders")

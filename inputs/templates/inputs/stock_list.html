@@ -27,7 +27,7 @@
             <input type="hidden" name="view" value="{{ view }}">
             <input type="search" name="q" value="{{ q }}" class="form-input" placeholder="Search name or SKU" aria-label="Search stock">
           </form>
-          {% if seller.retails and unlisted_count %}<form method="post" action="{% url 'inputs:stock_listing_all' %}" class="in-toolbar">{% csrf_token %}
+          {% if unlisted_count %}<form method="post" action="{% url 'inputs:stock_listing_all' %}" class="in-toolbar">{% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <button class="in-btn in-btn-secondary" type="submit">List all on the website ({{ unlisted_count }})</button></form>{% endif %}
           <a href="{% url 'inputs:stock_create' %}" class="in-btn in-btn-primary"><i class="fa-solid fa-plus"></i> Add item</a>
@@ -37,7 +37,7 @@
     {% if items %}
       <div class="in-table-wrap">
         <table class="supplier-table">
-          <thead><tr><th>Product</th><th>Category</th><th>In stock</th><th>Expiry</th><th>Cost</th><th>Price</th><th>Margin</th>{% if seller.retails %}<th>Website</th>{% endif %}<th></th></tr></thead>
+          <thead><tr><th>Product</th><th>Category</th><th>In stock</th><th>Expiry</th><th>Cost</th><th>Price</th><th>Margin</th><th>Website</th><th></th></tr></thead>
           <tbody>
             {% for item in items %}
               <tr>
@@ -64,7 +64,7 @@
                 <td class="in-money">{{ item.cost_price|floatformat:0|intcomma }}</td>
                 <td class="in-money"><strong>{{ item.selling_price|floatformat:0|intcomma }}</strong></td>
                 <td class="in-money">{% if item.margin_percent is not None %}{{ item.margin_percent }}%{% else %}—{% endif %}</td>
-                {% if seller.retails %}<td>
+                <td>
                   <form method="post" action="{% url 'inputs:stock_listing' item.pk %}">{% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
                     {% if item.marketplace_product and item.marketplace_product.is_active %}
@@ -76,7 +76,7 @@
                       <button class="in-btn in-btn-primary in-btn-sm" type="submit" style="margin-top:0.3rem">List on website</button>
                     {% endif %}
                   </form>
-                </td>{% endif %}
+                </td>
                 <td>
                   <div class="supplier-actions" style="gap:0.4rem;flex-wrap:nowrap">
                     <a href="{% url 'inputs:stock_edit' item.pk %}" class="in-btn in-btn-secondary in-btn-sm">Edit</a>

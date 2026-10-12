@@ -96,12 +96,12 @@ def _copy_image(product, source):
 
 
 @transaction.atomic
-def _publish(obj, user, name, brand, category_key, description, price, stock, photo):
+def _publish(obj, user, name, brand, category_key, description, price, stock, photo, through_agents=False, min_order=1):
     product = obj.marketplace_product
     if product is None:
         product = Product(
             name=name[:200], brand=(brand or "")[:120], category=_category(category_key), description=description, price=price, stock=stock,
-            supplier=user, is_active=True,
+            supplier=user, is_active=True, sold_through_agents=through_agents, min_order_quantity=min_order,
         )
         product.slug = generate_unique_slug(product.name, product)
         product.save()
@@ -109,7 +109,9 @@ def _publish(obj, user, name, brand, category_key, description, price, stock, ph
         obj.save(update_fields=["marketplace_product"])
     else:
         # Listing again refreshes price and stock and switches it back on; the seller's edits to the text are kept.
-        Product.objects.filter(pk=product.pk).update(price=price, stock=stock, is_active=True)
+        Product.objects.filter(pk=product.pk).update(
+            price=price, stock=stock, is_active=True, sold_through_agents=through_agents, min_order_quantity=min_order,
+        )
         product.refresh_from_db()
     _copy_image(product, photo)
     return product
@@ -119,16 +121,8 @@ def _publish(obj, user, name, brand, category_key, description, price, stock, ph
 # One product
 # ---------------------------------------------------------------------------
 
-WHOLESALE_ONLY = (
-    "You are set up as wholesale only, so your products are not shown to farmers on the website. "
-    "If you also sell to farmers directly, switch that on first."
-)
-
-
 def publish_stock_item(item):
     """List a shop's stock item on the marketplace."""
-    if not item.shop.retails:
-        raise ListingError(WHOLESALE_ONLY)
     user = item.shop.user
     if user is None:
         raise ListingError("This shop has no login account, so it cannot list products on the website.")
@@ -149,14 +143,12 @@ def publish_stock_item(item):
     photo = item.image or (wholesale.primary_image.image if wholesale and wholesale.primary_image else None)
     return _publish(
         item, user, item.name, item.brand or (wholesale.brand if wholesale else ""), item.category, _description(item.name, wholesale, agent_of),
-        item.selling_price, max(0, int(item.quantity)), photo,
+        item.selling_price, max(0, int(item.quantity)), photo, through_agents=not item.shop.retails,
     )
 
 
 def publish_wholesale(product):
     """List a manufacturer's catalog product on the marketplace, at its suggested retail price."""
-    if not product.manufacturer.retails:
-        raise ListingError(WHOLESALE_ONLY)
     user = product.manufacturer.user
     if user is None:
         raise ListingError("This company has no login account, so it cannot list products on the website.")
@@ -166,7 +158,8 @@ def publish_wholesale(product):
     image = product.primary_image
     return _publish(
         product, user, product.name, product.brand, product.category, _description(product.name, product),
-        price, product.stock_available, image.image if image else None,
+        price, product.stock_available, image.image if image else None, through_agents=not product.manufacturer.retails,
+        min_order=product.min_order_quantity if not product.manufacturer.retails else 1,
     )
 
 
@@ -199,9 +192,7 @@ def unlisted_wholesale(manufacturer):
 
 
 def unlisted_for(seller):
-    """The products of this seller that are not on the website yet (their catalog, or their stock for a shop). None if wholesale only."""
-    if not seller.retails:
-        return unlisted_wholesale(seller).none() if seller.seller_type == "manufacturer" else unlisted_stock(seller).none()
+    """The products of this seller that are not on the website yet (their catalog, or their stock for a shop)."""
     return unlisted_wholesale(seller) if seller.seller_type == "manufacturer" else unlisted_stock(seller)
 
 
@@ -230,14 +221,28 @@ def sync_listing(sender, instance, **kwargs):
         price, stock = instance.selling_price, int(instance.quantity)
     else:
         price, stock = instance.suggested_retail_price or instance.wholesale_price, instance.stock_available
+        # a wholesale-only supplier's listing follows the catalog's minimum order
+        Product.objects.filter(pk=instance.marketplace_product_id, sold_through_agents=True).update(min_order_quantity=max(1, instance.min_order_quantity))
     Product.objects.filter(pk=instance.marketplace_product_id).update(price=price, stock=max(0, stock))
 
 
-def hide_when_wholesale_only(sender, instance, **kwargs):
-    """post_save receiver for InputSeller: someone who does not sell to farmers has nothing on the farmer-facing website."""
-    if instance.retails or instance.user_id is None:
+def sync_routing(sender, instance, **kwargs):
+    """
+    post_save receiver for InputSeller: a supplier that sells wholesale only has its listings "sold through agents"
+    (an order goes to its agent for the buyer's region); one that retails delivers its own orders.
+    """
+    if instance.user_id is None:
         return
-    Product.objects.filter(supplier_id=instance.user_id, is_active=True).update(is_active=False)
+    from .models import WholesaleProduct
+
+    Product.objects.filter(supplier_id=instance.user_id).exclude(sold_through_agents=not instance.retails).update(
+        sold_through_agents=not instance.retails
+    )
+    # wholesale: the catalog's minimum order applies to the listing; retail: anyone can buy one
+    for wholesale in WholesaleProduct.objects.filter(manufacturer=instance, marketplace_product__isnull=False):
+        Product.objects.filter(pk=wholesale.marketplace_product_id).update(
+            min_order_quantity=max(1, wholesale.min_order_quantity) if not instance.retails else 1
+        )
 
 
 def hide_agent_listings(supplier, agent):

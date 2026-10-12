@@ -1,5 +1,5 @@
 {% extends 'website/base.html' %}
-{% load money %}
+{% load money l10n %}
 {% load static product_filters humanize %}
 
 {% block title %}Checkout - Mkulima Smart{% endblock %}
@@ -239,27 +239,19 @@
                                 </div>
                                 <div class="col-12">
                                     <label for="address" class="form-label">Street Address</label>
-                                    <input type="text" class="form-control" id="address" name="address" required>
+                                    <input type="text" class="form-control" id="address" name="address" value="{{ form_data.address }}" required>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="city" class="form-label">City</label>
-                                    <input type="text" class="form-control" id="city" name="city" required>
+                                <div class="col-md-6">
+                                    <label for="city" class="form-label">Town or village</label>
+                                    <input type="text" class="form-control" id="city" name="city" value="{{ form_data.city }}">
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="county" class="form-label">County</label>
-                                    <select class="form-select" id="county" name="county" required>
-                                        <option value="">Choose...</option>
-                                        <option value="Nairobi">Nairobi</option>
-                                        <option value="Mombasa">Mombasa</option>
-                                        <option value="Kisumu">Kisumu</option>
-                                        <option value="Nakuru">Nakuru</option>
-                                        <option value="Eldoret">Eldoret</option>
-                                        <!-- Add more counties as needed -->
+                                <div class="col-md-6">
+                                    <label for="region" class="form-label">Region to deliver to</label>
+                                    <select class="form-select" id="region" name="region" required>
+                                        <option value="">Choose your region...</option>
+                                        {% for name in regions %}<option value="{{ name }}" {% if form_data.region == name %}selected{% endif %}>{{ name }}</option>{% endfor %}
                                     </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="postalCode" class="form-label">Postal Code</label>
-                                    <input type="text" class="form-control" id="postalCode" name="postal_code" required>
+                                    <div class="form-text">Your region decides which of our agents delivers your order.</div>
                                 </div>
                                 <div class="col-12">
                                     <label for="deliveryInstructions" class="form-label">Delivery Instructions (Optional)</label>
@@ -279,33 +271,43 @@
                             
                             <div class="mb-3">
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="delivery_option" id="standardDelivery" value="standard" checked>
+                                    <input class="form-check-input" type="radio" name="delivery_option" id="noDelivery" value="" {% if not delivery_option %}checked{% endif %}>
+                                    <label class="form-check-label d-flex justify-content-between w-100" for="noDelivery">
+                                        <div>
+                                            <strong>No delivery added</strong>
+                                            <p class="text-muted mb-0">I will collect it or arrange delivery myself</p>
+                                        </div>
+                                        <span>Free</span>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="delivery_option" id="standardDelivery" value="standard" {% if delivery_option == "standard" %}checked{% endif %}>
                                     <label class="form-check-label d-flex justify-content-between w-100" for="standardDelivery">
                                         <div>
                                             <strong>Standard Delivery</strong>
                                             <p class="text-muted mb-0">3-5 business days</p>
                                         </div>
-                                        <span>KSh 350</span>
+                                        <span>+ TSh {{ standard_fee|tzs }}</span>
                                     </label>
                                 </div>
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="delivery_option" id="expressDelivery" value="express">
+                                    <input class="form-check-input" type="radio" name="delivery_option" id="expressDelivery" value="express" {% if delivery_option == "express" %}checked{% endif %}>
                                     <label class="form-check-label d-flex justify-content-between w-100" for="expressDelivery">
                                         <div>
                                             <strong>Express Delivery</strong>
                                             <p class="text-muted mb-0">1-2 business days</p>
                                         </div>
-                                        <span>KSh 650</span>
+                                        <span>+ TSh {{ express_fee|tzs }}</span>
                                     </label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="delivery_option" id="pickup" value="pickup">
-                                    <label class="form-check-label d-flex justify-content-between w-100" for="pickup">
+                                <div class="form-check mt-3 pt-3 border-top">
+                                    <input class="form-check-input" type="checkbox" name="add_vat" id="addVat" {% if add_vat %}checked{% endif %}>
+                                    <label class="form-check-label d-flex justify-content-between w-100" for="addVat">
                                         <div>
-                                            <strong>Pick up from warehouse</strong>
-                                            <p class="text-muted mb-0">Available during business hours</p>
+                                            <strong>Add VAT ({{ vat_percent }}%)</strong>
+                                            <p class="text-muted mb-0">Tick this if you need VAT added to your order</p>
                                         </div>
-                                        <span>Free</span>
+                                        <span>+ TSh <span id="vat-preview">{{ cart_subtotal|tzs }}</span></span>
                                     </label>
                                 </div>
                             </div>
@@ -479,13 +481,13 @@
                     </div>
                     
                     <div class="summary-item">
-                        <span>Delivery Fee</span>
-                        <span id="delivery-fee">TSh {{ cart_delivery_fee|tzs }}</span>
+                        <span>Delivery</span>
+                        <span id="delivery-fee">{% if cart_delivery_fee %}TSh {{ cart_delivery_fee|tzs }}{% else %}Not added{% endif %}</span>
                     </div>
                     
                     <div class="summary-item">
-                        <span>Tax (16% VAT)</span>
-                        <span>TSh {{ cart_tax|tzs }}</span>
+                        <span>VAT ({{ vat_percent }}%)</span>
+                        <span id="vat-amount">{% if cart_tax %}TSh {{ cart_tax|tzs }}{% else %}Not added{% endif %}</span>
                     </div>
                     
                     <div class="summary-item summary-total">
@@ -585,29 +587,29 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Handle delivery option changes
         const deliveryOptions = document.querySelectorAll('input[name="delivery_option"]');
+        const vatBox = document.getElementById('addVat');
         const deliveryFeeElement = document.getElementById('delivery-fee');
+        const vatElement = document.getElementById('vat-amount');
+        const vatPreview = document.getElementById('vat-preview');
         const orderTotalElement = document.getElementById('order-total');
-        const subtotal = {{ cart.get_total }};
-        const tax = subtotal * 0.16;
-        
-        deliveryOptions.forEach(option => {
-            option.addEventListener('change', function() {
-                let deliveryFee = 0;
-                
-                if (this.value === 'standard') {
-                    deliveryFee = 350;
-                    deliveryFeeElement.textContent = 'TSh 350';
-                } else if (this.value === 'express') {
-                    deliveryFee = 650;
-                    deliveryFeeElement.textContent = 'TSh 650';
-                } else {
-                    deliveryFeeElement.textContent = 'Free';
-                }
-                
-                const total = subtotal + deliveryFee + tax;
-                orderTotalElement.textContent = 'TSh ' + Math.round(total).toLocaleString('en-US');
-            });
-        });
+        const subtotal = {{ cart_subtotal|unlocalize }};
+        const fees = {standard: {{ standard_fee|unlocalize }}, express: {{ express_fee|unlocalize }}};
+        const vatAmount = Math.round(subtotal * {{ vat_percent }} / 100);
+        const money = value => 'TSh ' + Math.round(value).toLocaleString('en-US');
+        vatPreview.textContent = Math.round(vatAmount).toLocaleString('en-US');
+
+        function refresh() {
+            const chosen = document.querySelector('input[name="delivery_option"]:checked');
+            const deliveryFee = chosen && fees[chosen.value] ? fees[chosen.value] : 0;
+            const vat = vatBox && vatBox.checked ? vatAmount : 0;
+            deliveryFeeElement.textContent = deliveryFee ? money(deliveryFee) : 'Not added';
+            vatElement.textContent = vat ? money(vat) : 'Not added';
+            orderTotalElement.textContent = money(subtotal + deliveryFee + vat);
+        }
+
+        deliveryOptions.forEach(option => option.addEventListener('change', refresh));
+        if (vatBox) { vatBox.addEventListener('change', refresh); }
+        refresh();
     });
 </script>
 {% endblock %}

@@ -531,6 +531,7 @@
               
               <div class="product-footer">
                 <div class="product-price">TSh {{ product.price|tzs }}</div>
+                {% if product.is_wholesale %}<div style="font-size:.8rem"><strong>Wholesale</strong> · min order {{ product.minimum }}</div>{% endif %}
                 
                 {% if product.stock > 0 %}
                   <a href="{% url 'website:add_to_cart' product.id %}" class="add-to-cart-btn">🛒 Add to Cart</a>

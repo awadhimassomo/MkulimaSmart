@@ -34,6 +34,7 @@ class SupplierProductForm(forms.ModelForm):
             "price",
             "discount_price",
             "stock",
+            "min_order_quantity",
             "is_hydroponics",
             "requires_quote",
             "is_active",
@@ -44,6 +45,7 @@ class SupplierProductForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["min_order_quantity"].required = False
         self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
         self.fields["category"].empty_label = "Select a category"
         self.fields["category"].help_text = "Choose the best fit for what you are selling."
@@ -75,6 +77,11 @@ class SupplierProductForm(forms.ModelForm):
         price = cleaned_data.get("price")
         discount_price = cleaned_data.get("discount_price")
 
+        minimum = cleaned_data.get("min_order_quantity")
+        if minimum is None:
+            cleaned_data["min_order_quantity"] = 1
+        elif minimum < 1:
+            self.add_error("min_order_quantity", "The minimum order must be at least 1.")
         if price is not None and discount_price is not None and discount_price > price:
             self.add_error("discount_price", "Discount price cannot be higher than the main price.")
 
@@ -83,6 +90,8 @@ class SupplierProductForm(forms.ModelForm):
     def save(self, supplier, commit=True):
         product = super().save(commit=False)
         product.supplier = supplier
+        seller = InputSeller.objects.filter(user=supplier).first()
+        product.sold_through_agents = bool(seller is not None and not seller.retails)  # wholesale only: orders go to its agents
 
         if not product.slug or "name" in self.changed_data:
             product.slug = generate_unique_slug(product.name, instance=product)

@@ -8,15 +8,29 @@ from django.core.paginator import Paginator
 from decimal import Decimal
 
 from community.utils import discussions_for_names
+from operations.models import TANZANIA_REGIONS
+
+from .ordering import notify, place_order
 
 from .models import (User, Farm, Crop, Category, Product, ProductImage, Cart, CartItem, Order,
                       Warehouse, WarehouseBooking, Transport, TransportBooking, Course, Lesson, Testimonial)
 
 
-def build_cart_summary(cart):
+REGION_NAMES = [name for name, _label in TANZANIA_REGIONS]
+
+
+VAT_RATE = Decimal("0.18")
+DELIVERY_FEES = {"standard": Decimal("350"), "express": Decimal("650")}
+
+
+def build_cart_summary(cart, delivery_option="", add_vat=False):
+    """
+    Totals for a cart. Delivery and VAT are only included when the buyer chose to add them: a delivery option
+    ("standard" or "express") and/or the VAT box. Otherwise the total is just the products.
+    """
     subtotal = Decimal(cart.get_total() or 0)
-    delivery_fee = Decimal("350.00")
-    tax = (subtotal * Decimal("0.18")).quantize(Decimal("1"))
+    delivery_fee = DELIVERY_FEES.get(delivery_option, Decimal("0"))
+    tax = (subtotal * VAT_RATE).quantize(Decimal("1")) if add_vat else Decimal("0")
     total = subtotal + delivery_fee + tax
     item_count = cart.items.count()
 
@@ -26,6 +40,11 @@ def build_cart_summary(cart):
         "cart_tax": tax,
         "cart_total_with_fees": total,
         "cart_item_count": item_count,
+        "delivery_option": delivery_option if delivery_option in DELIVERY_FEES else "",
+        "add_vat": bool(add_vat),
+        "vat_percent": int(VAT_RATE * 100),
+        "standard_fee": DELIVERY_FEES["standard"],
+        "express_fee": DELIVERY_FEES["express"],
     }
 
 
@@ -339,16 +358,28 @@ def add_to_cart(request, product_id):
     Add a product to the shopping cart
     """
     product = get_object_or_404(Product, id=product_id, is_active=True)
+    minimum = product.minimum
+    if minimum > 1 and product.stock < minimum:
+        messages.error(
+            request,
+            _("%(name)s is sold wholesale with a minimum order of %(minimum)s, and only %(stock)s are in stock right now.")
+            % {'name': product.name, 'minimum': minimum, 'stock': product.stock},
+        )
+        return redirect(product.get_absolute_url())
     cart, created = Cart.objects.get_or_create(user=request.user)
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
-        product=product
+        product=product,
+        defaults={'quantity': minimum},
     )
-    
-    if not created:
+
+    if created:
+        if minimum > 1:
+            messages.info(request, _("%(name)s has a minimum order of %(minimum)s, so that is the quantity in your cart.") % {'name': product.name, 'minimum': minimum})
+    else:
         cart_item.quantity += 1
         cart_item.save()
-    
+
     return redirect('website:cart')
 
 
@@ -382,7 +413,14 @@ def update_cart_item(request, item_id):
             messages.info(request, _("Item removed from your cart."))
             return redirect('website:cart')
 
-        if quantity > cart_item.product.stock:
+        minimum = cart_item.product.minimum
+        if quantity < minimum:
+            quantity = minimum
+            messages.warning(
+                request,
+                _("%(name)s has a minimum order of %(minimum)s.") % {'name': cart_item.product.name, 'minimum': minimum},
+            )
+        elif quantity > cart_item.product.stock:
             quantity = cart_item.product.stock
             messages.warning(
                 request,
@@ -410,30 +448,50 @@ def checkout(request):
         user=request.user,
     )
     
+    errors = []
     if request.method == 'POST':
-        # Process order
-        # For brevity, form processing is omitted here
-        total_amount = cart.get_total()
-        shipping_address = request.POST.get('shipping_address')
-        phone_number = request.POST.get('phone_number')
-        
-        # Create order (simplified)
-        order = Order.objects.create(
-            user=request.user,
-            total_amount=total_amount,
-            shipping_address=shipping_address,
-            phone_number=phone_number
-        )
-        
-        # Clear cart
-        cart.items.all().delete()
-        
-        messages.success(request, _("Order placed successfully!"))
-        return redirect('website:order_detail', order_id=order.id)
-    
+        post = request.POST
+        delivery_option = post.get('delivery_option', '') if post.get('delivery_option', '') in DELIVERY_FEES else ''
+        add_vat = post.get('add_vat') == 'on'
+        name = f"{post.get('first_name', '').strip()} {post.get('last_name', '').strip()}".strip()
+        phone = post.get('phone_number', '').strip()
+        address = post.get('address', '').strip()
+        region = post.get('region', '').strip()
+        if not cart.items.exists():
+            errors.append(_("Your cart is empty."))
+        for item in cart.items.select_related('product'):
+            if item.quantity < item.product.minimum:
+                errors.append(
+                    _("%(name)s has a minimum order of %(minimum)s. Change the quantity in your cart.")
+                    % {'name': item.product.name, 'minimum': item.product.minimum}
+                )
+        if not phone:
+            errors.append(_("Enter a phone number we can reach you on."))
+        if not address:
+            errors.append(_("Enter your street address or the place to deliver to."))
+        if region not in REGION_NAMES:
+            errors.append(_("Choose the region to deliver to. It decides which of our agents delivers your order."))
+        if not errors:
+            notes = "\n".join(part for part in (post.get('delivery_instructions', '').strip(), post.get('order_notes', '').strip()) if part)
+            summary = build_cart_summary(cart, delivery_option, add_vat)
+            order = place_order(
+                request.user, cart, name=name, phone=phone, address=address, town=post.get('city', '').strip(), region=region,
+                notes=notes, total=summary['cart_total_with_fees'], delivery_option=delivery_option,
+                delivery_fee=summary['cart_delivery_fee'], vat_amount=summary['cart_tax'],
+            )
+            cart.items.all().delete()
+            notify(order)
+            messages.success(request, _("Order placed successfully!"))
+            return redirect('website:order_detail', order_id=order.id)
+        for error in errors:
+            messages.error(request, error)
+
+    chosen = request.POST if request.method == 'POST' else {}
     context = {
         'cart': cart,
-        **build_cart_summary(cart),
+        'regions': REGION_NAMES,
+        'form_data': request.POST,
+        **build_cart_summary(cart, chosen.get('delivery_option', ''), chosen.get('add_vat') == 'on'),
     }
     return render(request, 'website/checkout.html', context)
 

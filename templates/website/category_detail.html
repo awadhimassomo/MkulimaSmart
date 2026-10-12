@@ -216,6 +216,7 @@
                                 <div class="card-body">
                                     {% if product.brand %}<div class="small"><strong>{{ product.brand }}</strong></div>{% endif %}
                                     <h5 class="card-title">{{ product.name|truncatechars:40 }}</h5>
+                                    {% if product.is_wholesale %}<div class="small"><span class="badge bg-dark">Wholesale</span> <strong>Minimum order: {{ product.minimum }}</strong></div>{% endif %}
                                     
                                     <div class="price-section mb-3">
                                         {% if product.discount_price %}

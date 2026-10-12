@@ -366,11 +366,6 @@ def planting_record_qr_intake(request, seedling_batch_id):
 
 @supplier_required
 def supplier_product_create(request):
-    seller = InputSeller.objects.filter(user=request.user).first()
-    if seller is not None and not seller.retails:
-        messages.info(request, "You are set up as wholesale only, so your products are not listed for farmers. "
-                               "Turn on \"I also sell directly to farmers\" in your profile to list products on the website.")
-        return redirect("marketplace:supplier_dashboard")
     if request.method == "POST":
         form = SupplierProductForm(request.POST, request.FILES)
         if form.is_valid():

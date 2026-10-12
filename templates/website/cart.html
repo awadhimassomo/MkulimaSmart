@@ -266,7 +266,7 @@
 
                                     <form action="{% url 'website:update_cart_item' item.id %}" method="post" class="d-flex align-items-center">
                                         {% csrf_token %}
-                                        <input type="number" name="quantity" class="form-control quantity-input" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" onchange="this.form.submit()">
+                                        <input type="number" name="quantity" class="form-control quantity-input" value="{{ item.quantity }}" min="{{ item.product.minimum }}" max="{{ item.product.stock }}" onchange="this.form.submit()">
                                     </form>
 
                                     <div class="subtotal">
@@ -307,20 +307,11 @@
                             <span>TSh {{ cart_subtotal|tzs }}</span>
                         </div>
 
-                        <div class="summary-item">
-                            <span>Delivery Fee</span>
-                            <span>TSh {{ cart_delivery_fee|tzs }}</span>
-                        </div>
-
-                        <div class="summary-item">
-                            <span>Tax (18% VAT)</span>
-                            <span>TSh {{ cart_tax|tzs }}</span>
-                        </div>
-
                         <div class="summary-item summary-total">
                             <span>Total</span>
                             <span>TSh {{ cart_total_with_fees|tzs }}</span>
                         </div>
+                        <p class="small text-muted mt-2 mb-0">Delivery and VAT are not added automatically. You can choose to add them at checkout.</p>
 
                         <div class="d-flex flex-wrap gap-2 justify-content-end align-items-center mt-4">
                             <button id="updateCartBtn" class="btn btn-outline-success">

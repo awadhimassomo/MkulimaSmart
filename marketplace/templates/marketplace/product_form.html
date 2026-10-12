@@ -81,6 +81,14 @@
             {% endif %}
           </div>
           <div class="supplier-field">
+            <label for="{{ form.min_order_quantity.id_for_label }}">Minimum order</label>
+            {{ form.min_order_quantity }}
+            <span class="helptext">The smallest quantity a buyer can order. Keep it at 1 if you sell single items; wholesale suppliers set it higher.</span>
+            {% if form.min_order_quantity.errors %}
+              <div class="supplier-errors">{{ form.min_order_quantity.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="supplier-field">
             <label for="{{ form.primary_image.id_for_label }}">Cover Image</label>
             {{ form.primary_image }}
             {% if form.primary_image.help_text %}

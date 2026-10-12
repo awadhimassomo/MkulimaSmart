@@ -1,0 +1,52 @@
+{% extends 'website/base.html' %}
+{% load money %}
+
+{% block title %}Order #{{ order.id }} - Mkulima Smart{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background:#f5f7f2">
+  <div class="container" style="max-width:960px">
+    <p><a href="{% url 'website:order_list' %}">&larr; All my orders</a></p>
+    <h1 class="h3 mb-1">Order #{{ order.id }}</h1>
+    <p class="text-muted">Placed {{ order.created_at|date:"j M Y, H:i" }}. Deliver to {{ order.shipping_address }}{% if order.phone_number %}. We will call {{ order.phone_number }}{% endif %}.</p>
+
+    <div class="card shadow-sm mb-4" style="border-radius:16px;border:1px solid #e3e9e0">
+      <div class="card-body">
+        <h2 class="h5 mb-3">What you ordered and who delivers it</h2>
+        {% for line in order.lines.all %}
+          <div class="d-flex justify-content-between flex-wrap gap-2 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+            <div style="flex:1;min-width:240px">
+              {% if line.brand %}<div><strong>{{ line.brand }}</strong></div>{% endif %}
+              <div class="fw-semibold">{{ line.product_name }}</div>
+              <div class="text-muted small">{{ line.quantity }} x TSh {{ line.unit_price|tzs }}</div>
+              <div class="small mt-1">
+                {% if line.route == "agent" %}
+                  <span class="badge bg-success">Delivered by our agent in {{ line.region }}</span>
+                  <span class="text-muted">{{ line.deliverer_name }}</span>
+                {% elif line.route == "no_agent" %}
+                  <span class="badge bg-warning text-dark">No agent in {{ line.region }} yet</span>
+                  <div class="text-muted mt-1">
+                    {% if line.via_platform %}The supplier asked Mkulima Smart to deliver this, so we are arranging delivery to you.
+                    {% else %}The supplier has been told about your order. They will deliver it to you through Mkulima Smart, and we will contact you.{% endif %}
+                  </div>
+                {% else %}
+                  <span class="text-muted">Sold and delivered by {{ line.deliverer_name }}</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="fw-semibold">TSh {{ line.line_total|tzs }}</div>
+              <span class="badge bg-secondary">{{ line.get_status_display }}</span>
+            </div>
+          </div>
+        {% endfor %}
+        <div class="d-flex justify-content-between pt-3 mt-2 border-top">
+          <span class="fw-semibold">Total (with delivery and tax)</span>
+          <span class="fw-bold">TSh {{ order.total_amount|tzs }}</span>
+        </div>
+      </div>
+    </div>
+    {% if order.delivery_notes %}<p class="text-muted"><strong>Your notes:</strong> {{ order.delivery_notes }}</p>{% endif %}
+  </div>
+</section>
+{% endblock %}

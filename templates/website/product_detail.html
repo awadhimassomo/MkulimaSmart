@@ -168,6 +168,14 @@
                     {% endif %}
                 </div>
                 
+                {% if product.is_wholesale %}
+                <p class="mb-2"><span class="badge bg-dark">Wholesale</span> <strong>Minimum order: {{ product.minimum }}</strong>
+                  <span class="text-muted small">You cannot order less than this.</span></p>
+                {% endif %}
+                {% if product.sold_through_agents %}
+                <p class="small text-muted mb-3"><strong>Sold through our authorized agents.</strong> You choose your region at checkout and the order goes to the agent who covers it.</p>
+                {% endif %}
+
                 <div class="mb-4">
                     {% if product.stock > 10 %}
                         <span class="stock-badge in-stock">In Stock</span>

@@ -1,0 +1,64 @@
+{% extends "inputs/base.html" %}
+{% load money %}
+
+{% block page_title %}Website orders{% endblock %}
+{% block supplier_title %}Website orders{% endblock %}
+{% block supplier_subtitle %}Orders from the Mkulima Smart website that you are asked to deliver.{% endblock %}
+
+{% block supplier_content %}
+<div class="in-stack">
+  <section class="in-panel"><div class="in-panel-body">
+    <div class="in-panel-head">
+      <div class="in-tabs">
+        <a href="?show=open" class="{% if show != 'all' %}is-active{% endif %}">To deliver</a>
+        <a href="?show=all" class="{% if show == 'all' %}is-active{% endif %}">All</a>
+      </div>
+    </div>
+    <div class="in-list">
+      {% for line in page %}
+        <div class="in-list-row" style="align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:260px">
+            {% if line.brand %}<strong>{{ line.brand }}</strong> {% endif %}<strong>{{ line.product_name }}</strong>
+            <span class="in-pill {% if line.status == 'new' %}in-pill-pending{% elif line.status == 'delivered' %}in-pill-ok{% elif line.status == 'cancelled' %}in-pill-low{% else %}in-pill-confirmed{% endif %}">{{ line.get_status_display }}</span>
+            <div class="in-muted">{{ line.quantity }} x TSh {{ line.unit_price|tzs }} = TSh {{ line.line_total|tzs }} | order #{{ line.order_id }}, {{ line.created_at|date:"j M Y H:i" }}</div>
+            <div class="in-muted">Buyer: {{ line.order.buyer_name|default:"customer" }} | {{ line.order.phone_number }} | deliver to {{ line.order.shipping_address }}</div>
+            {% if line.order.delivery_notes %}<div class="in-muted">Notes: {{ line.order.delivery_notes }}</div>{% endif %}
+            {% if line.route == "no_agent" %}
+              <div class="in-muted" style="color:#92400e;margin-top:.3rem">
+                <strong>Demand in {{ line.region }}, where you have no agent.</strong>
+                You can deliver it yourself, or ask Mkulima Smart to deliver it to the buyer for you.
+                {% if line.via_platform %}Mkulima Smart is arranging delivery.{% endif %}
+                <a href="{% url 'inputs:agents' %}" class="in-link">Appoint an agent for {{ line.region }}</a>
+              </div>
+            {% elif line.route == "agent" %}
+              <div class="in-muted" style="margin-top:.3rem">Passed to you as the agent for {{ line.region }}.</div>
+            {% endif %}
+          </div>
+          <form method="post" action="{% url 'inputs:web_order_update' line.pk %}" class="in-toolbar">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            {% if line.status == "new" %}
+              {% if line.route == "no_agent" and not line.via_platform %}
+                <button class="in-btn in-btn-secondary in-btn-sm" type="submit" name="action" value="via_platform">Ask Mkulima Smart to deliver</button>
+              {% endif %}
+              <button class="in-btn in-btn-primary in-btn-sm" type="submit" name="action" value="confirm">{% if line.route == "no_agent" %}I will deliver it{% else %}Confirm{% endif %}</button>
+              <button class="in-btn in-btn-danger in-btn-sm" type="submit" name="action" value="cancel">Cancel</button>
+            {% elif line.status == "confirmed" %}
+              <button class="in-btn in-btn-primary in-btn-sm" type="submit" name="action" value="deliver">Mark delivered</button>
+              <button class="in-btn in-btn-danger in-btn-sm" type="submit" name="action" value="cancel">Cancel</button>
+            {% endif %}
+          </form>
+        </div>
+      {% empty %}
+        <div class="in-empty"><i class="fa-solid fa-box-open"></i>{% if show == "all" %}No website orders yet.{% else %}Nothing waiting for you to deliver.{% endif %}</div>
+      {% endfor %}
+    </div>
+    {% if page.paginator.num_pages > 1 %}
+      <div class="in-toolbar" style="margin-top:1rem">
+        {% if page.has_previous %}<a class="in-btn in-btn-secondary in-btn-sm" href="?show={{ show }}&amp;page={{ page.previous_page_number }}">Previous</a>{% endif %}
+        <span class="in-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a class="in-btn in-btn-secondary in-btn-sm" href="?show={{ show }}&amp;page={{ page.next_page_number }}">Next</a>{% endif %}
+      </div>
+    {% endif %}
+  </div></section>
+</div>
+{% endblock %}

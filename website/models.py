@@ -460,6 +460,14 @@ class Product(models.Model):
     is_hydroponics = models.BooleanField(_("Is Hydroponics"), default=False)
     requires_quote = models.BooleanField(_("Requires Quote"), default=False)
     is_active = models.BooleanField(_("Is Active"), default=True)
+    sold_through_agents = models.BooleanField(
+        _("Sold through agents"), default=False,
+        help_text=_("The supplier sells wholesale only: an order is passed to its retail agent for the buyer's region."),
+    )
+    min_order_quantity = models.PositiveIntegerField(
+        _("Minimum order"), default=1,
+        help_text=_("The smallest quantity a buyer can order. Wholesale suppliers set this above 1."),
+    )
     supplier = models.ForeignKey(User, on_delete=models.CASCADE, related_name="products")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -473,6 +481,16 @@ class Product(models.Model):
     
     def get_absolute_url(self):
         return reverse('website:product_detail', kwargs={'slug': self.slug})
+
+    @property
+    def minimum(self):
+        """The smallest quantity that can be ordered (never below 1)."""
+        return max(1, self.min_order_quantity or 1)
+
+    @property
+    def is_wholesale(self):
+        """Sold by a wholesale supplier (through its agents) or with a minimum order above one."""
+        return self.sold_through_agents or self.minimum > 1
 
 
 class ProductImage(models.Model):
@@ -549,15 +567,71 @@ class Order(models.Model):
     total_amount = models.DecimalField(_("Total Amount"), max_digits=10, decimal_places=2)
     shipping_address = models.TextField(_("Shipping Address"))
     phone_number = models.CharField(_("Phone Number"), max_length=15)
+    buyer_name = models.CharField(_("Buyer name"), max_length=150, blank=True)
+    delivery_region = models.CharField(_("Delivery region"), max_length=40, blank=True)
+    delivery_option = models.CharField(_("Delivery option"), max_length=20, blank=True)
+    delivery_fee = models.DecimalField(_("Delivery fee"), max_digits=10, decimal_places=2, default=0)
+    vat_amount = models.DecimalField(_("VAT"), max_digits=10, decimal_places=2, default=0)
+    delivery_notes = models.TextField(_("Delivery notes"), blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = _("Order")
         verbose_name_plural = _("Orders")
-    
+
     def __str__(self):
-        return f"Order #{self.id} - {self.user.phone_number}"
+        return f"Order #{self.id} - {self.user.phone_number or self.user.email}"
+
+
+class OrderLine(models.Model):
+    """
+    One product in an order, and who has to deliver it. A product sold through agents goes to the supplier's agent for
+    the delivery region; with no agent there it goes to the supplier, who is told about the demand and can deliver
+    through Mkulima Smart.
+    """
+    ROUTE_SELLER, ROUTE_AGENT, ROUTE_NO_AGENT = "seller", "agent", "no_agent"
+    ROUTE_CHOICES = [
+        (ROUTE_SELLER, _("The seller delivers")),
+        (ROUTE_AGENT, _("Passed to the agent for the region")),
+        (ROUTE_NO_AGENT, _("No agent in the region: the supplier was told")),
+    ]
+    STATUS_CHOICES = [
+        ("new", _("New")), ("confirmed", _("Confirmed")), ("delivered", _("Delivered")), ("cancelled", _("Cancelled")),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="lines")
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, blank=True, null=True, related_name="order_lines")
+    product_name = models.CharField(max_length=200)
+    brand = models.CharField(max_length=120, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    seller = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="sold_lines")
+    fulfilled_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="fulfilment_lines")
+    route = models.CharField(max_length=10, choices=ROUTE_CHOICES, default=ROUTE_SELLER, db_index=True)
+    region = models.CharField(max_length=40, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="new", db_index=True)
+    via_platform = models.BooleanField(default=False, help_text="The supplier asked Mkulima Smart to deliver it.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["order_id", "pk"]
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product_name} (order #{self.order_id})"
+
+    @property
+    def line_total(self):
+        return self.unit_price * self.quantity
+
+    @property
+    def deliverer_name(self):
+        user = self.fulfilled_by
+        if user is None:
+            return ""
+        shop = getattr(user, "input_seller_profile", None)
+        return (shop.business_name or shop.seller_name) if shop else (user.get_full_name() or user.email or "")
 
 
 # Booking Models

@@ -101,6 +101,7 @@
     <a href="{% url 'inputs:order_list' %}" class="supplier-nav-secondary {% if active_nav == 'orders' %}is-active{% endif %}"><i class="fa-solid fa-truck"></i>&nbsp;My Stock Requests</a>
     <a href="{% url 'marketplace:supplier_dashboard' %}" class="supplier-nav-secondary"><i class="fa-solid fa-shop"></i>&nbsp;Marketplace Listings</a>
   {% endif %}
+  <a href="{% url 'inputs:web_orders' %}" class="supplier-nav-secondary {% if active_nav == 'web_orders' %}is-active{% endif %}"><i class="fa-solid fa-bag-shopping"></i>&nbsp;Website Orders{% if web_orders_badge %} <span class="in-badge">{{ web_orders_badge }}</span>{% endif %}</a>
   {% if seller.can_have_agronomists %}<a href="{% url 'callcenter:team' %}" class="supplier-nav-secondary"><i class="fa-solid fa-headset"></i>&nbsp;Agronomists</a>{% endif %}
   <a href="{% url 'marketplace:supplier_onboarding' %}" class="supplier-nav-secondary"><i class="fa-solid fa-id-card"></i>&nbsp;Profile</a>
 {% endblock %}
