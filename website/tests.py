@@ -164,3 +164,20 @@ class ForgotPasswordTests(TestCase):
         with mock.patch("django.contrib.auth.forms.PasswordResetForm.send_mail", side_effect=OSError("down")):
             response = self.client.post(reverse("website:password_reset"), {"email": "neema@zamseed.test"})
         self.assertRedirects(response, reverse("website:password_reset_done"))
+
+
+class FooterLinksTests(TestCase):
+    def setUp(self):
+        translation.activate("en")
+        self.addCleanup(translation.deactivate)
+
+    def test_the_footer_links_to_the_government_app_and_the_operations_dashboard(self):
+        page = self.client.get(reverse("website:home"))
+        self.assertContains(page, f'href="{reverse("gova_pp:login")}"')
+        self.assertContains(page, f'href="{reverse("ops:overview")}"')
+
+    def test_the_operations_link_sends_visitors_to_sign_in_and_only_administrators_in(self):
+        self.assertRedirects(self.client.get(reverse("ops:overview")), reverse("gova_pp:login"), fetch_redirect_response=False)
+        admin = User.objects.create_superuser(password="pass12345", email="admin@mkulima.test")
+        self.client.force_login(admin)
+        self.assertEqual(self.client.get(reverse("ops:overview")).status_code, 200)
