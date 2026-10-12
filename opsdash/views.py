@@ -12,12 +12,14 @@ from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from assistant.models import Conversation
-from callcenter.models import Agronomist, Case, Heartbeat
+from callcenter.models import Agronomist, Case, Heartbeat, Invite
 from gova_pp.models import FarmerMessage, GovernmentOfficial
+from operations.models import InputSeller
 from kikapu_bridge.models import ReplyDelivery, WebhookDelivery
 
 User = get_user_model()
@@ -122,7 +124,32 @@ def agronomists(request):
         )
         .order_by("-is_active", "company__business_name", "full_name")
     )
-    return render(request, "opsdash/agronomists.html", {"rows": rows, "nav": "agronomists"})
+    invites = [
+        {"invite": invite, "link": request.build_absolute_uri(reverse("callcenter:join", args=[invite.token]))}
+        for invite in Invite.objects.filter(used_at__isnull=True, expires_at__gt=timezone.now()).select_related("company")
+    ]
+    companies = InputSeller.objects.filter(is_active=True, onboarding_completed=True).order_by("business_name", "seller_name")
+    return render(request, "opsdash/agronomists.html", {"rows": rows, "invites": invites, "companies": companies, "nav": "agronomists"})
+
+
+@ops_required
+@require_POST
+def invite_create(request):
+    """An administrator invites an agronomist on behalf of an input company or shop."""
+    company = InputSeller.objects.filter(pk=request.POST.get("company") or 0, is_active=True, onboarding_completed=True).first()
+    if company is None:
+        messages.error(request, "Choose the company this agronomist works for.")
+        return redirect("ops:agronomists")
+    Invite.objects.create(company=company, name=request.POST.get("name", "").strip()[:120], created_by=request.user)
+    messages.success(request, "Invite link created. Copy it from the list below and send it to the agronomist.")
+    return redirect("ops:agronomists")
+
+
+@ops_required
+@require_POST
+def invite_revoke(request, pk):
+    get_object_or_404(Invite, pk=pk, used_at__isnull=True).delete()
+    return redirect("ops:agronomists")
 
 
 @ops_required

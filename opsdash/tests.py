@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone, translation
 
 from assistant.models import Conversation, Message
-from callcenter.models import Agronomist, Case, Heartbeat
+from callcenter.models import Agronomist, Case, Heartbeat, Invite
 from gova_pp.models import GovernmentOfficial
 from kikapu_bridge.models import ReplyDelivery
 
@@ -126,7 +126,61 @@ class AgronomistTests(OpsBase):
         self.assertTrue(Agronomist.objects.get().is_active)
 
     def test_an_empty_list_says_how_agronomists_join(self):
-        self.assertContains(self.client.get(reverse("ops:agronomists")), "invite them")
+        self.assertContains(self.client.get(reverse("ops:agronomists")), "Create an invite link above")
+
+
+class InviteTests(OpsBase):
+    def setUp(self):
+        super().setUp()
+        from operations.models import InputSeller
+
+        owner = User.objects.create_user(password="pass12345", email="owner@zamseed.test", is_supplier=True)
+        self.company = InputSeller.objects.create(
+            user=owner, seller_name="Zamseed", business_name="Zamseed Tanzania", phone_number="0712000001",
+            seller_type="manufacturer", location="Arusha", onboarding_completed=True,
+        )
+
+    def test_the_page_offers_every_active_company(self):
+        self.assertContains(self.client.get(reverse("ops:agronomists")), "Zamseed Tanzania (Input Manufacturer / Distributor)")
+
+    def test_an_administrator_creates_a_link_for_a_company(self):
+        response = self.client.post(reverse("ops:invite_create"), {"company": self.company.pk, "name": "Neema"})
+        self.assertRedirects(response, reverse("ops:agronomists"))
+        invite = Invite.objects.get()
+        self.assertEqual((invite.company, invite.name, invite.created_by), (self.company, "Neema", self.admin))
+        page = self.client.get(reverse("ops:agronomists"))
+        self.assertContains(page, reverse("callcenter:join", args=[invite.token]))
+        self.assertContains(page, "Neema")
+
+    def test_the_link_works_for_the_agronomist(self):
+        self.client.post(reverse("ops:invite_create"), {"company": self.company.pk})
+        invite = Invite.objects.get()
+        response = Client().post(reverse("callcenter:join", args=[invite.token]), {
+            "full_name": "Neema Joseph", "email": "neema@zamseed.test", "password": "Str0ng-pass-99", "password2": "Str0ng-pass-99",
+        })
+        self.assertRedirects(response, reverse("callcenter:console"), fetch_redirect_response=False)
+        self.assertEqual(Agronomist.objects.get(user__email="neema@zamseed.test").company, self.company)
+
+    def test_a_company_is_required(self):
+        self.client.post(reverse("ops:invite_create"), {"company": "", "name": "Neema"})
+        self.client.post(reverse("ops:invite_create"), {"company": 99999})
+        self.assertFalse(Invite.objects.exists())
+
+    def test_cancelling_a_link(self):
+        invite = Invite.objects.create(company=self.company)
+        self.client.post(reverse("ops:invite_revoke", args=[invite.pk]))
+        self.assertFalse(Invite.objects.exists())
+
+    def test_used_links_are_not_listed_and_cannot_be_cancelled(self):
+        used = Invite.objects.create(company=self.company, name="Used one", used_at=timezone.now())
+        self.assertNotContains(self.client.get(reverse("ops:agronomists")), "Used one")
+        self.assertEqual(self.client.post(reverse("ops:invite_revoke", args=[used.pk])).status_code, 404)
+
+    def test_only_administrators_can_create_links(self):
+        staff = Client()
+        staff.force_login(User.objects.create_user(password="pass12345", email="staff@gov.test", is_staff=True))
+        self.assertEqual(staff.post(reverse("ops:invite_create"), {"company": self.company.pk}).status_code, 403)
+        self.assertFalse(Invite.objects.exists())
 
 
 class ChatTests(OpsBase):

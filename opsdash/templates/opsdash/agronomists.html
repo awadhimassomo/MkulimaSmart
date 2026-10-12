@@ -2,7 +2,32 @@
 {% block title %}Agronomists{% endblock %}
 {% block content %}
 <h1>Agronomists</h1>
-<p class="muted">Everyone invited by an input company or shop. Companies invite their own agronomists from their dashboard; you can switch anyone's access off here.</p>
+<p class="muted">Everyone invited by an input company or shop. You can invite agronomists here for any company, companies can invite their own from their dashboard, and you can switch anyone's access off.</p>
+
+<div class="panel">
+  <div class="panel-head"><h2>Invite an agronomist</h2></div>
+  <p class="muted" style="margin:0">Pick the company or shop they work for and create a link. Send it to them by WhatsApp or email. It works once, expires after 7 days, and they set their own email and password.</p>
+  <form method="post" action="{% url 'ops:invite_create' %}">
+    {% csrf_token %}
+    <div class="cols">
+      <div><label for="inv-company">Company or shop</label>
+        <select id="inv-company" name="company" required>
+          <option value="">Choose...</option>
+          {% for c in companies %}<option value="{{ c.pk }}">{{ c.business_name|default:c.seller_name }} ({{ c.get_seller_type_display }})</option>{% endfor %}
+        </select></div>
+      <div><label for="inv-name">Name of the agronomist (optional)</label><input type="text" id="inv-name" name="name" maxlength="120"></div>
+    </div>
+    <p><button class="btn" type="submit">Create invite link</button></p>
+  </form>
+  {% for item in invites %}
+    <div class="row"><div class="row-top">
+      <div><b>{{ item.invite.name|default:"Invite link" }} <span class="pill">{{ item.invite.company.business_name|default:item.invite.company.seller_name }}</span></b>
+        <code class="link">{{ item.link }}</code>
+        <span class="muted">Expires {{ item.invite.expires_at|date:"j M Y" }}</span></div>
+      <form method="post" action="{% url 'ops:invite_revoke' item.invite.pk %}">{% csrf_token %}<button class="btn sm danger" type="submit">Cancel</button></form>
+    </div></div>
+  {% endfor %}
+</div>
 
 <div class="panel">
   {% for a in rows %}
@@ -20,7 +45,7 @@
       </div>
     </div>
   {% empty %}
-    <p class="empty">No agronomists yet. Input companies invite them from their dashboard (the Agronomists tab).</p>
+    <p class="empty">No agronomists yet. Create an invite link above.</p>
   {% endfor %}
 </div>
 {% endblock %}
