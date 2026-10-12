@@ -523,3 +523,17 @@ class InviteReasonTests(CallcenterBase):
         self.assertContains(page, "Expired on")
         self.assertContains(page, "Used on")
         self.assertEqual(used.state, "used")
+
+
+class ConsoleBannerTests(CallcenterBase):
+    def setUp(self):
+        super().setUp()
+        self.client = Client()
+        self.client.force_login(self.agronomist.user)
+
+    def test_the_console_warns_when_the_call_center_is_off(self):
+        with override_settings(CALLCENTER_ENABLED=False):
+            self.assertContains(self.client.get(reverse("callcenter:console")), "The call center is switched off")
+
+    def test_no_warning_when_it_is_on(self):
+        self.assertNotContains(self.client.get(reverse("callcenter:console")), "The call center is switched off")

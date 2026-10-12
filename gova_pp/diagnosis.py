@@ -123,7 +123,7 @@ Look at the farmer's photo and reply with ONE JSON object and nothing else, with
   "confidence":           "low", "medium" or "high" - how sure you are from this photo
   "urgency":              "low", "medium" or "high"
   "summary":              one or two plain sentences saying what you see
-  "advice":               practical steps the farmer can take now, as short markdown bullets
+  "advice":               practical steps the farmer can take now, as ONE string of short markdown bullets ("- ..."), not a JSON list
   "product_search_terms": 3 to 6 lowercase ENGLISH keywords for products that would help, as a shop would name them
                           (e.g. ["fungicide", "mancozeb"], ["insecticide", "cypermethrin"], ["npk", "fertilizer"]).
                           Use [] if the plant is healthy or the photo is not agricultural.
@@ -192,6 +192,16 @@ def request_diagnosis(image_for_openai, context=None, language="en"):
     return data
 
 
+def _as_text(value, bullets=False):
+    """The model is asked for text but sometimes returns a JSON list: join it instead of printing "['a', 'b']"."""
+    if isinstance(value, (list, tuple)):
+        items = [str(item).strip() for item in value if str(item).strip()]
+        return "\n".join(f"- {item}" for item in items) if bullets else " ".join(items)
+    if isinstance(value, dict):
+        return "\n".join(f"- {key}: {item}" for key, item in value.items() if str(item).strip())
+    return str(value or "").strip()
+
+
 def normalize_diagnosis(raw):
     """Coerce model output into a predictable shape; the model's JSON is never trusted as-is."""
     problem_type = str(raw.get("problem_type") or "other").strip().lower()
@@ -210,15 +220,15 @@ def normalize_diagnosis(raw):
     terms = terms[:6]
 
     return {
-        "crop": str(raw.get("crop") or "").strip()[:80],
+        "crop": _as_text(raw.get("crop")).replace("\n- ", ", ").lstrip("- ")[:80],
         "crop_confidence": level(raw.get("crop_confidence"), "medium"),
         "visible_features": str(raw.get("visible_features") or "").strip()[:300],
         "problem_type": problem_type,
-        "problem": str(raw.get("problem") or "").strip()[:120],
+        "problem": _as_text(raw.get("problem")).replace("\n- ", ", ").lstrip("- ")[:120],
         "confidence": level(raw.get("confidence"), "low"),
         "urgency": level(raw.get("urgency"), "medium"),
-        "summary": str(raw.get("summary") or "").strip()[:600],
-        "advice": str(raw.get("advice") or "").strip()[:2000],
+        "summary": _as_text(raw.get("summary"))[:600],
+        "advice": _as_text(raw.get("advice"), bullets=True)[:2000],
         "product_search_terms": terms,
         "needs_expert": bool(raw.get("needs_expert")) or str(raw.get("confidence", "")).lower() == "low"
         or str(raw.get("crop_confidence", "")).lower() == "low",

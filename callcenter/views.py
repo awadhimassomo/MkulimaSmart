@@ -103,7 +103,9 @@ def console(request):
     request.agronomist.touch()
     from trainingdata import services as training
 
-    return render(request, "callcenter/console.html", {"agronomist": request.agronomist, "to_label": training.labelable().count()})
+    return render(request, "callcenter/console.html", {
+        "agronomist": request.agronomist, "to_label": training.labelable().count(), "call_center_on": services.enabled(),
+    })
 
 
 @agronomist_required

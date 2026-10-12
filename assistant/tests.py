@@ -491,3 +491,29 @@ class TrainingConsentTests(AssistantTestBase):
         self.photo_reply("a")
         self.assertEqual(self.consent(phone_number="0711000001", consent=True).status_code, 200)
         self.assertIs(Conversation.objects.get().training_consent, True)
+
+
+class AdviceAsListTests(AssistantTestBase):
+    def test_a_list_from_the_model_becomes_bullets_not_a_python_list(self):
+        from gova_pp.diagnosis import normalize_diagnosis
+
+        raw = diagnosis_answer(advice=["Scout all plants.", "Use a recommended insecticide.", "  "], summary=["Larva in the stem.", "Frass visible."])
+        normalized = normalize_diagnosis(raw)
+        self.assertEqual(normalized["advice"], "- Scout all plants.\n- Use a recommended insecticide.")
+        self.assertEqual(normalized["summary"], "Larva in the stem. Frass visible.")
+
+    def test_the_whatsapp_reply_never_shows_square_brackets_or_quotes_around_steps(self):
+        raw = diagnosis_answer(advice=["Angalia mimea yote.", "Tumia dawa."])
+        with mock.patch("assistant.engine.request_diagnosis", return_value=raw):
+            text = self.send_photo(language="sw").json()["reply"]["text"]
+        self.assertIn("- Angalia mimea yote.", text)
+        self.assertNotIn("['", text)
+        self.assertNotIn("']", text)
+
+    def test_plain_text_and_missing_values_still_work(self):
+        from gova_pp.diagnosis import normalize_diagnosis
+
+        self.assertEqual(normalize_diagnosis({"advice": "- one\n- two"})["advice"], "- one\n- two")
+        self.assertEqual(normalize_diagnosis({})["advice"], "")
+        self.assertEqual(normalize_diagnosis({"crop": ["Maize", "Sorghum"]})["crop"], "Maize, Sorghum")
+        self.assertEqual(normalize_diagnosis({"problem": {"name": "Stalk borer"}})["problem"], "name: Stalk borer")
