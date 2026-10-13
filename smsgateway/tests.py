@@ -468,6 +468,8 @@ class HandlerTests(GatewayBase):
         self.assertIn("Urea 46%: TSh 70,000, Arusha Agrovet, Arusha, 0712 000 111", system)
         self.assertNotIn("Maize seed", system)
         self.assertIn("does not know any commands", system)
+        self.assertIn("ask what they want to buy", system)
+        self.assertIn("As soon as the farmer names what they want", system)
         self.assertIn("Urea 46%", self.replies()[0])
 
     @mock.patch("assistant.engine.chat_completion", return_value="ok")
