@@ -1,3 +1,4 @@
+import os
 import hmac
 
 from django.conf import settings
@@ -29,12 +30,23 @@ class DeviceTokenAuthentication(authentication.BaseAuthentication):
         return "Bearer"
 
 
+def require_https():
+    """A setting wins; else the SMSGATEWAY_REQUIRE_HTTPS environment variable; else on whenever DEBUG is off."""
+    if hasattr(settings, "SMSGATEWAY_REQUIRE_HTTPS"):
+        return settings.SMSGATEWAY_REQUIRE_HTTPS
+    env = os.environ.get("SMSGATEWAY_REQUIRE_HTTPS")
+    if env is not None:
+        return env.strip().lower() not in ("false", "0", "no")
+    return not settings.DEBUG
+
+
 class IsDevice(permissions.BasePermission):
     message = "A device token is required."
 
     def has_permission(self, request, view):
         if not isinstance(request.auth, Device):
             return False
-        if getattr(settings, "SMSGATEWAY_REQUIRE_HTTPS", not settings.DEBUG) and not request.is_secure():
-            raise exceptions.PermissionDenied("HTTPS is required.", code="https_required")
+        if require_https() and not request.is_secure():
+            seen = f"scheme={request.scheme}, x-forwarded-proto={request.META.get('HTTP_X_FORWARDED_PROTO', 'none')}"
+            raise exceptions.PermissionDenied(f"HTTPS is required ({seen}).", code="https_required")
         return True
