@@ -20,7 +20,6 @@ from django.utils import timezone
 from . import text
 from .models import Contact
 
-HELP_WORDS = 5  # a message of this many words with no keyword is taken to be a question
 
 STRINGS = {
     "sw": {
@@ -78,16 +77,14 @@ MKULIMA_KEYWORDS = {
 
 
 def parse(keywords, body):
-    """Returns (handler name, the rest of the message). With no keyword: a long message is a question, a short one needs help."""
+    """Returns (handler name, the rest of the message). Keywords are shortcuts; any other text is a natural conversation."""
     words = (body or "").split()
     if not words:
         return "help", ""
     first = re.sub(r"[^\w]", "", words[0].lower())
     if first in keywords:
         return keywords[first], " ".join(words[1:]).strip()
-    if len(words) >= HELP_WORDS:
-        return "ask", " ".join(words)
-    return "help", ""
+    return "ask", " ".join(words)
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +157,38 @@ def _region_in(query):
         if re.search(rf"(?<!\w){re.escape(name.lower())}(?!\w)", lowered):
             return name
     return ""
+
+
+def stock_context(message, region=""):
+    """Lines of in-stock items matching what the farmer wrote (up to 8, cheapest first), for the assistant to quote. Empty if none."""
+    from inputs.models import ShopStockItem
+    from website.templatetags.money import tzs
+
+    region = region or _region_in(message)
+    words = [w for w in re.findall(r"\w+", message.lower()) if len(w) >= 3 and w not in STOP_WORDS]
+    categories = {CATEGORY_WORDS[w] for w in words if w in CATEGORY_WORDS}
+    names = [w for w in words if w not in CATEGORY_WORDS]
+    if not categories and not names:
+        return ""
+    today = timezone.localdate()
+    stock = ShopStockItem.objects.filter(
+        is_active=True, quantity__gte=1, shop__is_active=True, shop__onboarding_completed=True,
+    ).select_related("shop")
+    match = Q(category__in=categories)
+    for word in names:
+        match |= Q(name__icontains=word) | Q(brand__icontains=word)
+    stock = stock.filter(match)
+    if region:
+        stock = stock.filter(Q(shop__region__iexact=region) | Q(shop__location__icontains=region))
+    lines = []
+    for item in stock.order_by("selling_price", "name")[:20]:
+        if item.expiry_date and item.expiry_date < today:
+            continue
+        shop = item.shop
+        lines.append(f"- {item.name}: TSh {tzs(item.selling_price)}, {shop.business_name or shop.seller_name}, {shop.region or 'region unknown'}, {text.local_format(shop.phone_number)}")
+        if len(lines) == 8:
+            break
+    return "\n".join(lines)
 
 
 def price(inbound, contact, args):

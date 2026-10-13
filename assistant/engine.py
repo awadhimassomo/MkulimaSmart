@@ -194,6 +194,11 @@ def _known_context(conversation):
 SMS_RULES = (
     "\n- This is an SMS to a basic phone: answer in at most 300 characters, in plain text only (no markdown, no bullet symbols,"
     " no emoji, no links). If more is needed, tell them to send another question with more detail."
+    "\n- Talk naturally, like a helpful person at an agro shop. The farmer does not know any commands."
+    "\n- When the farmer wants to buy something, use the 'Shops with stock' list below: name the best one or two (item, price,"
+    " shop, phone number). If the region is not known and matters, ask which region they are in. If nothing matches, say so"
+    " and offer to look for something else. Never invent shops, prices or phone numbers."
+    "\n- Orders cannot be placed by SMS: tell them to call the shop or order on the website."
 )
 
 
@@ -210,7 +215,14 @@ def answer_text(conversation, inbound, language):
     language_name = {"sw": "Swahili", "en": "English"}.get(language, "Swahili")
     system = TEXT_SYSTEM_PROMPT.format(language_name=language_name, known=_known_context(conversation))
     if conversation.channel == "sms":
-        system += SMS_RULES
+        from smsgateway.handlers import _region_in, stock_context
+
+        region = _region_in(inbound.text)
+        if region and region != conversation.region:
+            conversation.region = region
+            conversation.save(update_fields=["region"])
+        stock = stock_context(inbound.text, conversation.region)
+        system += SMS_RULES + "\n\nShops with stock (cheapest first):\n" + (stock or "- none found for this message")
     messages = [{"role": "system", "content": system}]
     history = list(conversation.messages.exclude(pk=inbound.pk).order_by("-created_at", "-pk")[:HISTORY_MESSAGES])
     for message in reversed(history):

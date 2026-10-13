@@ -450,10 +450,43 @@ class HandlerTests(GatewayBase):
         self.assertIn("SWALI", self.replies()[0])
         self.assertIn("BEI", self.replies()[0])
 
-    def test_a_short_message_with_no_keyword_gets_help(self):
+    def test_a_message_with_no_keyword_is_a_conversation_not_a_menu(self):
         sms = self.text_in("habari")
+        self.assertEqual((sms.status, sms.handler), ("pending", "ask"))
+
+    def test_an_empty_message_gets_help(self):
+        sms = self.text_in(" ")
         self.assertEqual((sms.status, sms.handler), ("processed", "help"))
-        self.assertIn("SWALI", self.replies()[0])
+
+    @mock.patch("assistant.engine.chat_completion", return_value="Tuna Urea 46% TSh 70,000 Arusha Agrovet 0712 000 111. Uko mkoa gani?")
+    def test_a_plain_request_is_answered_with_the_shops_in_stock(self, chat):
+        self.stock("Urea 46%", 70000)
+        self.stock("Maize seed 2kg", 10000, category="seeds")
+        self.text_in("Nataka mbolea")
+        services.process_pending()
+        system = chat.call_args.args[0][0]["content"]
+        self.assertIn("Urea 46%: TSh 70,000, Arusha Agrovet, Arusha, 0712 000 111", system)
+        self.assertNotIn("Maize seed", system)
+        self.assertIn("does not know any commands", system)
+        self.assertIn("Urea 46%", self.replies()[0])
+
+    @mock.patch("assistant.engine.chat_completion", return_value="ok")
+    def test_a_region_in_the_text_is_remembered_for_the_next_message(self, chat):
+        self.stock("Urea 46%", 70000)
+        self.text_in("Nataka mbolea Arusha")
+        services.process_pending()
+        self.assertEqual(Conversation.objects.get().region, "Arusha")
+        self.text_in("na mbegu je")
+        services.process_pending()
+        self.assertIn("Urea", chat.call_args_list[0].args[0][0]["content"])
+        self.assertEqual(Conversation.objects.get().region, "Arusha")
+
+    @mock.patch("assistant.engine.chat_completion", return_value="ok")
+    def test_when_nothing_matches_the_assistant_is_told_so_and_not_given_other_regions_stock(self, chat):
+        self.stock("Urea 46%", 70000)
+        self.text_in("Nataka mbolea Kilimanjaro")
+        services.process_pending()
+        self.assertIn("none found for this message", chat.call_args.args[0][0]["content"])
 
     def test_language_can_be_changed_and_is_remembered(self):
         self.text_in("lugha en")
