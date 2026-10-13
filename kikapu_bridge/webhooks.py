@@ -137,6 +137,10 @@ def build_reply_payload(message, conversation, source, agronomist=None, text=Non
 
 def queue_reply(message, conversation, source, agronomist=None, text=None):
     """Write the reply to the outbox and send it once the surrounding transaction commits."""
+    if conversation.channel == "sms":
+        from smsgateway.outbox import send_sms
+
+        return send_sms(conversation.phone_number, text or message.text, handler=f"reply-{source}")
     delivery = ReplyDelivery.objects.create(
         message=message, phone_number=conversation.phone_number,
         payload=build_reply_payload(message, conversation, source, agronomist, text),

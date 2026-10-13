@@ -9,7 +9,7 @@ from django.db.models import Q
 
 
 class Conversation(models.Model):
-    CHANNEL_CHOICES = [("whatsapp", "WhatsApp (via Kikapu)")]
+    CHANNEL_CHOICES = [("whatsapp", "WhatsApp (via Kikapu)"), ("sms", "SMS (our own gateway phone)")]
 
     channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES, default="whatsapp")
     phone_number = models.CharField(max_length=20, help_text="E.164, e.g. +255712345678")

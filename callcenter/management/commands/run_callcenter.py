@@ -5,6 +5,8 @@ from django.db import close_old_connections
 
 from callcenter.models import Heartbeat
 from callcenter.services import enabled, sweep
+from smsgateway import outbox as sms_outbox
+from smsgateway import services as sms_services
 from kikapu_bridge.webhooks import deliver_replies
 
 
@@ -22,6 +24,8 @@ class Command(BaseCommand):
         Heartbeat.beat()
         counts = sweep() if enabled() else {}
         sent, failed = deliver_replies()
+        sms_services.process_pending()  # farmers' SMS that wait for the AI or an agronomist
+        sms_outbox.expire_old()
         return counts, sent, failed
 
     def handle(self, *args, **options):

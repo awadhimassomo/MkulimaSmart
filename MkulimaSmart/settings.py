@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'kikapu_bridge',  # Kikapu WhatsApp bridge: catalog pull, farmer orders, status webhooks
     'community',  # Farmer Talk: crop/seed experience discussions
     'trainingdata',  # Photo labels by agronomists and the exportable training dataset
+    'smsgateway',  # Our own SMS gateway: an office phone receives SMS, we reply through it
     'opsdash',  # Operations dashboard for administrators (replaces day-to-day Django admin use)
     'callcenter',  # Call center: company agronomists answer farmers' WhatsApp chats; the AI covers when none is free
     'assistant',  # Crop-doctor chat bot (WhatsApp via Kikapu): photo diagnosis + product advice

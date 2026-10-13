@@ -33,6 +33,7 @@ urlpatterns = [
     
     # Kikapu WhatsApp bridge (partner token auth)
     path('api/kikapu-bridge/', include('kikapu_bridge.urls', namespace='kikapu_bridge')),
+    path('api/sms-gateway/', include('smsgateway.urls', namespace='smsgateway')),
 
     # Input supply chain API for the mobile app (manufacturers, shops, POS)
     path('api/inputs/', include('inputs.api_urls', namespace='inputs_api')),

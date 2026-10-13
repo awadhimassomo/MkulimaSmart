@@ -8,6 +8,7 @@ Nothing here knows about WhatsApp: the caller (the Kikapu bridge) passes in a ph
 text and/or a photo and sends our reply text back to the farmer.
 """
 import logging
+import re
 from datetime import timedelta
 
 from django.conf import settings
@@ -190,9 +191,27 @@ def _known_context(conversation):
     return "\n".join(lines) or "- Nothing yet; this is a new conversation."
 
 
+SMS_RULES = (
+    "\n- This is an SMS to a basic phone: answer in at most 300 characters, in plain text only (no markdown, no bullet symbols,"
+    " no emoji, no links). If more is needed, tell them to send another question with more detail."
+)
+
+
+def to_sms(text):
+    """The model's answer as a short plain SMS: markdown symbols removed, tidy spacing, at most three SMS."""
+    from smsgateway.text import shorten
+
+    plain = re.sub(r"[*_`#>]+", "", str(text))
+    plain = re.sub(r"(?m)^\s*[-\u2022]\s*", "- ", plain)
+    return shorten(plain, max_parts=3)
+
+
 def answer_text(conversation, inbound, language):
     language_name = {"sw": "Swahili", "en": "English"}.get(language, "Swahili")
-    messages = [{"role": "system", "content": TEXT_SYSTEM_PROMPT.format(language_name=language_name, known=_known_context(conversation))}]
+    system = TEXT_SYSTEM_PROMPT.format(language_name=language_name, known=_known_context(conversation))
+    if conversation.channel == "sms":
+        system += SMS_RULES
+    messages = [{"role": "system", "content": system}]
     history = list(conversation.messages.exclude(pk=inbound.pk).order_by("-created_at", "-pk")[:HISTORY_MESSAGES])
     for message in reversed(history):
         if message.role == "farmer":
@@ -203,7 +222,8 @@ def answer_text(conversation, inbound, language):
         else:
             messages.append({"role": "assistant", "content": message.text})
     messages.append({"role": "user", "content": inbound.text})
-    return to_whatsapp(chat_completion(messages))
+    answer = chat_completion(messages)
+    return to_sms(answer) if conversation.channel == "sms" else to_whatsapp(answer)
 
 
 # ---------------------------------------------------------------------------
@@ -242,7 +262,7 @@ def _result(conversation, inbound, reply, **extra):
     }
 
 
-def handle_message(*, phone, name="", language="", region="", text="", upload=None, image_url="", external_id="", farmer_user=None):
+def handle_message(*, phone, name="", language="", region="", text="", upload=None, image_url="", external_id="", farmer_user=None, channel="whatsapp"):
     """
     Process one farmer message. Raises DiagnosisError (with .status) when the message cannot be
     handled; the farmer's message is kept in that case so a retry carries on where it left off.
@@ -253,7 +273,7 @@ def handle_message(*, phone, name="", language="", region="", text="", upload=No
     if not text and not is_image:
         raise DiagnosisError("Send text or a photo.", status=400)
 
-    conversation, _ = Conversation.objects.get_or_create(channel="whatsapp", phone_number=phone)
+    conversation, _ = Conversation.objects.get_or_create(channel=channel, phone_number=phone)
     if language in STRINGS:
         conversation.language = language
     if name:
