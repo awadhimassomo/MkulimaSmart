@@ -80,6 +80,7 @@
     <a href="{% url 'ops:products' %}" class="{% if nav == 'products' %}on{% endif %}">Listings</a>
     <a href="{% url 'ops:accounts' %}" class="{% if nav == 'accounts' %}on{% endif %}">Accounts</a>
     <a href="{% url 'training_data:dataset' %}" class="{% if nav == 'dataset' %}on{% endif %}">Training data</a>
+    <a href="{% url 'ops:sms_assistant' %}" class="{% if nav == 'sms' %}on{% endif %}">SMS assistant</a>
     <a href="{% url 'ops:deliveries' %}" class="{% if nav == 'deliveries' %}on{% endif %}">Messages to Kikapu{% if badges.deliveries %}<span class="badge">{{ badges.deliveries }}</span>{% endif %}</a>
   </nav>
   <main>

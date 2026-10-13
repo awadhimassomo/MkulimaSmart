@@ -160,3 +160,33 @@ class OutboundSms(models.Model):
 
     def __str__(self):
         return f"to {self.to}: {self.body[:30]}"
+
+
+class Guidance(models.Model):
+    """The instructions staff give the SMS assistant (tone, what to ask first, what never to say). One row."""
+
+    instructions = models.TextField(blank=True, help_text="Added to the assistant's rules for every SMS conversation.")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "guidance"
+
+    @classmethod
+    def current(cls):
+        return cls.objects.first() or cls()
+
+
+class Example(models.Model):
+    """A model conversation: when a farmer writes like this, this is how we answer. Shown to the assistant as a guide."""
+
+    farmer_says = models.CharField(max_length=320)
+    reply = models.CharField(max_length=480)
+    is_active = models.BooleanField(default=True)
+    source = models.ForeignKey("assistant.Message", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    def __str__(self):
+        return self.farmer_says[:60]

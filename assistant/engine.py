@@ -215,6 +215,21 @@ def to_sms(text):
     return shorten(plain, max_parts=3)
 
 
+def sms_training():
+    """What staff taught the SMS assistant in the ops dashboard: extra instructions and model conversations."""
+    from smsgateway.models import Example, Guidance
+
+    parts = []
+    instructions = Guidance.current().instructions.strip()
+    if instructions:
+        parts.append("\n\nExtra instructions from our staff (follow them):\n" + instructions)
+    examples = list(Example.objects.filter(is_active=True)[:15])
+    if examples:
+        shown = "\n".join(f"Farmer: {e.farmer_says}\nYou: {e.reply}" for e in examples)
+        parts.append("\n\nExamples of how we like to answer (copy the style, not the exact words or prices):\n" + shown)
+    return "".join(parts)
+
+
 def answer_text(conversation, inbound, language):
     language_name = {"sw": "Swahili", "en": "English"}.get(language, "Swahili")
     system = TEXT_SYSTEM_PROMPT.format(language_name=language_name, known=_known_context(conversation))
@@ -226,7 +241,7 @@ def answer_text(conversation, inbound, language):
             conversation.region = region
             conversation.save(update_fields=["region"])
         stock = stock_context(inbound.text, conversation.region)
-        system += SMS_RULES + "\n\nShops with stock (cheapest first):\n" + (stock or "- none found for this message")
+        system += SMS_RULES + sms_training() + "\n\nShops with stock (cheapest first):\n" + (stock or "- none found for this message")
     messages = [{"role": "system", "content": system}]
     history = list(conversation.messages.exclude(pk=inbound.pk).order_by("-created_at", "-pk")[:HISTORY_MESSAGES])
     for message in reversed(history):

@@ -23,7 +23,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.views.decorators.http import require_POST
 
-from assistant.models import Conversation
+from assistant.models import Conversation, Message
 from callcenter.models import Agronomist, Case, Heartbeat, Invite
 from gova_pp.models import FarmerMessage, GovernmentOfficial
 from website.models import OrderLine, Product
@@ -411,3 +411,72 @@ def web_order_update(request, pk):
         messages.success(request, f"{line.product_name} marked as delivered.")
     back = request.POST.get("back", "")
     return redirect(f"{reverse('ops:web_orders')}?{back}" if back else "ops:web_orders")
+
+
+# ---------------------------------------------------------------------------
+# SMS assistant: teach it how to talk to farmers
+# ---------------------------------------------------------------------------
+
+@ops_required
+def sms_assistant(request):
+    from smsgateway.models import Example, Guidance
+
+    replies = (
+        Message.objects.filter(conversation__channel="sms", role__in=("assistant", "agronomist"), in_reply_to__isnull=False)
+        .select_related("in_reply_to", "conversation")
+        .order_by("-created_at")[:30]
+    )
+    return render(request, "opsdash/sms_assistant.html", {
+        "nav": "sms",
+        "guidance": Guidance.current(),
+        "examples": Example.objects.all(),
+        "replies": replies,
+    })
+
+
+@ops_required
+@require_POST
+def sms_guidance_save(request):
+    from smsgateway.models import Guidance
+
+    guidance = Guidance.objects.first() or Guidance()
+    guidance.instructions = request.POST.get("instructions", "").strip()[:4000]
+    guidance.save()
+    messages.success(request, "Saved. The assistant follows these instructions from the next SMS.")
+    return redirect("ops:sms_assistant")
+
+
+@ops_required
+@require_POST
+def sms_example_add(request):
+    from smsgateway.models import Example
+
+    farmer_says = " ".join(request.POST.get("farmer_says", "").split())[:320]
+    reply = request.POST.get("reply", "").strip()[:480]
+    if not farmer_says or not reply:
+        messages.error(request, "Write both what the farmer says and how we should answer.")
+        return redirect("ops:sms_assistant")
+    source = Message.objects.filter(pk=request.POST.get("source") or 0).first()
+    Example.objects.create(farmer_says=farmer_says, reply=reply, source=source)
+    messages.success(request, "Added. The assistant will copy this style.")
+    return redirect("ops:sms_assistant")
+
+
+@ops_required
+@require_POST
+def sms_example_toggle(request, pk):
+    from smsgateway.models import Example
+
+    example = get_object_or_404(Example, pk=pk)
+    example.is_active = not example.is_active
+    example.save(update_fields=["is_active"])
+    return redirect("ops:sms_assistant")
+
+
+@ops_required
+@require_POST
+def sms_example_delete(request, pk):
+    from smsgateway.models import Example
+
+    get_object_or_404(Example, pk=pk).delete()
+    return redirect("ops:sms_assistant")

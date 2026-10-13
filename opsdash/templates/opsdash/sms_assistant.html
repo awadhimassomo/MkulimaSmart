@@ -1,0 +1,62 @@
+{% extends "opsdash/base.html" %}
+{% block title %}SMS assistant{% endblock %}
+{% block content %}
+<h1>SMS assistant</h1>
+<p class="muted">Teach the assistant how to talk to farmers who text the office phone. Changes apply from the next SMS, with no deploy. The assistant always sees the real shop stock, so never write prices into these rules.</p>
+
+<div class="panel">
+  <div class="panel-head"><h2>1. Instructions</h2></div>
+  <p class="muted">Plain sentences, for example: "Greet with Karibu Mkulima Smart. Always ask which region before suggesting a shop. Never promise delivery."</p>
+  <form method="post" action="{% url 'ops:sms_guidance_save' %}">{% csrf_token %}
+    <textarea name="instructions" rows="6" maxlength="4000">{{ guidance.instructions }}</textarea>
+    <div class="actions"><button class="btn" type="submit">Save instructions</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>2. Example conversations <span class="pill">{{ examples|length }}</span></h2></div>
+  <p class="muted">"When a farmer writes like this, we answer like that." The assistant uses the 15 newest active examples as a guide for style and approach.</p>
+  <form method="post" action="{% url 'ops:sms_example_add' %}">{% csrf_token %}
+    <label for="farmer_says">The farmer writes</label>
+    <input type="text" id="farmer_says" name="farmer_says" maxlength="320" placeholder="Nataka mbolea">
+    <label for="reply">We answer</label>
+    <textarea id="reply" name="reply" rows="3" maxlength="480" placeholder="Karibu! Unataka mbolea ya kupandia au kukuzia? Uko mkoa gani?"></textarea>
+    <div class="actions"><button class="btn" type="submit">Add example</button></div>
+  </form>
+  {% for e in examples %}
+    <div class="row"><div class="row-top">
+      <div>
+        <b>{{ e.farmer_says }} {% if not e.is_active %}<span class="pill no">Off</span>{% endif %}</b>
+        <span class="muted">{{ e.reply }}</span>
+      </div>
+      <div class="actions" style="margin:0">
+        <form method="post" action="{% url 'ops:sms_example_toggle' e.pk %}" class="inline">{% csrf_token %}<button class="btn secondary sm" type="submit">{% if e.is_active %}Turn off{% else %}Turn on{% endif %}</button></form>
+        <form method="post" action="{% url 'ops:sms_example_delete' e.pk %}" class="inline" onsubmit="return confirm('Delete this example?')">{% csrf_token %}<button class="btn danger sm" type="submit">Delete</button></form>
+      </div>
+    </div></div>
+  {% empty %}
+    <p class="empty">No examples yet.</p>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>3. Recent replies: correct the ones that were wrong</h2></div>
+  <p class="muted">Edit the answer to how it should have been and press "Teach this". It becomes an example above.</p>
+  {% for r in replies %}
+    <div class="row">
+      <div class="row-top"><div>
+        <b>Farmer: {{ r.in_reply_to.text }}</b>
+        <span class="muted">{{ r.conversation.phone_number }} | {{ r.created_at|date:"j M H:i" }} | <a href="{% url 'ops:chat' r.conversation.pk %}">full chat</a></span>
+      </div></div>
+      <form method="post" action="{% url 'ops:sms_example_add' %}">{% csrf_token %}
+        <input type="hidden" name="farmer_says" value="{{ r.in_reply_to.text }}">
+        <input type="hidden" name="source" value="{{ r.pk }}">
+        <textarea name="reply" rows="3" maxlength="480">{{ r.text }}</textarea>
+        <div class="actions"><button class="btn secondary sm" type="submit">Teach this</button></div>
+      </form>
+    </div>
+  {% empty %}
+    <p class="empty">No SMS conversations yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

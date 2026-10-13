@@ -38,7 +38,7 @@ class OpsBase(TestCase):
 
 
 class AccessTests(OpsBase):
-    PAGES = ["ops:overview", "ops:agronomists", "ops:chats", "ops:deliveries"]
+    PAGES = ["ops:overview", "ops:agronomists", "ops:chats", "ops:deliveries", "ops:sms_assistant"]
 
     def test_every_page_opens_for_an_administrator(self):
         for name in self.PAGES:
@@ -473,3 +473,98 @@ class ListingsTests(OpsBase):
 
     def test_it_is_in_the_navigation(self):
         self.assertContains(self.client.get(reverse("ops:overview")), reverse("ops:products"))
+
+
+class SmsAssistantTests(OpsBase):
+    def sms_exchange(self, farmer="Nataka mbolea", reply="Karibu! Uko mkoa gani?"):
+        conversation = Conversation.objects.create(phone_number="+255712345678", channel="sms")
+        asked = Message.objects.create(conversation=conversation, role="farmer", text=farmer)
+        answered = Message.objects.create(conversation=conversation, role="assistant", text=reply, in_reply_to=asked)
+        return conversation, asked, answered
+
+    def test_the_page_opens_and_lists_recent_sms_replies(self):
+        self.sms_exchange()
+        response = self.client.get(reverse("ops:sms_assistant"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Nataka mbolea")
+        self.assertContains(response, "Karibu! Uko mkoa gani?")
+
+    def test_whatsapp_chats_are_not_listed(self):
+        conversation = Conversation.objects.create(phone_number="+255700000000", channel="whatsapp")
+        asked = Message.objects.create(conversation=conversation, role="farmer", text="WhatsApp only text")
+        Message.objects.create(conversation=conversation, role="assistant", text="x", in_reply_to=asked)
+        self.assertNotContains(self.client.get(reverse("ops:sms_assistant")), "WhatsApp only text")
+
+    def test_instructions_are_saved_and_replaced(self):
+        from smsgateway.models import Guidance
+
+        self.client.post(reverse("ops:sms_guidance_save"), {"instructions": "  Always greet first.  "})
+        self.client.post(reverse("ops:sms_guidance_save"), {"instructions": "Never promise delivery."})
+        self.assertEqual(Guidance.objects.count(), 1)
+        self.assertEqual(Guidance.current().instructions, "Never promise delivery.")
+
+    def test_an_example_is_added_toggled_and_deleted(self):
+        from smsgateway.models import Example
+
+        self.client.post(reverse("ops:sms_example_add"), {"farmer_says": "Nataka   mbolea", "reply": "Karibu!"})
+        example = Example.objects.get()
+        self.assertEqual((example.farmer_says, example.is_active), ("Nataka mbolea", True))
+        self.client.post(reverse("ops:sms_example_toggle", args=[example.pk]))
+        example.refresh_from_db()
+        self.assertFalse(example.is_active)
+        self.client.post(reverse("ops:sms_example_delete", args=[example.pk]))
+        self.assertFalse(Example.objects.exists())
+
+    def test_an_incomplete_example_is_refused(self):
+        from smsgateway.models import Example
+
+        self.client.post(reverse("ops:sms_example_add"), {"farmer_says": "Nataka mbolea", "reply": " "})
+        self.assertFalse(Example.objects.exists())
+
+    def test_a_wrong_reply_can_be_corrected_into_an_example(self):
+        from smsgateway.models import Example
+
+        _, asked, answered = self.sms_exchange()
+        self.client.post(reverse("ops:sms_example_add"), {"farmer_says": asked.text, "reply": "Karibu! Mbolea ya kupandia au kukuzia?", "source": answered.pk})
+        example = Example.objects.get()
+        self.assertEqual((example.farmer_says, example.reply, example.source), ("Nataka mbolea", "Karibu! Mbolea ya kupandia au kukuzia?", answered))
+
+    def test_the_assistant_is_given_the_instructions_and_only_the_active_examples(self):
+        from assistant import engine
+        from smsgateway.models import Example, Guidance
+
+        Guidance.objects.create(instructions="Always ask the region.")
+        Example.objects.create(farmer_says="Nataka mbolea", reply="Karibu! Uko mkoa gani?")
+        Example.objects.create(farmer_says="Switched off one", reply="Hidden", is_active=False)
+        prompt = engine.sms_training()
+        self.assertIn("Always ask the region.", prompt)
+        self.assertIn("Farmer: Nataka mbolea\nYou: Karibu! Uko mkoa gani?", prompt)
+        self.assertNotIn("Hidden", prompt)
+
+    def test_only_the_newest_fifteen_examples_are_used(self):
+        from assistant import engine
+        from smsgateway.models import Example
+
+        for i in range(20):
+            Example.objects.create(farmer_says=f"q{i:02d}", reply="r")
+        prompt = engine.sms_training()
+        self.assertIn("q19", prompt)
+        self.assertNotIn("q04", prompt)
+
+    @mock.patch("assistant.engine.chat_completion", return_value="ok")
+    def test_the_sms_prompt_carries_the_training_but_a_whatsapp_prompt_does_not(self, chat):
+        from assistant import engine
+        from smsgateway.models import Guidance
+
+        Guidance.objects.create(instructions="Mention the office hours.")
+        engine.handle_message(phone="+255711000111", text="habari", channel="sms", external_id="a1")
+        self.assertIn("Mention the office hours.", chat.call_args.args[0][0]["content"])
+        engine.handle_message(phone="+255711000222", text="habari", channel="whatsapp", external_id="a2")
+        self.assertNotIn("Mention the office hours.", chat.call_args.args[0][0]["content"])
+
+    def test_only_administrators_can_open_or_change_it(self):
+        client = Client()
+        self.assertEqual(client.get(reverse("ops:sms_assistant")).status_code, 302)
+        client.force_login(User.objects.create_user(password="pass12345", email="user@mkulima.test"))
+        self.assertEqual(client.get(reverse("ops:sms_assistant")).status_code, 403)
+        self.assertEqual(client.post(reverse("ops:sms_guidance_save"), {"instructions": "hack"}).status_code, 403)

@@ -19,6 +19,11 @@ urlpatterns = [
     path("accounts/", views.accounts, name="accounts"),
     path("accounts/<int:pk>/reset-link/", views.account_reset_link, name="account_reset_link"),
     path("accounts/<int:pk>/reset-email/", views.account_reset_email, name="account_reset_email"),
+    path("sms-assistant/", views.sms_assistant, name="sms_assistant"),
+    path("sms-assistant/guidance/", views.sms_guidance_save, name="sms_guidance_save"),
+    path("sms-assistant/examples/add/", views.sms_example_add, name="sms_example_add"),
+    path("sms-assistant/examples/<int:pk>/toggle/", views.sms_example_toggle, name="sms_example_toggle"),
+    path("sms-assistant/examples/<int:pk>/delete/", views.sms_example_delete, name="sms_example_delete"),
     path("deliveries/", views.deliveries, name="deliveries"),
     path("deliveries/<str:kind>/<int:pk>/retry/", views.delivery_retry, name="delivery_retry"),
 ]

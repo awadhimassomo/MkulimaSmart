@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Contact, Device, InboundSms, OutboundSms
+from .models import Contact, Device, Example, Guidance, InboundSms, OutboundSms
 
 
 @admin.register(Device)
@@ -36,3 +36,13 @@ class OutboundSmsAdmin(admin.ModelAdmin):
 class ContactAdmin(admin.ModelAdmin):
     list_display = ("phone", "language", "opted_out", "last_message_at")
     list_filter = ("opted_out", "language")
+
+
+@admin.register(Guidance)
+class GuidanceAdmin(admin.ModelAdmin):
+    list_display = ("updated_at",)
+
+
+@admin.register(Example)
+class ExampleAdmin(admin.ModelAdmin):
+    list_display = ("farmer_says", "is_active", "created_at")
